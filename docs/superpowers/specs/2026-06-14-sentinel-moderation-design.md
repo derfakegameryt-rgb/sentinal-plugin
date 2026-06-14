@@ -33,6 +33,7 @@ bytecode and using only stable Paper API (no NMS / version-specific internals).
 - Invsee (live, editable view of a player's inventory)
 - EChestSee (live, editable view of a player's ender chest)
 - Punishment history per player
+- Auto-updater (checks GitHub Releases, downloads new JAR, applies on next restart)
 
 ## Permissions / Access
 
@@ -54,6 +55,7 @@ All commands are optional shortcuts — the GUI is the primary interface.
 | `/report <player> <reason>` | everyone | Submit a report |
 | `/sc [message]` | OP | Toggle staff chat, or send a one-off staff chat message |
 | `/sentinel reload` | OP | Reload config + messages |
+| `/sentinel update` | OP | Force an immediate update check |
 
 ## GUI Flow
 
@@ -115,6 +117,34 @@ All commands are optional shortcuts — the GUI is the primary interface.
 - Chat input is captured via the chat event so the message never appears in
   public chat.
 
+## Auto-Update
+
+Sentinel keeps itself up to date from a GitHub repository.
+
+- **Source:** GitHub Releases of `derfakegameryt-rgb/sentinal-plugin`.
+  - The finished JAR is uploaded as a **release asset**; the release **tag** is
+    the version (e.g. `v1.2.0`).
+- **Check:** On startup and then on a repeating async task every
+  `update.check-interval-seconds` (config; default `1800` = 30 min), Sentinel
+  calls `https://api.github.com/repos/derfakegameryt-rgb/sentinal-plugin/releases/latest`
+  and reads `tag_name` plus the `.jar` asset's `browser_download_url`.
+- **Compare:** The tag (with a leading `v` stripped) is compared against the
+  running version (`getPluginMeta().getVersion()`). A strictly higher semantic
+  version triggers an update; equal/lower is ignored (no downgrade).
+- **Download & apply (next restart):** The new JAR is downloaded async to the
+  Bukkit **update folder** (`plugins/update/Sentinel.jar`, filename matching the
+  installed plugin JAR). Paper applies it automatically on the next server
+  restart. The running plugin is **not** hot-swapped (unsafe).
+- **Notify:** On a successful download, log to console and message online OPs:
+  *"Sentinel vX.Y.Z downloaded — restart the server to apply."* If already up to
+  date, nothing is shown (unless triggered via `/sentinel update`).
+- **Rate limits:** Unauthenticated GitHub API allows ~60 requests/hour per IP.
+  The default 30-minute interval stays well within that. The config enforces a
+  **minimum interval of 60 seconds**, and an optional `update.github-token` can
+  be set to raise the limit. Failed checks (network/API errors) are logged at a
+  low level and never crash the plugin.
+- **Toggle:** `update.enabled` (default `true`) disables the whole feature.
+
 ## Data Model (SQLite)
 
 ```
@@ -175,6 +205,8 @@ de.derfakegamer.sentinel
 │   ├── ConfirmGui.java
 │   ├── HistoryGui.java
 │   └── ReportsGui.java
+├── updater/
+│   └── UpdateChecker.java    (GitHub Releases poll, download to update folder)
 ├── command/
 │   ├── SentinelCommand.java
 │   ├── ReportCommand.java
@@ -200,7 +232,8 @@ de.derfakegamer.sentinel
 
 ## Config Files
 
-- `config.yml` — storage settings, 5 preset reasons, exempt UUID list, defaults.
+- `config.yml` — storage settings, 5 preset reasons, exempt UUID list, defaults,
+  and the `update:` section (`enabled`, `check-interval-seconds`, `github-token`).
 - `messages.yml` — all user-facing strings (English, MiniMessage formatted).
 
 ## Cross-Version Strategy
