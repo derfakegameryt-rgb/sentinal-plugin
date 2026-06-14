@@ -18,7 +18,7 @@ import java.util.List;
 public final class PlayerActionsGui extends Gui {
     private static final int HEAD = 4;
     private static final int BAN = 10, TEMPBAN = 11, MUTE = 12, TEMPMUTE = 13, KICK = 14, WARN = 15;
-    private static final int IPBAN = 19, FREEZE = 20, INVSEE = 21, ECHEST = 22, HISTORY = 23, BACK = 36, CLOSE = 44;
+    private static final int IPBAN = 19, FREEZE = 20, INVSEE = 21, ECHEST = 22, HISTORY = 23, NOTES = 24, ALTS = 25, BACK = 36, CLOSE = 44;
 
     private final OfflinePlayer target;
     private final boolean banned;
@@ -68,6 +68,10 @@ public final class PlayerActionsGui extends Gui {
         }
         inventory.setItem(HISTORY, Items.button(Material.WRITABLE_BOOK, Component.text("History", NamedTextColor.AQUA),
             List.of(hint("View past punishments"))));
+        inventory.setItem(NOTES, Items.button(Material.BOOK, Component.text("Notes", NamedTextColor.AQUA),
+            List.of(hint("Staff notes about this player"))));
+        inventory.setItem(ALTS, Items.button(Material.PLAYER_HEAD, Component.text("Alts", NamedTextColor.AQUA),
+            List.of(hint("Accounts sharing this IP"))));
         inventory.setItem(BACK, Items.button(Material.ARROW, Component.text("Back", NamedTextColor.GRAY),
             List.of(hint("Return to the player list"))));
         inventory.setItem(CLOSE, Items.button(Material.BARRIER, Component.text("Close", NamedTextColor.RED),
@@ -137,6 +141,8 @@ public final class PlayerActionsGui extends Gui {
                 if (online != null) mod.openInventory(online.getEnderChest());
             }
             case HISTORY -> new HistoryGui(plugin, target, 0).open(mod);
+            case NOTES -> new NotesGui(plugin, target).open(mod);
+            case ALTS -> new AltsGui(plugin, target).open(mod);
             case BACK -> new PlayersGui(plugin, 0).open(mod);
             case CLOSE -> mod.closeInventory();
         }
