@@ -16,7 +16,7 @@ import java.util.List;
 public final class PlayerActionsGui extends Gui {
     private static final int HEAD = 4;
     private static final int BAN = 10, TEMPBAN = 11, MUTE = 12, TEMPMUTE = 13, KICK = 14, WARN = 15;
-    private static final int IPBAN = 19, HISTORY = 22, BACK = 36, CLOSE = 44;
+    private static final int IPBAN = 19, FREEZE = 20, INVSEE = 21, ECHEST = 22, HISTORY = 23, BACK = 36, CLOSE = 44;
 
     private final OfflinePlayer target;
     private final boolean banned;
@@ -44,8 +44,13 @@ public final class PlayerActionsGui extends Gui {
         inventory.setItem(TEMPMUTE, Items.button(Material.CLOCK, Component.text("Tempmute"), List.of()));
         inventory.setItem(KICK, Items.button(Material.LEATHER_BOOTS, Component.text("Kick"), List.of()));
         inventory.setItem(WARN, Items.button(Material.YELLOW_BANNER, Component.text("Warn"), List.of()));
-        if (target.isOnline())
+        if (target.isOnline()) {
             inventory.setItem(IPBAN, Items.button(Material.IRON_BARS, Component.text("IP-Ban"), List.of()));
+            boolean frozen = plugin.freeze().isFrozen(target.getUniqueId());
+            inventory.setItem(FREEZE, Items.button(Material.ICE, Component.text(frozen ? "Unfreeze" : "Freeze"), List.of()));
+            inventory.setItem(INVSEE, Items.button(Material.CHEST, Component.text("View inventory"), List.of()));
+            inventory.setItem(ECHEST, Items.button(Material.ENDER_CHEST, Component.text("View ender chest"), List.of()));
+        }
         inventory.setItem(HISTORY, Items.button(Material.WRITABLE_BOOK, Component.text("History"), List.of()));
         inventory.setItem(BACK, Items.button(Material.ARROW, Component.text("Back"), List.of()));
         inventory.setItem(CLOSE, Items.button(Material.BARRIER, Component.text("Close"), List.of()));
@@ -81,6 +86,23 @@ public final class PlayerActionsGui extends Gui {
                 String ip = ip();
                 if (ip != null) new ReasonGui(plugin, target, ip, PunishmentType.IPBAN, 0).open(mod);
                 else mod.sendMessage(plugin.messages().prefixed("ipban-requires-online"));
+            }
+            case FREEZE -> {
+                Player online = target.getPlayer();
+                if (online != null) {
+                    boolean nowFrozen = plugin.freeze().toggle(target.getUniqueId());
+                    if (nowFrozen) online.sendMessage(plugin.messages().prefixed("you-are-frozen"));
+                    mod.sendMessage(plugin.messages().prefixed(nowFrozen ? "freeze-frozen" : "freeze-unfrozen", "player", name()));
+                    mod.closeInventory();
+                }
+            }
+            case INVSEE -> {
+                Player online = target.getPlayer();
+                if (online != null) mod.openInventory(online.getInventory());
+            }
+            case ECHEST -> {
+                Player online = target.getPlayer();
+                if (online != null) mod.openInventory(online.getEnderChest());
             }
             case HISTORY -> new HistoryGui(plugin, target, 0).open(mod);
             case BACK -> new PlayersGui(plugin, 0).open(mod);
