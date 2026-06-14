@@ -33,6 +33,22 @@ tasks.test { useJUnitPlatform() }
 tasks.shadowJar {
     archiveClassifier.set("")
     relocate("org.sqlite", "de.derfakegamer.sentinel.libs.sqlite")
+    // sqlite-jdbc ships native binaries for ~24 platforms (~24 MB). Keep only the ones
+    // real Paper servers run on to shrink the jar; drop the exotic/mobile/legacy ones.
+    exclude("org/sqlite/native/Linux-Android/**")
+    exclude("org/sqlite/native/FreeBSD/**")
+    exclude("org/sqlite/native/Linux/ppc64/**")
+    exclude("org/sqlite/native/Linux/arm/**")
+    exclude("org/sqlite/native/Linux/armv6/**")
+    exclude("org/sqlite/native/Linux/armv7/**")
+    exclude("org/sqlite/native/Linux/riscv64/**")
+    exclude("org/sqlite/native/Linux/x86/**")
+    exclude("org/sqlite/native/Linux-Musl/aarch64/**")
+    exclude("org/sqlite/native/Linux-Musl/x86/**")
+    exclude("org/sqlite/native/Windows/x86/**")
+    exclude("org/sqlite/native/Windows/armv7/**")
+    exclude("org/sqlite/native/Windows/aarch64/**")
+    // kept: Linux/{x86_64,aarch64}, Linux-Musl/x86_64, Windows/x86_64, Mac/{x86_64,aarch64}
 }
 
 tasks.build { dependsOn(tasks.shadowJar) }
