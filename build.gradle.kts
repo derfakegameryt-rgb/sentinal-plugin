@@ -20,6 +20,7 @@ dependencies {
     implementation("org.xerial:sqlite-jdbc:3.47.1.0")
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.11.3")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("org.mockbukkit.mockbukkit:mockbukkit-v1.21:4.110.0")
     testImplementation("io.papermc.paper:paper-api:1.21.8-R0.1-SNAPSHOT")
     testImplementation("org.xerial:sqlite-jdbc:3.47.1.0")
