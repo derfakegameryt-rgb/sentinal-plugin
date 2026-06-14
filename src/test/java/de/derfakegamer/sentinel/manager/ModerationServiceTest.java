@@ -27,6 +27,7 @@ class ModerationServiceTest {
     @Test void applyExemptReturnsFalseAndRecordsNothing() {
         UUID exempt = UUID.randomUUID();
         plugin.getConfig().set("exempt", java.util.List.of(exempt.toString()));
+        plugin.saveConfig();
         plugin.reloadAll();
         boolean ok = plugin.moderation().apply(
             new UUID(0,0), "Admin", exempt, "Owner", null, PunishmentType.BAN, 0, "x");

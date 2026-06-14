@@ -60,7 +60,6 @@ public class Sentinel extends JavaPlugin {
     public de.derfakegamer.sentinel.manager.ChatInputManager chatInput() { return chatInputManager; }
 
     public void reloadAll() {
-        saveConfig();
         reloadConfig();
         this.messages.reload(loadMessages());
         this.punishmentManager = new PunishmentManager(new PunishmentDao(database), loadExempt());
