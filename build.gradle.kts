@@ -17,6 +17,7 @@ repositories {
 
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
+    compileOnly("com.google.code.gson:gson:2.11.0")
     implementation("org.xerial:sqlite-jdbc:3.47.1.0")
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.11.3")
@@ -24,6 +25,7 @@ dependencies {
     testImplementation("org.mockbukkit.mockbukkit:mockbukkit-v1.21:4.110.0")
     testImplementation("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
     testImplementation("org.xerial:sqlite-jdbc:3.47.1.0")
+    testImplementation("com.google.code.gson:gson:2.11.0")
 }
 
 tasks.test { useJUnitPlatform() }
