@@ -1,5 +1,6 @@
 package de.derfakegamer.sentinel;
 
+import de.derfakegamer.sentinel.command.SentinelCommand;
 import de.derfakegamer.sentinel.manager.PunishmentManager;
 import de.derfakegamer.sentinel.storage.Database;
 import de.derfakegamer.sentinel.storage.PunishmentDao;
@@ -32,6 +33,12 @@ public class Sentinel extends JavaPlugin {
         this.punishmentManager = new PunishmentManager(new PunishmentDao(database), loadExempt());
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.LoginListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.ChatListener(this), this);
+        SentinelCommand sentinelCmd = new de.derfakegamer.sentinel.command.SentinelCommand(this);
+        getCommand("sentinel").setExecutor(sentinelCmd);
+        de.derfakegamer.sentinel.command.PunishmentCommands pc =
+            new de.derfakegamer.sentinel.command.PunishmentCommands(this);
+        for (String c : new String[]{"ban","tempban","ipban","unban","mute","tempmute","unmute","kick","warn","history"})
+            getCommand(c).setExecutor(pc);
         getLogger().info("Sentinel enabled.");
     }
 
