@@ -40,6 +40,19 @@ public final class Database implements AutoCloseable {
                 )""");
             st.executeUpdate("CREATE INDEX IF NOT EXISTS idx_pun_target ON punishments(target_uuid)");
             st.executeUpdate("CREATE INDEX IF NOT EXISTS idx_pun_ip ON punishments(target_ip)");
+            st.executeUpdate("""
+                CREATE TABLE IF NOT EXISTS reports (
+                  id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  reporter_uuid TEXT NOT NULL,
+                  reporter_name TEXT NOT NULL,
+                  target_uuid TEXT NOT NULL,
+                  target_name TEXT NOT NULL,
+                  reason TEXT NOT NULL,
+                  created_at INTEGER NOT NULL,
+                  handled INTEGER NOT NULL DEFAULT 0,
+                  handled_by TEXT
+                )""");
+            st.executeUpdate("CREATE INDEX IF NOT EXISTS idx_report_open ON reports(handled)");
         }
     }
 
