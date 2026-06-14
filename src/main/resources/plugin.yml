@@ -1,0 +1,18 @@
+name: Sentinel
+version: '1.0.0'
+main: de.derfakegamer.sentinel.Sentinel
+api-version: '1.21'
+author: DerFakeGamer
+commands:
+  sentinel:
+    description: Sentinel admin (reload)
+  ban: { description: Ban a player }
+  tempban: { description: Temporarily ban a player }
+  ipban: { description: Ban a player's IP }
+  unban: { description: Unban a player }
+  mute: { description: Mute a player }
+  tempmute: { description: Temporarily mute a player }
+  unmute: { description: Unmute a player }
+  kick: { description: Kick a player }
+  warn: { description: Warn a player }
+  history: { description: View a player's punishment history }

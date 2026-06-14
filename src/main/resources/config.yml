@@ -1,0 +1,12 @@
+# Sentinel configuration
+exempt: []          # list of UUIDs that can never be punished
+reasons:            # the 5 presets shown in the Reason GUI
+  - Hacking
+  - Spam
+  - Toxicity
+  - Advertising
+  - Griefing
+update:
+  enabled: true
+  check-interval-seconds: 1800   # minimum enforced: 60
+  github-token: ''               # optional, raises GitHub API rate limit
