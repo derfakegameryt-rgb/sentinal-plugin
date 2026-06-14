@@ -16,3 +16,5 @@ commands:
   kick: { description: Kick a player }
   warn: { description: Warn a player }
   history: { description: View a player's punishment history }
+  report: { description: Report a player }
+  sc: { description: Staff chat }

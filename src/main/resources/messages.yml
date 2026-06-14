@@ -27,3 +27,8 @@ enter-duration: "<#60A5FA>Enter a duration in chat (e.g. 30s, 10m, 3h, 8d, 2w), 
 bad-duration: "<red>Invalid duration. Try again from the menu."
 gui-history-title: "<#3B82F6>Sentinel · History · <player>"
 gui-players-title: "<#3B82F6>Sentinel · Players"
+report-usage: "<red>Usage: /report <player> <reason>"
+report-filed: "<#60A5FA>Thanks — your report has been sent to staff."
+report-self: "<red>You cannot report yourself."
+report-alert: "<#3B82F6><bold>Report</bold> <dark_gray>»</dark_gray> <#60A5FA><reporter></#60A5FA> <gray>reported <#60A5FA><player></#60A5FA><gray>: <white><reason>"
+report-handled: "<#60A5FA>Report marked as handled."
