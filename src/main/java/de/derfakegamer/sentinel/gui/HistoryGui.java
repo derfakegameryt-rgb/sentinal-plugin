@@ -5,6 +5,8 @@ import de.derfakegamer.sentinel.model.Punishment;
 import de.derfakegamer.sentinel.model.PunishmentType;
 import de.derfakegamer.sentinel.util.Items;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
@@ -38,16 +40,24 @@ public final class HistoryGui extends Gui {
         int from = page * PAGE_SIZE;
         for (int i = 0; i < PAGE_SIZE && from + i < all.size(); i++) {
             Punishment p = all.get(from + i);
-            inventory.setItem(i, Items.button(iconFor(p.type()), Component.text(p.type().name()), List.of(
-                Component.text("Reason: " + p.reason()),
-                Component.text("By: " + p.issuerName()),
-                Component.text("Date: " + DATE.format(Instant.ofEpochMilli(p.createdAt()))),
-                Component.text(p.active() ? "Active" : "Removed/expired"))));
+            inventory.setItem(i, Items.button(iconFor(p.type()), Component.text(p.type().name(), NamedTextColor.AQUA), List.of(
+                line("Reason: " + p.reason()),
+                line("By: " + p.issuerName()),
+                line("Date: " + DATE.format(Instant.ofEpochMilli(p.createdAt()))),
+                p.active() ? Component.text("Active", NamedTextColor.RED).decoration(TextDecoration.ITALIC, false)
+                           : Component.text("Removed/expired", NamedTextColor.GREEN).decoration(TextDecoration.ITALIC, false))));
         }
-        if (page > 0) inventory.setItem(PREV, Items.button(Material.ARROW, Component.text("Previous"), List.of()));
-        inventory.setItem(BACK, Items.button(Material.BARRIER, Component.text("Back"), List.of()));
-        if (from + PAGE_SIZE < total) inventory.setItem(NEXT, Items.button(Material.ARROW, Component.text("Next"), List.of()));
+        if (page > 0) inventory.setItem(PREV, Items.button(Material.ARROW, Component.text("Previous", NamedTextColor.GRAY),
+            List.of(line("Go to the previous page"))));
+        inventory.setItem(BACK, Items.button(Material.BARRIER, Component.text("Back", NamedTextColor.RED),
+            List.of(line("Return to player actions"))));
+        if (from + PAGE_SIZE < total) inventory.setItem(NEXT, Items.button(Material.ARROW, Component.text("Next", NamedTextColor.GRAY),
+            List.of(line("Go to the next page"))));
         fillEmpty();
+    }
+
+    private static Component line(String text) {
+        return Component.text(text, NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false);
     }
 
     private String name() { return target.getName() == null ? "?" : target.getName(); }

@@ -3,6 +3,8 @@ package de.derfakegamer.sentinel.gui;
 import de.derfakegamer.sentinel.Sentinel;
 import de.derfakegamer.sentinel.util.Items;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -23,11 +25,17 @@ public final class ConfirmGui extends Gui {
         this.inventory = Bukkit.createInventory(this, 27,
             plugin.messages().plain("gui-confirm-title"));
         inventory.setItem(CONFIRM, Items.button(Material.LIME_WOOL,
-            Component.text("Confirm"), List.of()));
+            Component.text("Confirm", NamedTextColor.GREEN),
+            List.of(hint("Apply this punishment"))));
         inventory.setItem(SUMMARY, Items.button(Material.PAPER, summary, List.of()));
         inventory.setItem(CANCEL, Items.button(Material.RED_WOOL,
-            Component.text("Cancel"), List.of()));
+            Component.text("Cancel", NamedTextColor.RED),
+            List.of(hint("Discard and go back"))));
         fillEmpty();
+    }
+
+    private static Component hint(String text) {
+        return Component.text(text, NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false);
     }
 
     @Override

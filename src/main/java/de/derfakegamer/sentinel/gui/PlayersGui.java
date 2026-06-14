@@ -3,6 +3,8 @@ package de.derfakegamer.sentinel.gui;
 import de.derfakegamer.sentinel.Sentinel;
 import de.derfakegamer.sentinel.util.Items;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -28,18 +30,33 @@ public final class PlayersGui extends Gui {
         for (int i = 0; i < PAGE_SIZE && from + i < players.size(); i++) {
             Player p = players.get(from + i);
             long now = System.currentTimeMillis();
-            inventory.setItem(i, Items.head(p, Component.text(p.getName()), List.of(
-                Component.text(plugin.punishments().activeMute(p.getUniqueId(), now) != null ? "Muted" : "Not muted"),
-                Component.text("Warns: " + plugin.punishments().warnCount(p.getUniqueId())))));
+            boolean muted = plugin.punishments().activeMute(p.getUniqueId(), now) != null;
+            inventory.setItem(i, Items.head(p, Component.text(p.getName(), NamedTextColor.AQUA), List.of(
+                line(muted ? "Muted" : "Not muted", muted ? NamedTextColor.RED : NamedTextColor.GREEN),
+                line("Warns: " + plugin.punishments().warnCount(p.getUniqueId()), NamedTextColor.GRAY))));
         }
-        if (page > 0) inventory.setItem(PREV, Items.button(Material.ARROW, Component.text("Previous"), List.of()));
-        inventory.setItem(REPORTS, Items.button(Material.BOOK, Component.text("Reports"),
-            List.of(Component.text("Open: " + plugin.reports().open().size()))));
-        inventory.setItem(STAFF, Items.button(Material.NETHER_STAR, Component.text("Toggle staff chat"), List.of()));
-        inventory.setItem(VANISH, Items.button(Material.ENDER_EYE, Component.text("Toggle vanish"), List.of()));
-        inventory.setItem(CLOSE, Items.button(Material.BARRIER, Component.text("Close"), List.of()));
-        if (from + PAGE_SIZE < players.size()) inventory.setItem(NEXT, Items.button(Material.ARROW, Component.text("Next"), List.of()));
+        if (page > 0) inventory.setItem(PREV, Items.button(Material.ARROW, Component.text("Previous", NamedTextColor.GRAY),
+            List.of(hint("Go to the previous page"))));
+        inventory.setItem(REPORTS, Items.button(Material.BOOK, Component.text("Reports", NamedTextColor.AQUA),
+            List.of(hint("View open player reports"),
+                    line("Open: " + plugin.reports().open().size(), NamedTextColor.GRAY))));
+        inventory.setItem(STAFF, Items.button(Material.NETHER_STAR, Component.text("Toggle staff chat", NamedTextColor.LIGHT_PURPLE),
+            List.of(hint("Toggle your staff-only chat"))));
+        inventory.setItem(VANISH, Items.button(Material.ENDER_EYE, Component.text("Toggle vanish", NamedTextColor.AQUA),
+            List.of(hint("Toggle your own vanish"))));
+        inventory.setItem(CLOSE, Items.button(Material.BARRIER, Component.text("Close", NamedTextColor.RED),
+            List.of(hint("Close this menu"))));
+        if (from + PAGE_SIZE < players.size()) inventory.setItem(NEXT, Items.button(Material.ARROW, Component.text("Next", NamedTextColor.GRAY),
+            List.of(hint("Go to the next page"))));
         fillEmpty();
+    }
+
+    private static Component hint(String text) {
+        return Component.text(text, NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false);
+    }
+
+    private static Component line(String text, NamedTextColor color) {
+        return Component.text(text, color).decoration(TextDecoration.ITALIC, false);
     }
 
     @Override

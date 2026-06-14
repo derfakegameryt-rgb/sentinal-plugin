@@ -38,7 +38,7 @@ class PlayerActionsGuiToolsTest {
         gui.onClick(event);
 
         assertTrue(event.isCancelled());
-        assertSame(target.getInventory(), mod.getOpenInventory().getTopInventory(),
-            "moderator is now viewing the target's real inventory");
+        assertInstanceOf(InvseeGui.class, mod.getOpenInventory().getTopInventory().getHolder(),
+            "moderator is now viewing the target via the InvseeGui");
     }
 }

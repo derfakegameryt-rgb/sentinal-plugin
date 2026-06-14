@@ -4,6 +4,8 @@ import de.derfakegamer.sentinel.Sentinel;
 import de.derfakegamer.sentinel.model.Report;
 import de.derfakegamer.sentinel.util.Items;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
@@ -33,16 +35,23 @@ public final class ReportsGui extends Gui {
         int from = page * PAGE_SIZE;
         for (int i = 0; i < PAGE_SIZE && from + i < reports.size(); i++) {
             Report r = reports.get(from + i);
-            inventory.setItem(i, Items.button(Material.PAPER, Component.text(r.targetName()), List.of(
-                Component.text("Reported by: " + r.reporterName()),
-                Component.text("Reason: " + r.reason()),
-                Component.text("At: " + DATE.format(Instant.ofEpochMilli(r.createdAt()))),
-                Component.text("Left: teleport  Right: actions  Shift: handled"))));
+            inventory.setItem(i, Items.button(Material.PAPER, Component.text(r.targetName(), NamedTextColor.AQUA), List.of(
+                line("Reported by: " + r.reporterName()),
+                line("Reason: " + r.reason()),
+                line("At: " + DATE.format(Instant.ofEpochMilli(r.createdAt()))),
+                line("Left: teleport  Right: actions  Shift: handled"))));
         }
-        if (page > 0) inventory.setItem(PREV, Items.button(Material.ARROW, Component.text("Previous"), List.of()));
-        inventory.setItem(CLOSE, Items.button(Material.BARRIER, Component.text("Close"), List.of()));
-        if (from + PAGE_SIZE < reports.size()) inventory.setItem(NEXT, Items.button(Material.ARROW, Component.text("Next"), List.of()));
+        if (page > 0) inventory.setItem(PREV, Items.button(Material.ARROW, Component.text("Previous", NamedTextColor.GRAY),
+            List.of(line("Go to the previous page"))));
+        inventory.setItem(CLOSE, Items.button(Material.BARRIER, Component.text("Close", NamedTextColor.RED),
+            List.of(line("Close this menu"))));
+        if (from + PAGE_SIZE < reports.size()) inventory.setItem(NEXT, Items.button(Material.ARROW, Component.text("Next", NamedTextColor.GRAY),
+            List.of(line("Go to the next page"))));
         fillEmpty();
+    }
+
+    private static Component line(String text) {
+        return Component.text(text, NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false);
     }
 
     @Override

@@ -4,6 +4,8 @@ import de.derfakegamer.sentinel.Sentinel;
 import de.derfakegamer.sentinel.model.PunishmentType;
 import de.derfakegamer.sentinel.util.Items;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
@@ -31,14 +33,21 @@ public final class ReasonGui extends Gui {
         this.presets = plugin.getConfig().getStringList("reasons");
         this.inventory = Bukkit.createInventory(this, 27, plugin.messages().plain("gui-reason-title"));
         for (int i = 0; i < 5; i++) {
-            String label = i < presets.size() ? presets.get(i) : "—";
+            boolean has = i < presets.size();
+            String label = has ? presets.get(i) : "—";
             inventory.setItem(FIRST_PRESET + i,
-                Items.button(Material.PAPER, Component.text(label), List.of()));
+                Items.button(Material.PAPER, Component.text(label, NamedTextColor.AQUA),
+                    has ? List.of(hint("Use this preset reason")) : List.of()));
         }
         inventory.setItem(CUSTOM, Items.button(Material.NAME_TAG,
-            Component.text("Custom reason"), List.of(Component.text("Type it in chat"))));
-        inventory.setItem(CLOSE, Items.button(Material.BARRIER, Component.text("Close"), List.of()));
+            Component.text("Custom reason", NamedTextColor.AQUA), List.of(hint("Type your own reason in chat"))));
+        inventory.setItem(CLOSE, Items.button(Material.BARRIER, Component.text("Close", NamedTextColor.RED),
+            List.of(hint("Close this menu"))));
         fillEmpty();
+    }
+
+    private static Component hint(String text) {
+        return Component.text(text, NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false);
     }
 
     @Override

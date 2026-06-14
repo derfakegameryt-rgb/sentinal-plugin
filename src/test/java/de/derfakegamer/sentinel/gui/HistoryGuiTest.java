@@ -27,7 +27,7 @@ class HistoryGuiTest {
         HistoryGui gui = new HistoryGui(plugin, target, 0);
         int items = 0;
         for (int i = 0; i <= 44; i++)
-            if (gui.getInventory().getItem(i) != null && gui.getInventory().getItem(i).getType() != org.bukkit.Material.LIGHT_BLUE_STAINED_GLASS_PANE)
+            if (gui.getInventory().getItem(i) != null && gui.getInventory().getItem(i).getType() != org.bukkit.Material.GRAY_STAINED_GLASS_PANE)
                 items++;
         assertEquals(2, items);
     }
@@ -38,7 +38,7 @@ class HistoryGuiTest {
         HistoryGui gui = new HistoryGui(plugin, target, 0);
         for (int i = 0; i <= 44; i++) {
             var item = gui.getInventory().getItem(i);
-            assertTrue(item == null || item.getType() == org.bukkit.Material.LIGHT_BLUE_STAINED_GLASS_PANE,
+            assertTrue(item == null || item.getType() == org.bukkit.Material.GRAY_STAINED_GLASS_PANE,
                 "no real entries for a clean player");
         }
     }

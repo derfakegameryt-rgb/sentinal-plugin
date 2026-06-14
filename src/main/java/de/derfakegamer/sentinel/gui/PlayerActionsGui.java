@@ -5,6 +5,8 @@ import de.derfakegamer.sentinel.model.PunishmentType;
 import de.derfakegamer.sentinel.util.DurationParser;
 import de.derfakegamer.sentinel.util.Items;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
@@ -31,30 +33,56 @@ public final class PlayerActionsGui extends Gui {
         this.inventory = Bukkit.createInventory(this, 45,
             plugin.messages().plain("gui-actions-title", "player", name()));
 
-        inventory.setItem(HEAD, Items.head(target, Component.text(name()),
-            List.of(Component.text(banned ? "Banned" : "Not banned"),
-                    Component.text(muted ? "Muted" : "Not muted"),
-                    Component.text("Warns: " + plugin.punishments().warnCount(target.getUniqueId())))));
+        inventory.setItem(HEAD, Items.head(target, Component.text(name(), NamedTextColor.AQUA),
+            List.of(status(banned ? "Banned" : "Not banned", banned),
+                    status(muted ? "Muted" : "Not muted", muted),
+                    line("Warns: " + plugin.punishments().warnCount(target.getUniqueId()), NamedTextColor.GRAY))));
 
         inventory.setItem(BAN, Items.button(Material.BARRIER,
-            Component.text(banned ? "Unban" : "Ban"), List.of()));
-        inventory.setItem(TEMPBAN, Items.button(Material.CLOCK, Component.text("Tempban"), List.of()));
+            Component.text(banned ? "Unban" : "Ban", banned ? NamedTextColor.GREEN : NamedTextColor.RED),
+            List.of(hint(banned ? "Remove this player's ban" : "Permanently ban this player"))));
+        inventory.setItem(TEMPBAN, Items.button(Material.CLOCK, Component.text("Tempban", NamedTextColor.GOLD),
+            List.of(hint("Ban for a set duration"))));
         inventory.setItem(MUTE, Items.button(Material.BOOK,
-            Component.text(muted ? "Unmute" : "Mute"), List.of()));
-        inventory.setItem(TEMPMUTE, Items.button(Material.CLOCK, Component.text("Tempmute"), List.of()));
-        inventory.setItem(KICK, Items.button(Material.LEATHER_BOOTS, Component.text("Kick"), List.of()));
-        inventory.setItem(WARN, Items.button(Material.YELLOW_BANNER, Component.text("Warn"), List.of()));
+            Component.text(muted ? "Unmute" : "Mute", muted ? NamedTextColor.GREEN : NamedTextColor.RED),
+            List.of(hint(muted ? "Remove this player's mute" : "Prevent this player from chatting"))));
+        inventory.setItem(TEMPMUTE, Items.button(Material.CLOCK, Component.text("Tempmute", NamedTextColor.GOLD),
+            List.of(hint("Mute for a set duration"))));
+        inventory.setItem(KICK, Items.button(Material.LEATHER_BOOTS, Component.text("Kick", NamedTextColor.RED),
+            List.of(hint("Disconnect this player now"))));
+        inventory.setItem(WARN, Items.button(Material.YELLOW_BANNER, Component.text("Warn", NamedTextColor.YELLOW),
+            List.of(hint("Issue a formal warning"))));
         if (target.isOnline()) {
-            inventory.setItem(IPBAN, Items.button(Material.IRON_BARS, Component.text("IP-Ban"), List.of()));
+            inventory.setItem(IPBAN, Items.button(Material.IRON_BARS, Component.text("IP-Ban", NamedTextColor.DARK_RED),
+                List.of(hint("Ban this player's IP address"))));
             boolean frozen = plugin.freeze().isFrozen(target.getUniqueId());
-            inventory.setItem(FREEZE, Items.button(Material.ICE, Component.text(frozen ? "Unfreeze" : "Freeze"), List.of()));
-            inventory.setItem(INVSEE, Items.button(Material.CHEST, Component.text("View inventory"), List.of()));
-            inventory.setItem(ECHEST, Items.button(Material.ENDER_CHEST, Component.text("View ender chest"), List.of()));
+            inventory.setItem(FREEZE, Items.button(Material.ICE,
+                Component.text(frozen ? "Unfreeze" : "Freeze", frozen ? NamedTextColor.GREEN : NamedTextColor.AQUA),
+                List.of(hint(frozen ? "Allow this player to move" : "Stop this player from moving"))));
+            inventory.setItem(INVSEE, Items.button(Material.CHEST, Component.text("View inventory", NamedTextColor.AQUA),
+                List.of(hint("Open this player's inventory"))));
+            inventory.setItem(ECHEST, Items.button(Material.ENDER_CHEST, Component.text("View ender chest", NamedTextColor.LIGHT_PURPLE),
+                List.of(hint("Open this player's ender chest"))));
         }
-        inventory.setItem(HISTORY, Items.button(Material.WRITABLE_BOOK, Component.text("History"), List.of()));
-        inventory.setItem(BACK, Items.button(Material.ARROW, Component.text("Back"), List.of()));
-        inventory.setItem(CLOSE, Items.button(Material.BARRIER, Component.text("Close"), List.of()));
+        inventory.setItem(HISTORY, Items.button(Material.WRITABLE_BOOK, Component.text("History", NamedTextColor.AQUA),
+            List.of(hint("View past punishments"))));
+        inventory.setItem(BACK, Items.button(Material.ARROW, Component.text("Back", NamedTextColor.GRAY),
+            List.of(hint("Return to the player list"))));
+        inventory.setItem(CLOSE, Items.button(Material.BARRIER, Component.text("Close", NamedTextColor.RED),
+            List.of(hint("Close this menu"))));
         fillEmpty();
+    }
+
+    private static Component hint(String text) {
+        return Component.text(text, NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false);
+    }
+
+    private static Component line(String text, NamedTextColor color) {
+        return Component.text(text, color).decoration(TextDecoration.ITALIC, false);
+    }
+
+    private static Component status(String text, boolean active) {
+        return line(text, active ? NamedTextColor.RED : NamedTextColor.GREEN);
     }
 
     private String name() { return target.getName() == null ? "?" : target.getName(); }
@@ -98,7 +126,7 @@ public final class PlayerActionsGui extends Gui {
             }
             case INVSEE -> {
                 Player online = target.getPlayer();
-                if (online != null) mod.openInventory(online.getInventory());
+                if (online != null) new InvseeGui(plugin, online).open(mod);
             }
             case ECHEST -> {
                 Player online = target.getPlayer();

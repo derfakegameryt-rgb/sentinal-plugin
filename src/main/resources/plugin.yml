@@ -6,6 +6,7 @@ author: DerFakeGamer
 commands:
   sentinel:
     description: Sentinel admin (reload)
+  sn: { description: Sentinel (shortcut) }
   ban: { description: Ban a player }
   tempban: { description: Temporarily ban a player }
   ipban: { description: Ban a player's IP }
