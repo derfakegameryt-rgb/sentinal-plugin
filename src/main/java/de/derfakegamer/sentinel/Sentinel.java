@@ -23,6 +23,7 @@ public class Sentinel extends JavaPlugin {
     private de.derfakegamer.sentinel.manager.StaffChatManager staffChatManager;
     private de.derfakegamer.sentinel.manager.FreezeManager freezeManager;
     private de.derfakegamer.sentinel.manager.VanishManager vanishManager;
+    private de.derfakegamer.sentinel.updater.UpdateChecker updateChecker;
 
     @Override
     public void onEnable() {
@@ -57,6 +58,8 @@ public class Sentinel extends JavaPlugin {
             getCommand(c).setExecutor(pc);
         getCommand("report").setExecutor(new de.derfakegamer.sentinel.command.ReportCommand(this));
         getCommand("sc").setExecutor(new de.derfakegamer.sentinel.command.StaffChatCommand(this));
+        this.updateChecker = new de.derfakegamer.sentinel.updater.UpdateChecker(this);
+        this.updateChecker.start();
         getLogger().info("Sentinel enabled.");
     }
 
@@ -75,6 +78,9 @@ public class Sentinel extends JavaPlugin {
     public de.derfakegamer.sentinel.manager.StaffChatManager staffChat() { return staffChatManager; }
     public de.derfakegamer.sentinel.manager.FreezeManager freeze() { return freezeManager; }
     public de.derfakegamer.sentinel.manager.VanishManager vanish() { return vanishManager; }
+    public de.derfakegamer.sentinel.updater.UpdateChecker updater() { return updateChecker; }
+
+    public java.io.File pluginJar() { return getFile(); }
 
     public void reloadAll() {
         reloadConfig();

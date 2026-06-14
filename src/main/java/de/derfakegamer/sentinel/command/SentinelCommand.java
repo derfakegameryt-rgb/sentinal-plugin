@@ -20,6 +20,10 @@ public final class SentinelCommand implements CommandExecutor {
             sender.sendMessage(plugin.messages().prefixed("reloaded"));
             return true;
         }
+        if (args.length == 1 && args[0].equalsIgnoreCase("update")) {
+            plugin.updater().checkNow(sender);
+            return true;
+        }
         if (!(sender instanceof org.bukkit.entity.Player mod)) {
             sender.sendMessage(plugin.messages().prefixed("usage", "usage", "/sentinel reload"));
             return true;
