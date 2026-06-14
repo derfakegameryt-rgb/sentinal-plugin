@@ -38,15 +38,13 @@ public final class PunishmentCommands implements CommandExecutor {
                     return true;
                 }
                 String reason = join(args, 1);
-                var result = switch (cmd) {
-                    case "ban" -> pm.ban(t.id, t.name, issuerId, issuerName, reason, 0);
-                    case "ipban" -> pm.ipBan(t.id, t.name, t.ip, issuerId, issuerName, reason, 0);
-                    default -> pm.mute(t.id, t.name, issuerId, issuerName, reason, 0);
+                de.derfakegamer.sentinel.model.PunishmentType type = switch (cmd) {
+                    case "ban" -> de.derfakegamer.sentinel.model.PunishmentType.BAN;
+                    case "ipban" -> de.derfakegamer.sentinel.model.PunishmentType.IPBAN;
+                    default -> de.derfakegamer.sentinel.model.PunishmentType.MUTE;
                 };
-                if (!result.isSuccess()) { sender.sendMessage(plugin.messages().prefixed("exempt")); return true; }
-                String key = cmd.equals("mute") ? "muted" : "banned";
-                announce(key, t.name, reason);
-                if (!cmd.equals("mute")) kickIfOnline(t.id, "ban-screen", reason);
+                boolean applied = plugin.moderation().apply(issuerId, issuerName, t.id, t.name, t.ip, type, 0, reason);
+                if (!applied) { sender.sendMessage(plugin.messages().prefixed("exempt")); return true; }
             }
             case "tempban", "tempmute" -> {
                 if (args.length < 3) return usage(sender, "/" + cmd + " <player> <duration> <reason>");
@@ -55,33 +53,30 @@ public final class PunishmentCommands implements CommandExecutor {
                 try { expiresAt = now + DurationParser.parse(args[1]); }
                 catch (IllegalArgumentException e) { return usage(sender, "/" + cmd + " <player> 1d2h <reason>"); }
                 String reason = join(args, 2);
-                var result = cmd.equals("tempban")
-                    ? pm.ban(t.id, t.name, issuerId, issuerName, reason, expiresAt)
-                    : pm.mute(t.id, t.name, issuerId, issuerName, reason, expiresAt);
-                if (!result.isSuccess()) { sender.sendMessage(plugin.messages().prefixed("exempt")); return true; }
-                announce(cmd.equals("tempban") ? "banned" : "muted", t.name, reason);
-                if (cmd.equals("tempban")) kickIfOnline(t.id, "ban-screen", reason);
+                de.derfakegamer.sentinel.model.PunishmentType type = cmd.equals("tempban")
+                    ? de.derfakegamer.sentinel.model.PunishmentType.BAN
+                    : de.derfakegamer.sentinel.model.PunishmentType.MUTE;
+                boolean applied = plugin.moderation().apply(issuerId, issuerName, t.id, t.name, t.ip, type, expiresAt, reason);
+                if (!applied) { sender.sendMessage(plugin.messages().prefixed("exempt")); return true; }
             }
             case "kick", "warn" -> {
                 if (args.length < 2) return usage(sender, "/" + cmd + " <player> <reason>");
                 Target t = resolve(sender, args[0]); if (t == null) return true;
                 String reason = join(args, 1);
-                var result = cmd.equals("kick")
-                    ? pm.kick(t.id, t.name, issuerId, issuerName, reason)
-                    : pm.warn(t.id, t.name, issuerId, issuerName, reason);
-                if (!result.isSuccess()) { sender.sendMessage(plugin.messages().prefixed("exempt")); return true; }
-                announce(cmd.equals("kick") ? "kicked" : "warned", t.name, reason);
-                if (cmd.equals("kick")) kickIfOnline(t.id, "ban-screen", reason);
+                de.derfakegamer.sentinel.model.PunishmentType type = cmd.equals("kick")
+                    ? de.derfakegamer.sentinel.model.PunishmentType.KICK
+                    : de.derfakegamer.sentinel.model.PunishmentType.WARN;
+                boolean applied = plugin.moderation().apply(issuerId, issuerName, t.id, t.name, t.ip, type, 0, reason);
+                if (!applied) { sender.sendMessage(plugin.messages().prefixed("exempt")); return true; }
             }
             case "unban", "unmute" -> {
                 if (args.length < 1) return usage(sender, "/" + cmd + " <player>");
                 Target t = resolve(sender, args[0]); if (t == null) return true;
-                boolean ok = cmd.equals("unban") ? pm.unban(t.id, issuerName, now) : pm.unmute(t.id, issuerName, now);
-                if (!ok) {
-                    sender.sendMessage(plugin.messages().prefixed(cmd.equals("unban") ? "not-banned" : "not-muted"));
-                    return true;
-                }
-                announce(cmd.equals("unban") ? "unbanned" : "unmuted", t.name, "");
+                boolean ok = cmd.equals("unban")
+                    ? plugin.moderation().removeBan(issuerId, issuerName, t.id, t.name)
+                    : plugin.moderation().removeMute(issuerId, issuerName, t.id, t.name);
+                if (!ok) sender.sendMessage(plugin.messages().prefixed(cmd.equals("unban") ? "not-banned" : "not-muted"));
+                return true;
             }
             case "history" -> {
                 if (args.length < 1) return usage(sender, "/history <player>");
@@ -116,15 +111,6 @@ public final class PunishmentCommands implements CommandExecutor {
         String ip = (op.getPlayer() != null && op.getPlayer().getAddress() != null)
             ? op.getPlayer().getAddress().getAddress().getHostAddress() : null;
         return new Target(op.getUniqueId(), name, ip);
-    }
-
-    private void kickIfOnline(UUID id, String key, String reason) {
-        Player online = Bukkit.getPlayer(id);
-        if (online != null) online.kick(plugin.messages().plain(key, "reason", reason));
-    }
-
-    private void announce(String key, String player, String reason) {
-        Bukkit.broadcast(plugin.messages().prefixed(key, "player", player, "reason", reason));
     }
 
     private boolean usage(CommandSender sender, String usage) {
