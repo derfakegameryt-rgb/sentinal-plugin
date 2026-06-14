@@ -14,6 +14,7 @@ public final class PunishmentDao {
     public PunishmentDao(Database db) { this.db = db; }
 
     public long insert(Punishment p) {
+      synchronized (db) {
         String sql = """
             INSERT INTO punishments
               (type,target_uuid,target_name,target_ip,reason,issuer_uuid,issuer_name,
@@ -37,27 +38,33 @@ public final class PunishmentDao {
                 return keys.next() ? keys.getLong(1) : -1;
             }
         } catch (SQLException e) { throw new RuntimeException(e); }
+      }
     }
 
     public Punishment findActive(PunishmentType type, UUID target) {
+      synchronized (db) {
         String sql = "SELECT * FROM punishments WHERE type=? AND target_uuid=? AND active=1 LIMIT 1";
         try (PreparedStatement ps = db.connection().prepareStatement(sql)) {
             ps.setString(1, type.name());
             ps.setString(2, target.toString());
             try (ResultSet rs = ps.executeQuery()) { return rs.next() ? map(rs) : null; }
         } catch (SQLException e) { throw new RuntimeException(e); }
+      }
     }
 
     public Punishment findActiveByIp(PunishmentType type, String ip) {
+      synchronized (db) {
         String sql = "SELECT * FROM punishments WHERE type=? AND target_ip=? AND active=1 LIMIT 1";
         try (PreparedStatement ps = db.connection().prepareStatement(sql)) {
             ps.setString(1, type.name());
             ps.setString(2, ip);
             try (ResultSet rs = ps.executeQuery()) { return rs.next() ? map(rs) : null; }
         } catch (SQLException e) { throw new RuntimeException(e); }
+      }
     }
 
     public void deactivate(long id, String removedBy, long removedAt) {
+      synchronized (db) {
         String sql = "UPDATE punishments SET active=0, removed_by=?, removed_at=? WHERE id=?";
         try (PreparedStatement ps = db.connection().prepareStatement(sql)) {
             ps.setString(1, removedBy);
@@ -65,9 +72,11 @@ public final class PunishmentDao {
             ps.setLong(3, id);
             ps.executeUpdate();
         } catch (SQLException e) { throw new RuntimeException(e); }
+      }
     }
 
     public List<Punishment> findHistory(UUID target) {
+      synchronized (db) {
         String sql = "SELECT * FROM punishments WHERE target_uuid=? ORDER BY created_at DESC";
         List<Punishment> out = new ArrayList<>();
         try (PreparedStatement ps = db.connection().prepareStatement(sql)) {
@@ -75,14 +84,17 @@ public final class PunishmentDao {
             try (ResultSet rs = ps.executeQuery()) { while (rs.next()) out.add(map(rs)); }
         } catch (SQLException e) { throw new RuntimeException(e); }
         return out;
+      }
     }
 
     public int countWarns(UUID target) {
+      synchronized (db) {
         String sql = "SELECT COUNT(*) FROM punishments WHERE type='WARN' AND target_uuid=? AND active=1";
         try (PreparedStatement ps = db.connection().prepareStatement(sql)) {
             ps.setString(1, target.toString());
             try (ResultSet rs = ps.executeQuery()) { return rs.next() ? rs.getInt(1) : 0; }
         } catch (SQLException e) { throw new RuntimeException(e); }
+      }
     }
 
     private Punishment map(ResultSet rs) throws SQLException {

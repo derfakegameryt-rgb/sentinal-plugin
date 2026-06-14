@@ -33,6 +33,10 @@ public final class PunishmentCommands implements CommandExecutor {
             case "ban", "ipban", "mute" -> {
                 if (args.length < 2) return usage(sender, "/" + cmd + " <player> <reason>");
                 Target t = resolve(sender, args[0]); if (t == null) return true;
+                if (cmd.equals("ipban") && t.ip == null) {
+                    sender.sendMessage(plugin.messages().prefixed("ipban-requires-online"));
+                    return true;
+                }
                 String reason = join(args, 1);
                 var result = switch (cmd) {
                     case "ban" -> pm.ban(t.id, t.name, issuerId, issuerName, reason, 0);
@@ -73,13 +77,32 @@ public final class PunishmentCommands implements CommandExecutor {
                 if (args.length < 1) return usage(sender, "/" + cmd + " <player>");
                 Target t = resolve(sender, args[0]); if (t == null) return true;
                 boolean ok = cmd.equals("unban") ? pm.unban(t.id, issuerName, now) : pm.unmute(t.id, issuerName, now);
+                if (!ok) {
+                    sender.sendMessage(plugin.messages().prefixed(cmd.equals("unban") ? "not-banned" : "not-muted"));
+                    return true;
+                }
                 announce(cmd.equals("unban") ? "unbanned" : "unmuted", t.name, "");
             }
             case "history" -> {
                 if (args.length < 1) return usage(sender, "/history <player>");
                 Target t = resolve(sender, args[0]); if (t == null) return true;
-                for (Punishment p : pm.history(t.id))
-                    sender.sendMessage(plugin.messages().prefixed("warned", "player", p.type().name(), "reason", p.reason()));
+                var entries = pm.history(t.id);
+                if (entries.isEmpty()) {
+                    sender.sendMessage(plugin.messages().prefixed("history-empty", "player", t.name));
+                    return true;
+                }
+                sender.sendMessage(plugin.messages().prefixed("history-header", "player", t.name));
+                for (Punishment p : entries) {
+                    String date = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+                        .withZone(java.time.ZoneOffset.UTC)
+                        .format(java.time.Instant.ofEpochMilli(p.createdAt()));
+                    sender.sendMessage(plugin.messages().prefixed("history-entry",
+                        "type", p.type().name(),
+                        "issuer", p.issuerName(),
+                        "reason", p.reason(),
+                        "date", date,
+                        "status", p.active() ? "(active)" : ""));
+                }
             }
         }
         return true;

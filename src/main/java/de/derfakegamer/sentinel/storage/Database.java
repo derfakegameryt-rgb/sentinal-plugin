@@ -11,6 +11,10 @@ public final class Database implements AutoCloseable {
 
     public Database(File file) throws SQLException {
         this.connection = DriverManager.getConnection("jdbc:sqlite:" + file.getAbsolutePath());
+        try (Statement st = connection.createStatement()) {
+            st.execute("PRAGMA busy_timeout = 3000;");
+            st.execute("PRAGMA journal_mode = WAL;");
+        }
         createSchema();
     }
 
