@@ -32,12 +32,7 @@ public final class PunishmentManager {
 
     public Result ipBan(UUID target, String targetName, String ip, UUID issuer, String issuerName,
                         String reason, long expiresAt) {
-        if (isExempt(target)) return Result.fail("exempt");
-        dao.insert(Punishment.builder().type(PunishmentType.IPBAN).targetUuid(target)
-            .targetName(targetName).targetIp(ip).reason(reason).issuerUuid(issuer)
-            .issuerName(issuerName).createdAt(System.currentTimeMillis())
-            .expiresAt(expiresAt).active(true).build());
-        return Result.ok();
+        return record(PunishmentType.IPBAN, target, targetName, ip, issuer, issuerName, reason, expiresAt);
     }
 
     public Result mute(UUID target, String targetName, UUID issuer, String issuerName,
