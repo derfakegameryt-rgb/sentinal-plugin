@@ -41,4 +41,16 @@ class PlayerActionsGuiToolsTest {
         assertInstanceOf(InvseeGui.class, mod.getOpenInventory().getTopInventory().getHolder(),
             "moderator is now viewing the target via the InvseeGui");
     }
+
+    @Test void offlineIpBanUsesStoredIp() {
+        org.mockbukkit.mockbukkit.entity.PlayerMock mod = server.addPlayer("Mod");
+        java.util.UUID offline = java.util.UUID.randomUUID();
+        plugin.players().record(offline, "GoneGuy", "7.7.7.7");
+        org.bukkit.OfflinePlayer target = server.getOfflinePlayer(offline);
+
+        PlayerActionsGui gui = new PlayerActionsGui(plugin, target);
+        // IP-Ban button is present at slot 19 even though the target is offline
+        assertNotNull(gui.getInventory().getItem(19));
+        assertEquals(org.bukkit.Material.IRON_BARS, gui.getInventory().getItem(19).getType());
+    }
 }

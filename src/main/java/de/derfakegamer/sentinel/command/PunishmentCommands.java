@@ -110,6 +110,10 @@ public final class PunishmentCommands implements CommandExecutor {
         if (op.getUniqueId() == null) { sender.sendMessage(plugin.messages().prefixed("player-not-found")); return null; }
         String ip = (op.getPlayer() != null && op.getPlayer().getAddress() != null)
             ? op.getPlayer().getAddress().getAddress().getHostAddress() : null;
+        if (ip == null) {
+            var rec = plugin.players().byUuid(op.getUniqueId());
+            if (rec != null) ip = rec.lastIp();
+        }
         return new Target(op.getUniqueId(), name, ip);
     }
 

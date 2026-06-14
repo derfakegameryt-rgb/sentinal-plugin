@@ -52,9 +52,11 @@ public final class PlayerActionsGui extends Gui {
             List.of(hint("Disconnect this player now"))));
         inventory.setItem(WARN, Items.button(Material.YELLOW_BANNER, Component.text("Warn", NamedTextColor.YELLOW),
             List.of(hint("Issue a formal warning"))));
-        if (target.isOnline()) {
+        if (ip() != null) {
             inventory.setItem(IPBAN, Items.button(Material.IRON_BARS, Component.text("IP-Ban", NamedTextColor.DARK_RED),
-                List.of(hint("Ban this player's IP address"))));
+                List.of(hint("Ban the last known IP"))));
+        }
+        if (target.isOnline()) {
             boolean frozen = plugin.freeze().isFrozen(target.getUniqueId());
             inventory.setItem(FREEZE, Items.button(Material.ICE,
                 Component.text(frozen ? "Unfreeze" : "Freeze", frozen ? NamedTextColor.GREEN : NamedTextColor.AQUA),
@@ -89,8 +91,10 @@ public final class PlayerActionsGui extends Gui {
 
     private String ip() {
         Player online = target.getPlayer();
-        return (online != null && online.getAddress() != null)
-            ? online.getAddress().getAddress().getHostAddress() : null;
+        if (online != null && online.getAddress() != null)
+            return online.getAddress().getAddress().getHostAddress();
+        var rec = plugin.players().byUuid(target.getUniqueId());
+        return rec != null ? rec.lastIp() : null;
     }
 
     @Override
