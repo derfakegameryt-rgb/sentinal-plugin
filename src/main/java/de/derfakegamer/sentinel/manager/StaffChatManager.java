@@ -23,6 +23,9 @@ public final class StaffChatManager {
 
     public boolean isToggled(UUID player) { return toggled.contains(player); }
 
+    /** Clears staff-chat mode for a player (called on disconnect to avoid stale state). */
+    public void clear(UUID player) { toggled.remove(player); }
+
     public void send(String senderName, String message) {
         for (Player staff : Bukkit.getOnlinePlayers()) {
             if (staff.isOp())

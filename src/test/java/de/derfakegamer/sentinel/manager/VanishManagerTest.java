@@ -28,4 +28,16 @@ class VanishManagerTest {
         plugin.vanish().toggle(staff); // vanish
         assertFalse(normal.canSee(staff), "non-op should not see a vanished staff member");
     }
+
+    @Test void vanishedStaffStaysHiddenAfterRelog() {
+        PlayerMock staff = server.addPlayer("Mod");
+        PlayerMock normal = server.addPlayer("Player");
+        plugin.vanish().toggle(staff); // vanish; normal can no longer see staff
+        // Simulate a relog: the server clears visibility state, so normal can momentarily see staff again.
+        normal.showPlayer(plugin, staff);
+        assertTrue(normal.canSee(staff));
+        // The join handler must re-hide the still-vanished staff member.
+        plugin.vanish().applyOnJoin(staff);
+        assertFalse(normal.canSee(staff), "a vanished staff member must remain hidden after relogging");
+    }
 }

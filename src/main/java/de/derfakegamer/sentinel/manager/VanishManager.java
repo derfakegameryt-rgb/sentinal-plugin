@@ -26,11 +26,16 @@ public final class VanishManager {
 
     /** When a player joins, hide every currently-vanished staff member from them (unless they are op). */
     public void applyOnJoin(Player joiner) {
-        if (joiner.isOp()) return;
-        for (UUID id : vanished) {
-            Player staff = Bukkit.getPlayer(id);
-            if (staff != null) joiner.hidePlayer(plugin, staff);
+        // Hide already-vanished staff from a non-op joiner.
+        if (!joiner.isOp()) {
+            for (UUID id : vanished) {
+                Player staff = Bukkit.getPlayer(id);
+                if (staff != null && !staff.equals(joiner)) joiner.hidePlayer(plugin, staff);
+            }
         }
+        // If the joiner is themselves vanished (e.g. a relog), re-hide them from current non-ops —
+        // otherwise a vanished staff member silently becomes visible again after reconnecting.
+        if (isVanished(joiner.getUniqueId())) hideFromNonOps(joiner);
     }
 
     private void hideFromNonOps(Player staff) {
