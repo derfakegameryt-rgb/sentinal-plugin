@@ -12,7 +12,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-public final class Sentinel extends JavaPlugin {
+public class Sentinel extends JavaPlugin {
     private Database database;
     private PunishmentManager punishmentManager;
     private Messages messages;
@@ -30,6 +30,8 @@ public final class Sentinel extends JavaPlugin {
             return;
         }
         this.punishmentManager = new PunishmentManager(new PunishmentDao(database), loadExempt());
+        getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.LoginListener(this), this);
+        getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.ChatListener(this), this);
         getLogger().info("Sentinel enabled.");
     }
 
