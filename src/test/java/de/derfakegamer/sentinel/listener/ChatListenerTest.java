@@ -7,7 +7,6 @@ import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.chat.SignedMessage;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
-import org.bukkit.entity.Player;
 import org.junit.jupiter.api.*;
 import org.mockbukkit.mockbukkit.MockBukkit;
 import org.mockbukkit.mockbukkit.ServerMock;
@@ -42,7 +41,7 @@ class ChatListenerTest {
      * factory. Because the listener is invoked directly (not dispatched through the plugin
      * manager / scheduler), no async-thread assertions are triggered.
      */
-    private AsyncChatEvent chatEventFor(Player player, String message) {
+    private AsyncChatEvent chatEvent(PlayerMock player, String message) {
         Component msg = Component.text(message);
         Set<Audience> viewers = new HashSet<>(server.getOnlinePlayers());
         SignedMessage signed = SignedMessage.system(message, msg);
@@ -65,7 +64,7 @@ class ChatListenerTest {
         assertNotNull(plugin.punishments().activeMute(p.getUniqueId(), System.currentTimeMillis()),
                 "test precondition: the mute must be active");
 
-        AsyncChatEvent event = chatEventFor(p, "hello world");
+        AsyncChatEvent event = chatEvent(p, "hello world");
         new ChatListener(plugin).onChat(event);
 
         assertTrue(event.isCancelled(), "a muted player's chat must be cancelled");
@@ -87,11 +86,41 @@ class ChatListenerTest {
         assertNull(plugin.punishments().activeMute(p.getUniqueId(), System.currentTimeMillis()),
                 "test precondition: the player must not be muted");
 
-        AsyncChatEvent event = chatEventFor(p, "hello world");
+        AsyncChatEvent event = chatEvent(p, "hello world");
         new ChatListener(plugin).onChat(event);
 
         assertFalse(event.isCancelled(), "an unmuted player's chat must not be cancelled");
         assertNull(p.nextComponentMessage(),
                 "an unmuted player should not receive a mute notification");
+    }
+
+    @Test
+    void pendingChatInputIsCapturedAndCancelled() {
+        org.mockbukkit.mockbukkit.entity.PlayerMock p = server.addPlayer("Mod");
+        java.util.concurrent.atomic.AtomicReference<String> captured = new java.util.concurrent.atomic.AtomicReference<>();
+        plugin.chatInput().await(p.getUniqueId(), captured::set);
+
+        io.papermc.paper.event.player.AsyncChatEvent event = chatEvent(p, "2d6h");
+        new ChatListener(plugin).onChat(event);
+
+        assertTrue(event.isCancelled(), "input message must not reach public chat");
+        server.getScheduler().performTicks(2); // input callback runs on the main thread
+        assertEquals("2d6h", captured.get());
+        assertFalse(plugin.chatInput().has(p.getUniqueId()), "pending input is consumed");
+    }
+
+    @Test
+    void cancelKeywordAbortsInput() {
+        org.mockbukkit.mockbukkit.entity.PlayerMock p = server.addPlayer("Mod");
+        java.util.concurrent.atomic.AtomicReference<String> captured = new java.util.concurrent.atomic.AtomicReference<>();
+        plugin.chatInput().await(p.getUniqueId(), captured::set);
+
+        io.papermc.paper.event.player.AsyncChatEvent event = chatEvent(p, "cancel");
+        new ChatListener(plugin).onChat(event);
+
+        assertTrue(event.isCancelled());
+        server.getScheduler().performTicks(2);
+        assertNull(captured.get(), "cancel must NOT invoke the callback");
+        assertFalse(plugin.chatInput().has(p.getUniqueId()));
     }
 }

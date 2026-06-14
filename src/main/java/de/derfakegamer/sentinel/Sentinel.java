@@ -18,6 +18,7 @@ public class Sentinel extends JavaPlugin {
     private PunishmentManager punishmentManager;
     private Messages messages;
     private de.derfakegamer.sentinel.manager.ModerationService moderationService;
+    private de.derfakegamer.sentinel.manager.ChatInputManager chatInputManager;
 
     @Override
     public void onEnable() {
@@ -33,6 +34,7 @@ public class Sentinel extends JavaPlugin {
         }
         this.punishmentManager = new PunishmentManager(new PunishmentDao(database), loadExempt());
         this.moderationService = new de.derfakegamer.sentinel.manager.ModerationService(this);
+        this.chatInputManager = new de.derfakegamer.sentinel.manager.ChatInputManager();
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.gui.GuiListener(), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.LoginListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.ChatListener(this), this);
@@ -55,6 +57,7 @@ public class Sentinel extends JavaPlugin {
     public PunishmentManager punishments() { return punishmentManager; }
     public Messages messages() { return messages; }
     public de.derfakegamer.sentinel.manager.ModerationService moderation() { return moderationService; }
+    public de.derfakegamer.sentinel.manager.ChatInputManager chatInput() { return chatInputManager; }
 
     public void reloadAll() {
         saveConfig();
