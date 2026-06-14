@@ -38,6 +38,9 @@ public final class NotesGui extends Gui {
                 List.of(grey("By: " + n.author()),
                         grey("At: " + DATE.format(Instant.ofEpochMilli(n.createdAt()))))));
         }
+        if (notes.isEmpty())
+            inventory.setItem(22, Items.button(Material.BOOK,
+                plugin.messages().plain("notes-empty"), List.of()));
         inventory.setItem(BACK, Items.button(Material.ARROW, Component.text("Back", NamedTextColor.GRAY), List.of()));
         inventory.setItem(ADD, Items.button(Material.WRITABLE_BOOK,
             Component.text("Add note", NamedTextColor.AQUA), List.of(grey("Type the note in chat"))));

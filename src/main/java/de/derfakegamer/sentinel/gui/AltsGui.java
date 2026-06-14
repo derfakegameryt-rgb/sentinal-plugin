@@ -40,6 +40,9 @@ public final class AltsGui extends Gui {
                         grey("Last seen: " + DATE.format(Instant.ofEpochMilli(r.lastSeen()))),
                         grey("Click to open their actions"))));
         }
+        if (alts.isEmpty())
+            inventory.setItem(22, Items.button(Material.BARRIER,
+                plugin.messages().plain("alts-empty"), List.of()));
         inventory.setItem(BACK, Items.button(Material.ARROW, Component.text("Back", NamedTextColor.GRAY), List.of()));
         inventory.setItem(CLOSE, Items.button(Material.BARRIER, Component.text("Close", NamedTextColor.RED), List.of()));
         fillEmpty();
