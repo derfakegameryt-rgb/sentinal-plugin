@@ -19,6 +19,10 @@ public class Sentinel extends JavaPlugin {
     private Messages messages;
     private de.derfakegamer.sentinel.manager.ModerationService moderationService;
     private de.derfakegamer.sentinel.manager.ChatInputManager chatInputManager;
+    private de.derfakegamer.sentinel.manager.ReportManager reportManager;
+    private de.derfakegamer.sentinel.manager.StaffChatManager staffChatManager;
+    private de.derfakegamer.sentinel.manager.FreezeManager freezeManager;
+    private de.derfakegamer.sentinel.manager.VanishManager vanishManager;
 
     @Override
     public void onEnable() {
@@ -35,15 +39,24 @@ public class Sentinel extends JavaPlugin {
         this.punishmentManager = new PunishmentManager(new PunishmentDao(database), loadExempt());
         this.moderationService = new de.derfakegamer.sentinel.manager.ModerationService(this);
         this.chatInputManager = new de.derfakegamer.sentinel.manager.ChatInputManager();
+        this.reportManager = new de.derfakegamer.sentinel.manager.ReportManager(this,
+            new de.derfakegamer.sentinel.storage.ReportDao(database));
+        this.staffChatManager = new de.derfakegamer.sentinel.manager.StaffChatManager(this);
+        this.freezeManager = new de.derfakegamer.sentinel.manager.FreezeManager();
+        this.vanishManager = new de.derfakegamer.sentinel.manager.VanishManager(this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.gui.GuiListener(), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.LoginListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.ChatListener(this), this);
+        getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.MoveListener(this), this);
+        getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.JoinQuitListener(this), this);
         SentinelCommand sentinelCmd = new de.derfakegamer.sentinel.command.SentinelCommand(this);
         getCommand("sentinel").setExecutor(sentinelCmd);
         de.derfakegamer.sentinel.command.PunishmentCommands pc =
             new de.derfakegamer.sentinel.command.PunishmentCommands(this);
         for (String c : new String[]{"ban","tempban","ipban","unban","mute","tempmute","unmute","kick","warn","history"})
             getCommand(c).setExecutor(pc);
+        getCommand("report").setExecutor(new de.derfakegamer.sentinel.command.ReportCommand(this));
+        getCommand("sc").setExecutor(new de.derfakegamer.sentinel.command.StaffChatCommand(this));
         getLogger().info("Sentinel enabled.");
     }
 
@@ -58,6 +71,10 @@ public class Sentinel extends JavaPlugin {
     public Messages messages() { return messages; }
     public de.derfakegamer.sentinel.manager.ModerationService moderation() { return moderationService; }
     public de.derfakegamer.sentinel.manager.ChatInputManager chatInput() { return chatInputManager; }
+    public de.derfakegamer.sentinel.manager.ReportManager reports() { return reportManager; }
+    public de.derfakegamer.sentinel.manager.StaffChatManager staffChat() { return staffChatManager; }
+    public de.derfakegamer.sentinel.manager.FreezeManager freeze() { return freezeManager; }
+    public de.derfakegamer.sentinel.manager.VanishManager vanish() { return vanishManager; }
 
     public void reloadAll() {
         reloadConfig();

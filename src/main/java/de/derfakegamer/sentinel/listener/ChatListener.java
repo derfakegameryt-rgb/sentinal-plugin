@@ -30,6 +30,13 @@ public final class ChatListener implements Listener {
             return;
         }
 
+        if (plugin.staffChat().isToggled(id)) {
+            event.setCancelled(true);
+            String text = PlainTextComponentSerializer.plainText().serialize(event.message());
+            plugin.staffChat().send(event.getPlayer().getName(), text);
+            return;
+        }
+
         Punishment mute = plugin.punishments().activeMute(id, System.currentTimeMillis());
         if (mute != null) {
             event.setCancelled(true);

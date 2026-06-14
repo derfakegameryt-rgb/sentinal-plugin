@@ -125,6 +125,21 @@ class ChatListenerTest {
     }
 
     @Test
+    void staffChatTogglesRouteMessageAndCancel() {
+        PlayerMock p = server.addPlayer("Mod");
+        p.setOp(true);
+        plugin.staffChat().toggle(p.getUniqueId()); // staff chat on
+
+        AsyncChatEvent event = chatEvent(p, "secret plan");
+        new ChatListener(plugin).onChat(event);
+
+        assertTrue(event.isCancelled(), "staff-chat message must not reach public chat");
+        Component routed = p.nextComponentMessage();
+        assertNotNull(routed, "the staff message should be delivered to online staff");
+        assertTrue(PlainTextComponentSerializer.plainText().serialize(routed).contains("secret plan"));
+    }
+
+    @Test
     void quitClearsPendingInput() {
         PlayerMock p = server.addPlayer("Mod");
         plugin.chatInput().await(p.getUniqueId(), s -> {});
