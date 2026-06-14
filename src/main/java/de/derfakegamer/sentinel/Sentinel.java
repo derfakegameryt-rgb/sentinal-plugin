@@ -21,6 +21,7 @@ public class Sentinel extends JavaPlugin {
     private de.derfakegamer.sentinel.manager.ChatInputManager chatInputManager;
     private de.derfakegamer.sentinel.manager.ReportManager reportManager;
     private de.derfakegamer.sentinel.manager.StaffChatManager staffChatManager;
+    private de.derfakegamer.sentinel.manager.FreezeManager freezeManager;
 
     @Override
     public void onEnable() {
@@ -40,9 +41,11 @@ public class Sentinel extends JavaPlugin {
         this.reportManager = new de.derfakegamer.sentinel.manager.ReportManager(this,
             new de.derfakegamer.sentinel.storage.ReportDao(database));
         this.staffChatManager = new de.derfakegamer.sentinel.manager.StaffChatManager(this);
+        this.freezeManager = new de.derfakegamer.sentinel.manager.FreezeManager();
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.gui.GuiListener(), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.LoginListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.ChatListener(this), this);
+        getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.MoveListener(this), this);
         SentinelCommand sentinelCmd = new de.derfakegamer.sentinel.command.SentinelCommand(this);
         getCommand("sentinel").setExecutor(sentinelCmd);
         de.derfakegamer.sentinel.command.PunishmentCommands pc =
@@ -67,6 +70,7 @@ public class Sentinel extends JavaPlugin {
     public de.derfakegamer.sentinel.manager.ChatInputManager chatInput() { return chatInputManager; }
     public de.derfakegamer.sentinel.manager.ReportManager reports() { return reportManager; }
     public de.derfakegamer.sentinel.manager.StaffChatManager staffChat() { return staffChatManager; }
+    public de.derfakegamer.sentinel.manager.FreezeManager freeze() { return freezeManager; }
 
     public void reloadAll() {
         reloadConfig();
