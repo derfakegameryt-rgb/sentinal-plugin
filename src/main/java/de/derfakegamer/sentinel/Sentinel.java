@@ -62,10 +62,14 @@ public class Sentinel extends JavaPlugin {
         SentinelCommand sentinelCmd = new de.derfakegamer.sentinel.command.SentinelCommand(this);
         getCommand("sentinel").setExecutor(sentinelCmd);
         getCommand("sn").setExecutor(sentinelCmd);
+        getCommand("sentinel").setTabCompleter(sentinelCmd);
+        getCommand("sn").setTabCompleter(sentinelCmd);
         de.derfakegamer.sentinel.command.PunishmentCommands pc =
             new de.derfakegamer.sentinel.command.PunishmentCommands(this);
-        for (String c : new String[]{"ban","tempban","ipban","unban","mute","tempmute","unmute","kick","warn","history"})
+        for (String c : new String[]{"ban","tempban","ipban","unban","mute","tempmute","unmute","kick","warn","history"}) {
             getCommand(c).setExecutor(pc);
+            getCommand(c).setTabCompleter(pc);
+        }
         getCommand("report").setExecutor(new de.derfakegamer.sentinel.command.ReportCommand(this));
         getCommand("sc").setExecutor(new de.derfakegamer.sentinel.command.StaffChatCommand(this));
         this.updateChecker = new de.derfakegamer.sentinel.updater.UpdateChecker(this);

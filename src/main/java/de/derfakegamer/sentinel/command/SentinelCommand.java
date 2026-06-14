@@ -4,9 +4,10 @@ import de.derfakegamer.sentinel.Sentinel;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
 import org.jetbrains.annotations.NotNull;
 
-public final class SentinelCommand implements CommandExecutor {
+public final class SentinelCommand implements CommandExecutor, TabCompleter {
     private final Sentinel plugin;
 
     public SentinelCommand(Sentinel plugin) { this.plugin = plugin; }
@@ -35,5 +36,24 @@ public final class SentinelCommand implements CommandExecutor {
             new de.derfakegamer.sentinel.gui.PlayersGui(plugin, 0).open(mod);
         }
         return true;
+    }
+
+    @Override
+    public java.util.List<String> onTabComplete(org.bukkit.command.CommandSender sender,
+            org.bukkit.command.Command command, String label, String[] args) {
+        if (!sender.isOp()) return java.util.List.of();
+        if (args.length == 1) {
+            java.util.List<String> opts = new java.util.ArrayList<>(java.util.List.of("reload", "update"));
+            for (org.bukkit.entity.Player p : org.bukkit.Bukkit.getOnlinePlayers()) opts.add(p.getName());
+            return filter(opts, args[0]);
+        }
+        return java.util.List.of();
+    }
+
+    private static java.util.List<String> filter(java.util.List<String> options, String prefix) {
+        String low = prefix.toLowerCase();
+        java.util.List<String> out = new java.util.ArrayList<>();
+        for (String o : options) if (o.toLowerCase().startsWith(low)) out.add(o);
+        return out;
     }
 }
