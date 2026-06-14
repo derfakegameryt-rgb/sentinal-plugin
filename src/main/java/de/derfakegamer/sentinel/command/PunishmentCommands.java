@@ -9,12 +9,13 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
 
-public final class PunishmentCommands implements CommandExecutor {
+public final class PunishmentCommands implements CommandExecutor, TabCompleter {
     private final Sentinel plugin;
 
     public PunishmentCommands(Sentinel plugin) { this.plugin = plugin; }
@@ -103,6 +104,31 @@ public final class PunishmentCommands implements CommandExecutor {
         return true;
     }
 
+    private static final java.util.List<String> DURATIONS =
+        java.util.List.of("30m", "1h", "6h", "12h", "1d", "3d", "7d", "30d");
+
+    @Override
+    public java.util.List<String> onTabComplete(org.bukkit.command.CommandSender sender,
+            org.bukkit.command.Command command, String label, String[] args) {
+        if (!sender.isOp()) return java.util.List.of();
+        boolean temp = command.getName().equalsIgnoreCase("tempban")
+            || command.getName().equalsIgnoreCase("tempmute");
+        if (args.length == 1) {
+            java.util.List<String> names = new java.util.ArrayList<>();
+            for (org.bukkit.entity.Player p : org.bukkit.Bukkit.getOnlinePlayers()) names.add(p.getName());
+            return filter(names, args[0]);
+        }
+        if (args.length == 2 && temp) return filter(DURATIONS, args[1]);
+        return java.util.List.of();
+    }
+
+    private static java.util.List<String> filter(java.util.List<String> options, String prefix) {
+        String low = prefix.toLowerCase();
+        java.util.List<String> out = new java.util.ArrayList<>();
+        for (String o : options) if (o.toLowerCase().startsWith(low)) out.add(o);
+        return out;
+    }
+
     private record Target(UUID id, String name, String ip) {}
 
     private Target resolve(CommandSender sender, String name) {
@@ -110,6 +136,10 @@ public final class PunishmentCommands implements CommandExecutor {
         if (op.getUniqueId() == null) { sender.sendMessage(plugin.messages().prefixed("player-not-found")); return null; }
         String ip = (op.getPlayer() != null && op.getPlayer().getAddress() != null)
             ? op.getPlayer().getAddress().getAddress().getHostAddress() : null;
+        if (ip == null) {
+            var rec = plugin.players().byUuid(op.getUniqueId());
+            if (rec != null) ip = rec.lastIp();
+        }
         return new Target(op.getUniqueId(), name, ip);
     }
 

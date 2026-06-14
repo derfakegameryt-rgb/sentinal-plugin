@@ -24,6 +24,8 @@ public class Sentinel extends JavaPlugin {
     private de.derfakegamer.sentinel.manager.FreezeManager freezeManager;
     private de.derfakegamer.sentinel.manager.VanishManager vanishManager;
     private de.derfakegamer.sentinel.updater.UpdateChecker updateChecker;
+    private de.derfakegamer.sentinel.manager.PlayerDirectory playerDirectory;
+    private de.derfakegamer.sentinel.manager.NoteManager noteManager;
 
     @Override
     public void onEnable() {
@@ -40,6 +42,10 @@ public class Sentinel extends JavaPlugin {
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
+        this.playerDirectory = new de.derfakegamer.sentinel.manager.PlayerDirectory(
+            new de.derfakegamer.sentinel.storage.PlayerDao(database));
+        this.noteManager = new de.derfakegamer.sentinel.manager.NoteManager(
+            new de.derfakegamer.sentinel.storage.NoteDao(database));
         this.punishmentManager = new PunishmentManager(new PunishmentDao(database), loadExempt());
         this.moderationService = new de.derfakegamer.sentinel.manager.ModerationService(this);
         this.chatInputManager = new de.derfakegamer.sentinel.manager.ChatInputManager();
@@ -56,10 +62,14 @@ public class Sentinel extends JavaPlugin {
         SentinelCommand sentinelCmd = new de.derfakegamer.sentinel.command.SentinelCommand(this);
         getCommand("sentinel").setExecutor(sentinelCmd);
         getCommand("sn").setExecutor(sentinelCmd);
+        getCommand("sentinel").setTabCompleter(sentinelCmd);
+        getCommand("sn").setTabCompleter(sentinelCmd);
         de.derfakegamer.sentinel.command.PunishmentCommands pc =
             new de.derfakegamer.sentinel.command.PunishmentCommands(this);
-        for (String c : new String[]{"ban","tempban","ipban","unban","mute","tempmute","unmute","kick","warn","history"})
+        for (String c : new String[]{"ban","tempban","ipban","unban","mute","tempmute","unmute","kick","warn","history"}) {
             getCommand(c).setExecutor(pc);
+            getCommand(c).setTabCompleter(pc);
+        }
         getCommand("report").setExecutor(new de.derfakegamer.sentinel.command.ReportCommand(this));
         getCommand("sc").setExecutor(new de.derfakegamer.sentinel.command.StaffChatCommand(this));
         this.updateChecker = new de.derfakegamer.sentinel.updater.UpdateChecker(this);
@@ -83,6 +93,8 @@ public class Sentinel extends JavaPlugin {
     public de.derfakegamer.sentinel.manager.FreezeManager freeze() { return freezeManager; }
     public de.derfakegamer.sentinel.manager.VanishManager vanish() { return vanishManager; }
     public de.derfakegamer.sentinel.updater.UpdateChecker updater() { return updateChecker; }
+    public de.derfakegamer.sentinel.manager.PlayerDirectory players() { return playerDirectory; }
+    public de.derfakegamer.sentinel.manager.NoteManager notes() { return noteManager; }
 
     public java.io.File pluginJar() { return getFile(); }
 

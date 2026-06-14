@@ -18,7 +18,7 @@ import java.util.List;
 public final class PlayerActionsGui extends Gui {
     private static final int HEAD = 4;
     private static final int BAN = 10, TEMPBAN = 11, MUTE = 12, TEMPMUTE = 13, KICK = 14, WARN = 15;
-    private static final int IPBAN = 19, FREEZE = 20, INVSEE = 21, ECHEST = 22, HISTORY = 23, BACK = 36, CLOSE = 44;
+    private static final int IPBAN = 19, FREEZE = 20, INVSEE = 21, ECHEST = 22, HISTORY = 23, NOTES = 24, ALTS = 25, BACK = 36, CLOSE = 44;
 
     private final OfflinePlayer target;
     private final boolean banned;
@@ -52,9 +52,11 @@ public final class PlayerActionsGui extends Gui {
             List.of(hint("Disconnect this player now"))));
         inventory.setItem(WARN, Items.button(Material.YELLOW_BANNER, Component.text("Warn", NamedTextColor.YELLOW),
             List.of(hint("Issue a formal warning"))));
-        if (target.isOnline()) {
+        if (ip() != null) {
             inventory.setItem(IPBAN, Items.button(Material.IRON_BARS, Component.text("IP-Ban", NamedTextColor.DARK_RED),
-                List.of(hint("Ban this player's IP address"))));
+                List.of(hint("Ban the last known IP"))));
+        }
+        if (target.isOnline()) {
             boolean frozen = plugin.freeze().isFrozen(target.getUniqueId());
             inventory.setItem(FREEZE, Items.button(Material.ICE,
                 Component.text(frozen ? "Unfreeze" : "Freeze", frozen ? NamedTextColor.GREEN : NamedTextColor.AQUA),
@@ -66,6 +68,10 @@ public final class PlayerActionsGui extends Gui {
         }
         inventory.setItem(HISTORY, Items.button(Material.WRITABLE_BOOK, Component.text("History", NamedTextColor.AQUA),
             List.of(hint("View past punishments"))));
+        inventory.setItem(NOTES, Items.button(Material.BOOK, Component.text("Notes", NamedTextColor.AQUA),
+            List.of(hint("Staff notes about this player"))));
+        inventory.setItem(ALTS, Items.button(Material.PLAYER_HEAD, Component.text("Alts", NamedTextColor.AQUA),
+            List.of(hint("Accounts sharing this IP"))));
         inventory.setItem(BACK, Items.button(Material.ARROW, Component.text("Back", NamedTextColor.GRAY),
             List.of(hint("Return to the player list"))));
         inventory.setItem(CLOSE, Items.button(Material.BARRIER, Component.text("Close", NamedTextColor.RED),
@@ -89,8 +95,10 @@ public final class PlayerActionsGui extends Gui {
 
     private String ip() {
         Player online = target.getPlayer();
-        return (online != null && online.getAddress() != null)
-            ? online.getAddress().getAddress().getHostAddress() : null;
+        if (online != null && online.getAddress() != null)
+            return online.getAddress().getAddress().getHostAddress();
+        var rec = plugin.players().byUuid(target.getUniqueId());
+        return rec != null ? rec.lastIp() : null;
     }
 
     @Override
@@ -133,6 +141,8 @@ public final class PlayerActionsGui extends Gui {
                 if (online != null) mod.openInventory(online.getEnderChest());
             }
             case HISTORY -> new HistoryGui(plugin, target, 0).open(mod);
+            case NOTES -> new NotesGui(plugin, target).open(mod);
+            case ALTS -> new AltsGui(plugin, target).open(mod);
             case BACK -> new PlayersGui(plugin, 0).open(mod);
             case CLOSE -> mod.closeInventory();
         }
