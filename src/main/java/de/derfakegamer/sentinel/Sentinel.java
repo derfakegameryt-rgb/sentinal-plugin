@@ -28,7 +28,10 @@ public class Sentinel extends JavaPlugin {
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        getConfig().options().copyDefaults(true);
+        saveConfig();
         saveResource("messages.yml", false);
+        mergeMessagesDefaults();
         this.messages = new Messages(loadMessages());
         try {
             this.database = new Database(new File(getDataFolder(), "sentinel.db"));
@@ -101,5 +104,25 @@ public class Sentinel extends JavaPlugin {
     private org.bukkit.configuration.file.FileConfiguration loadMessages() {
         return org.bukkit.configuration.file.YamlConfiguration
             .loadConfiguration(new File(getDataFolder(), "messages.yml"));
+    }
+
+    /**
+     * Adds any message keys that exist in the bundled (jar) messages.yml but are
+     * missing from the server's on-disk file, without overwriting the admin's own
+     * values. This makes new keys from a plugin update appear automatically.
+     */
+    private void mergeMessagesDefaults() {
+        File file = new File(getDataFolder(), "messages.yml");
+        var onDisk = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(file);
+        try (java.io.InputStream in = getResource("messages.yml")) {
+            if (in == null) return;
+            var defaults = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(
+                new java.io.InputStreamReader(in, java.nio.charset.StandardCharsets.UTF_8));
+            onDisk.setDefaults(defaults);
+            onDisk.options().copyDefaults(true);
+            onDisk.save(file);
+        } catch (java.io.IOException e) {
+            getLogger().warning("Could not migrate messages.yml: " + e.getMessage());
+        }
     }
 }

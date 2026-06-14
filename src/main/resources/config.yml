@@ -8,5 +8,5 @@ reasons:            # the 5 presets shown in the Reason GUI
   - Griefing
 update:
   enabled: true
-  check-interval-seconds: 1800   # minimum enforced: 60
+  check-interval-seconds: 300    # check every 5 minutes (minimum enforced: 60)
   github-token: ''               # optional, raises GitHub API rate limit
