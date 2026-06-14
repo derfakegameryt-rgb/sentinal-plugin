@@ -1,0 +1,17 @@
+package de.derfakegamer.sentinel.listener;
+
+import de.derfakegamer.sentinel.Sentinel;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
+
+public final class JoinQuitListener implements Listener {
+    private final Sentinel plugin;
+
+    public JoinQuitListener(Sentinel plugin) { this.plugin = plugin; }
+
+    @EventHandler
+    public void onJoin(PlayerJoinEvent event) {
+        plugin.vanish().applyOnJoin(event.getPlayer());
+    }
+}

@@ -1,0 +1,31 @@
+package de.derfakegamer.sentinel.manager;
+
+import de.derfakegamer.sentinel.Sentinel;
+import org.junit.jupiter.api.*;
+import org.mockbukkit.mockbukkit.MockBukkit;
+import org.mockbukkit.mockbukkit.ServerMock;
+import org.mockbukkit.mockbukkit.entity.PlayerMock;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+class VanishManagerTest {
+    ServerMock server; Sentinel plugin;
+
+    @BeforeEach void setup() { server = MockBukkit.mock(); plugin = MockBukkit.load(Sentinel.class); }
+    @AfterEach void teardown() { MockBukkit.unmock(); }
+
+    @Test void toggleTracksVanishState() {
+        PlayerMock staff = server.addPlayer("Mod");
+        assertTrue(plugin.vanish().toggle(staff));   // now vanished
+        assertTrue(plugin.vanish().isVanished(staff.getUniqueId()));
+        assertFalse(plugin.vanish().toggle(staff));  // now visible
+        assertFalse(plugin.vanish().isVanished(staff.getUniqueId()));
+    }
+
+    @Test void vanishedHiddenFromNonOp() {
+        PlayerMock staff = server.addPlayer("Mod");
+        PlayerMock normal = server.addPlayer("Player");
+        plugin.vanish().toggle(staff); // vanish
+        assertFalse(normal.canSee(staff), "non-op should not see a vanished staff member");
+    }
+}
