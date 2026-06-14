@@ -24,5 +24,7 @@ public final class LoginListener implements Listener {
             Component screen = plugin.messages().plain("ban-screen", "reason", ban.reason());
             event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED, screen);
         }
+        String ip = event.getAddress() != null ? event.getAddress().getHostAddress() : null;
+        plugin.players().record(event.getUniqueId(), event.getName(), ip);
     }
 }

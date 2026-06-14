@@ -24,6 +24,8 @@ public class Sentinel extends JavaPlugin {
     private de.derfakegamer.sentinel.manager.FreezeManager freezeManager;
     private de.derfakegamer.sentinel.manager.VanishManager vanishManager;
     private de.derfakegamer.sentinel.updater.UpdateChecker updateChecker;
+    private de.derfakegamer.sentinel.manager.PlayerDirectory playerDirectory;
+    private de.derfakegamer.sentinel.manager.NoteManager noteManager;
 
     @Override
     public void onEnable() {
@@ -40,6 +42,10 @@ public class Sentinel extends JavaPlugin {
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
+        this.playerDirectory = new de.derfakegamer.sentinel.manager.PlayerDirectory(
+            new de.derfakegamer.sentinel.storage.PlayerDao(database));
+        this.noteManager = new de.derfakegamer.sentinel.manager.NoteManager(
+            new de.derfakegamer.sentinel.storage.NoteDao(database));
         this.punishmentManager = new PunishmentManager(new PunishmentDao(database), loadExempt());
         this.moderationService = new de.derfakegamer.sentinel.manager.ModerationService(this);
         this.chatInputManager = new de.derfakegamer.sentinel.manager.ChatInputManager();
@@ -83,6 +89,8 @@ public class Sentinel extends JavaPlugin {
     public de.derfakegamer.sentinel.manager.FreezeManager freeze() { return freezeManager; }
     public de.derfakegamer.sentinel.manager.VanishManager vanish() { return vanishManager; }
     public de.derfakegamer.sentinel.updater.UpdateChecker updater() { return updateChecker; }
+    public de.derfakegamer.sentinel.manager.PlayerDirectory players() { return playerDirectory; }
+    public de.derfakegamer.sentinel.manager.NoteManager notes() { return noteManager; }
 
     public java.io.File pluginJar() { return getFile(); }
 
