@@ -6,6 +6,7 @@ import io.papermc.paper.event.player.AsyncChatEvent;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerQuitEvent;
 
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -34,5 +35,11 @@ public final class ChatListener implements Listener {
             event.setCancelled(true);
             event.getPlayer().sendMessage(plugin.messages().prefixed("you-are-muted", "reason", mute.reason()));
         }
+    }
+
+    /** Drop any pending GUI chat-input when the moderator disconnects, so it can't leak or misfire. */
+    @EventHandler
+    public void onQuit(PlayerQuitEvent event) {
+        plugin.chatInput().cancel(event.getPlayer().getUniqueId());
     }
 }

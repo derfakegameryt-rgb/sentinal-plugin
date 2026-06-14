@@ -123,4 +123,16 @@ class ChatListenerTest {
         assertNull(captured.get(), "cancel must NOT invoke the callback");
         assertFalse(plugin.chatInput().has(p.getUniqueId()));
     }
+
+    @Test
+    void quitClearsPendingInput() {
+        PlayerMock p = server.addPlayer("Mod");
+        plugin.chatInput().await(p.getUniqueId(), s -> {});
+        assertTrue(plugin.chatInput().has(p.getUniqueId()));
+
+        new ChatListener(plugin).onQuit(
+            new org.bukkit.event.player.PlayerQuitEvent(p, Component.empty()));
+
+        assertFalse(plugin.chatInput().has(p.getUniqueId()), "pending input dropped on quit");
+    }
 }
