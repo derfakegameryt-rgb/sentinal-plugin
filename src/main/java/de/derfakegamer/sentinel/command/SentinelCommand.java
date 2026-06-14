@@ -20,7 +20,16 @@ public final class SentinelCommand implements CommandExecutor {
             sender.sendMessage(plugin.messages().prefixed("reloaded"));
             return true;
         }
-        sender.sendMessage(plugin.messages().prefixed("usage", "usage", "/sentinel reload"));
+        if (!(sender instanceof org.bukkit.entity.Player mod)) {
+            sender.sendMessage(plugin.messages().prefixed("usage", "usage", "/sentinel reload"));
+            return true;
+        }
+        if (args.length == 1) {
+            org.bukkit.OfflinePlayer target = org.bukkit.Bukkit.getOfflinePlayer(args[0]);
+            new de.derfakegamer.sentinel.gui.PlayerActionsGui(plugin, target).open(mod);
+        } else {
+            new de.derfakegamer.sentinel.gui.PlayersGui(plugin, 0).open(mod);
+        }
         return true;
     }
 }
