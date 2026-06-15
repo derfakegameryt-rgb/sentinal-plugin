@@ -61,7 +61,7 @@ public class Sentinel extends JavaPlugin {
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
-        this.ownerManager = new de.derfakegamer.sentinel.manager.OwnerManager(this);
+        this.ownerManager = new de.derfakegamer.sentinel.manager.OwnerManager();
         this.orbitalAccess = new de.derfakegamer.sentinel.manager.OrbitalAccess(this,
             new de.derfakegamer.sentinel.storage.SettingsDao(database),
             new de.derfakegamer.sentinel.storage.OrbitalAllowDao(database));

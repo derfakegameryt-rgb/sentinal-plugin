@@ -1,5 +1,4 @@
 # Sentinel configuration
-owner: "DerFakeGamer"   # the single owner: a player name or a UUID
 exempt: []          # list of UUIDs that can never be punished
 reasons:            # the 5 presets shown in the Reason GUI
   - Hacking

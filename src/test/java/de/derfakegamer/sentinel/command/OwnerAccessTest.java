@@ -9,13 +9,13 @@ import org.mockbukkit.mockbukkit.entity.PlayerMock;
 import static org.junit.jupiter.api.Assertions.*;
 
 class OwnerAccessTest {
+    static final java.util.UUID OWNER = java.util.UUID.fromString("6500ca9a-a10c-40a5-b985-a56ca9ff1d1e");
     ServerMock server; Sentinel plugin;
     @BeforeEach void setup() { server = MockBukkit.mock(); plugin = MockBukkit.load(Sentinel.class); }
     @AfterEach void teardown() { MockBukkit.unmock(); }
 
     @Test void onlyOwnerSeesOwnerInTab() {
-        plugin.getConfig().set("owner", "Boss");
-        PlayerMock boss = server.addPlayer("Boss"); boss.setOp(true);
+        PlayerMock boss = new PlayerMock(server, "Owner", OWNER); server.addPlayer(boss); boss.setOp(true);
         PlayerMock other = server.addPlayer("Admin"); other.setOp(true);
         SentinelCommand cmd = new SentinelCommand(plugin);
         Command sentinel = server.getCommandMap().getCommand("sentinel");
@@ -24,7 +24,6 @@ class OwnerAccessTest {
     }
 
     @Test void nonOwnerOwnerSubcommandDoesNotOpenPanel() {
-        plugin.getConfig().set("owner", "Boss");
         PlayerMock other = server.addPlayer("Admin"); other.setOp(true);
         SentinelCommand cmd = new SentinelCommand(plugin);
         cmd.onCommand(other, server.getCommandMap().getCommand("sentinel"), "sentinel", new String[]{"owner"});

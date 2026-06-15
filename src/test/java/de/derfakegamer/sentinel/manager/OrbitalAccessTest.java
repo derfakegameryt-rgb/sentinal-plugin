@@ -8,13 +8,14 @@ import org.mockbukkit.mockbukkit.entity.PlayerMock;
 import static org.junit.jupiter.api.Assertions.*;
 
 class OrbitalAccessTest {
+    static final java.util.UUID OWNER = java.util.UUID.fromString("6500ca9a-a10c-40a5-b985-a56ca9ff1d1e");
     ServerMock server; Sentinel plugin;
     @BeforeEach void setup() { server = MockBukkit.mock(); plugin = MockBukkit.load(Sentinel.class); }
     @AfterEach void teardown() { MockBukkit.unmock(); }
 
     @Test void ownerIsAlwaysAllowed() {
-        plugin.getConfig().set("owner", "Boss");
-        PlayerMock boss = server.addPlayer("Boss");
+        PlayerMock boss = new PlayerMock(server, "Owner", OWNER);
+        server.addPlayer(boss);
         assertTrue(plugin.orbitalAccess().isAllowed(boss));
     }
 
