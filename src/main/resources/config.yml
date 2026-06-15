@@ -29,3 +29,9 @@ gui:
   sound-name: UI_BUTTON_CLICK
 discord:
   webhook-url: ''   # paste a Discord webhook URL to mirror punishments & reports; empty = off
+templates:        # quick punishments: "<type> [duration] <reason>"
+  - "ban Cheating / hacked client"
+  - "tempban 7d Severe griefing"
+  - "mute 1d Spam"
+  - "kick Please read the rules"
+  - "warn Inappropriate language"
