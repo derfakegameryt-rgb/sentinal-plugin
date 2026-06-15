@@ -21,6 +21,7 @@ commands:
   unshadowmute: { description: Remove a shadow-mute, permission: sentinel.use }
   history: { description: View a player's punishment history, permission: sentinel.use }
   report: { description: Report a player }
+  rules: { description: Show the server rules }
   sc: { description: Staff chat, permission: sentinel.use }
   clearchat: { description: Clear the chat, aliases: [cc], permission: sentinel.use }
   maintenance: { description: Toggle maintenance mode, permission: sentinel.use }

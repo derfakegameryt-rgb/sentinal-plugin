@@ -53,6 +53,7 @@ public class Sentinel extends JavaPlugin {
         getConfig().options().copyDefaults(true);
         saveConfig();
         saveResource("messages.yml", false);
+        saveResource("rules.txt", false);
         mergeMessagesDefaults();
         this.messages = new Messages(loadMessages());
         this.secret = new de.derfakegamer.sentinel.manager.SecretMessages(this.messages.prefix());
@@ -115,6 +116,7 @@ public class Sentinel extends JavaPlugin {
             getCommand(c).setTabCompleter(pc);
         }
         getCommand("report").setExecutor(new de.derfakegamer.sentinel.command.ReportCommand(this));
+        getCommand("rules").setExecutor(new de.derfakegamer.sentinel.command.RulesCommand(this));
         getCommand("sc").setExecutor(new de.derfakegamer.sentinel.command.StaffChatCommand(this));
         getCommand("clearchat").setExecutor(new de.derfakegamer.sentinel.command.ClearChatCommand(this));
         registerOrbital();

@@ -62,7 +62,7 @@ public final class ScheduledStrikesGui extends Gui {
         event.setCancelled(true);
         Player p = (Player) event.getWhoClicked();
         int slot = event.getRawSlot();
-        if (slot == BACK) { new OwnerPanelGui(plugin).open(p); return; }
+        if (slot == BACK) { new OrbitalModeGui(plugin).open(p); return; }
         if (slot == CLOSE) { p.closeInventory(); return; }
         if (slot >= 0 && slot < PAGE_SIZE && slot < strikes.size()) {
             ScheduledStrike s = strikes.get(slot);
