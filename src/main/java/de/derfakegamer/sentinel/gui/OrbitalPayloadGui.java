@@ -52,10 +52,18 @@ public final class OrbitalPayloadGui extends Gui {
 
         Component summary = Component.text((world == null ? "Give rod: " : "Strike: ") + payload.label(),
             NamedTextColor.AQUA);
+        String worldName = world == null ? null : world.getName();
         Runnable action = (world == null)
             ? () -> { p.getInventory().addItem(OrbitalRod.create(plugin, payload));
                       p.sendMessage(plugin.messages().prefixed("orbital-rod-received")); }
-            : () -> plugin.orbital().strike(world, x, z, payload);
+            : () -> {
+                // re-resolve the world at fire time in case it was unloaded while the operator navigated
+                org.bukkit.World w = Bukkit.getWorld(worldName);
+                if (w == null) { p.sendMessage(plugin.messages().prefixed("orbital-world-gone")); return; }
+                plugin.orbital().strike(w, x, z, payload);
+                p.sendMessage(plugin.messages().prefixed("orbital-fired",
+                    "x", String.valueOf(x), "z", String.valueOf(z)));
+            };
         new ConfirmGui(plugin, summary, action, null).open(p);
     }
 }
