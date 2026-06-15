@@ -16,8 +16,12 @@ public final class OrbitalStrikeCommand implements CommandExecutor {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
                              @NotNull String label, @NotNull String[] args) {
-        if (!sender.isOp()) { sender.sendMessage(plugin.messages().prefixed("no-permission")); return true; }
-        if (sender instanceof Player p) new OrbitalCodeGui(plugin).open(p);
+        if (!(sender instanceof Player p) || !plugin.orbitalAccess().isAllowed(p)) {
+            sender.sendMessage(net.kyori.adventure.text.Component.text("Unknown command. Type \"/help\" for help.",
+                net.kyori.adventure.text.format.NamedTextColor.RED));
+            return true;
+        }
+        new OrbitalCodeGui(plugin).open(p);
         return true;
     }
 }

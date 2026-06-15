@@ -23,7 +23,7 @@ public final class OrbitalRodListener implements Listener {
         if (payload == null) return;
         event.setCancelled(true);
         Player p = event.getPlayer();
-        if (!p.isOp()) return;
+        if (!plugin.orbitalAccess().isAllowed(p)) return;
         Block target = p.getTargetBlockExact(320);
         if (target == null) { p.sendMessage(plugin.messages().prefixed("orbital-no-target")); return; }
         plugin.orbital().strike(p.getWorld(), target.getX(), target.getZ(), payload);
