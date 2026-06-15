@@ -58,7 +58,7 @@ public class Sentinel extends JavaPlugin {
         this.vanishManager = new de.derfakegamer.sentinel.manager.VanishManager(this);
         this.chatModeration = new de.derfakegamer.sentinel.manager.ChatModeration(this);
         this.warnEscalation = new de.derfakegamer.sentinel.manager.WarnEscalation(this);
-        getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.gui.GuiListener(), this);
+        getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.gui.GuiListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.LoginListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.ChatListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.MoveListener(this), this);
