@@ -70,6 +70,19 @@ public final class PunishmentCommands implements CommandExecutor, TabCompleter {
                 boolean applied = plugin.moderation().apply(issuerId, issuerName, t.id, t.name, t.ip, type, 0, reason);
                 if (!applied) { sender.sendMessage(plugin.messages().prefixed("exempt")); return true; }
             }
+            case "shadowmute" -> {
+                if (args.length < 2) return usage(sender, "/shadowmute <player> <reason>");
+                Target t = resolve(sender, args[0]); if (t == null) return true;
+                boolean ok = plugin.moderation().apply(issuerId, issuerName, t.id, t.name, t.ip,
+                    de.derfakegamer.sentinel.model.PunishmentType.SHADOWMUTE, 0, join(args, 1));
+                if (!ok) sender.sendMessage(plugin.messages().prefixed("exempt"));
+            }
+            case "unshadowmute" -> {
+                if (args.length < 1) return usage(sender, "/unshadowmute <player>");
+                Target t = resolve(sender, args[0]); if (t == null) return true;
+                if (!plugin.moderation().removeShadowMute(issuerId, issuerName, t.id, t.name))
+                    sender.sendMessage(plugin.messages().prefixed("not-muted"));
+            }
             case "unban", "unmute" -> {
                 if (args.length < 1) return usage(sender, "/" + cmd + " <player>");
                 Target t = resolve(sender, args[0]); if (t == null) return true;

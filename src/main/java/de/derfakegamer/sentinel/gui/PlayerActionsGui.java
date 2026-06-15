@@ -18,11 +18,13 @@ import java.util.List;
 public final class PlayerActionsGui extends Gui {
     private static final int HEAD = 4;
     private static final int BAN = 10, TEMPBAN = 11, MUTE = 12, TEMPMUTE = 13, KICK = 14, WARN = 15;
+    private static final int SHADOWMUTE_SLOT = 16;
     private static final int IPBAN = 19, FREEZE = 20, INVSEE = 21, ECHEST = 22, HISTORY = 23, NOTES = 24, ALTS = 25, OPTOGGLE = 26, BACK = 36, CLOSE = 44;
 
     private final OfflinePlayer target;
     private final boolean banned;
     private final boolean muted;
+    private final boolean shadowMuted;
 
     public PlayerActionsGui(Sentinel plugin, OfflinePlayer target) {
         super(plugin);
@@ -30,6 +32,7 @@ public final class PlayerActionsGui extends Gui {
         long now = System.currentTimeMillis();
         this.banned = plugin.punishments().activeBan(target.getUniqueId(), now) != null;
         this.muted = plugin.punishments().activeMute(target.getUniqueId(), now) != null;
+        this.shadowMuted = plugin.punishments().activeShadowMute(target.getUniqueId(), now) != null;
         this.inventory = Bukkit.createInventory(this, 45,
             plugin.messages().plain("gui-actions-title", "player", name()));
 
@@ -52,6 +55,13 @@ public final class PlayerActionsGui extends Gui {
             List.of(hint("Disconnect this player now"))));
         inventory.setItem(WARN, Items.button(Material.YELLOW_BANNER, Component.text("Warn", NamedTextColor.YELLOW),
             List.of(hint("Issue a formal warning"))));
+        inventory.setItem(SHADOWMUTE_SLOT, Items.button(Material.INK_SAC,
+            net.kyori.adventure.text.Component.text(shadowMuted ? "Un-shadowmute" : "Shadow-mute",
+                shadowMuted ? net.kyori.adventure.text.format.NamedTextColor.GREEN
+                            : net.kyori.adventure.text.format.NamedTextColor.LIGHT_PURPLE),
+            List.of(net.kyori.adventure.text.Component.text("Covert mute — only they see their chat",
+                net.kyori.adventure.text.format.NamedTextColor.GRAY)
+                .decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false))));
         if (ip() != null) {
             inventory.setItem(IPBAN, Items.button(Material.IRON_BARS, Component.text("IP-Ban", NamedTextColor.DARK_RED),
                 List.of(hint("Ban the last known IP"))));
@@ -119,6 +129,10 @@ public final class PlayerActionsGui extends Gui {
             case MUTE -> {
                 if (muted) { plugin.moderation().removeMute(mod.getUniqueId(), mod.getName(), target.getUniqueId(), name()); mod.closeInventory(); }
                 else new ReasonGui(plugin, target, null, PunishmentType.MUTE, 0).open(mod);
+            }
+            case SHADOWMUTE_SLOT -> {
+                if (shadowMuted) { plugin.moderation().removeShadowMute(mod.getUniqueId(), mod.getName(), target.getUniqueId(), name()); mod.closeInventory(); }
+                else new ReasonGui(plugin, target, null, PunishmentType.SHADOWMUTE, 0).open(mod);
             }
             case TEMPBAN -> awaitDuration(mod, PunishmentType.BAN);
             case TEMPMUTE -> awaitDuration(mod, PunishmentType.MUTE);

@@ -80,7 +80,7 @@ public class Sentinel extends JavaPlugin {
         getCommand("sn").setTabCompleter(sentinelCmd);
         de.derfakegamer.sentinel.command.PunishmentCommands pc =
             new de.derfakegamer.sentinel.command.PunishmentCommands(this);
-        for (String c : new String[]{"ban","tempban","ipban","unban","mute","tempmute","unmute","kick","warn","history"}) {
+        for (String c : new String[]{"ban","tempban","ipban","unban","mute","tempmute","unmute","kick","warn","shadowmute","unshadowmute","history"}) {
             getCommand(c).setExecutor(pc);
             getCommand(c).setTabCompleter(pc);
         }
