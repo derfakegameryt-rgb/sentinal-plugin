@@ -15,4 +15,5 @@ class DurationParserTest {
     @Test void rejectsEmpty()   { assertThrows(IllegalArgumentException.class, () -> DurationParser.parse("")); }
     @Test void rejectsGarbage() { assertThrows(IllegalArgumentException.class, () -> DurationParser.parse("abc")); }
     @Test void rejectsBadUnit() { assertThrows(IllegalArgumentException.class, () -> DurationParser.parse("5y")); }
+    @Test void rejectsOverflow() { assertThrows(IllegalArgumentException.class, () -> DurationParser.parse("99999999999w")); }
 }
