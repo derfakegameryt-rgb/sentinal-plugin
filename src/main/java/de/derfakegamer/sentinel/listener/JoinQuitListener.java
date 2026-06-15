@@ -14,11 +14,13 @@ public final class JoinQuitListener implements Listener {
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
         plugin.vanish().applyOnJoin(event.getPlayer());
+        plugin.players().startSession(event.getPlayer().getUniqueId());
     }
 
     /** Drop staff-chat mode when a player disconnects so it can't linger if the UUID is de-op'd offline. */
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         plugin.staffChat().clear(event.getPlayer().getUniqueId());
+        plugin.players().endSession(event.getPlayer().getUniqueId());
     }
 }

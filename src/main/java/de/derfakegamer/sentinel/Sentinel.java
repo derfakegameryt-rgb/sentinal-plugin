@@ -105,6 +105,7 @@ public class Sentinel extends JavaPlugin {
         getCommand("maintenance").setExecutor(new de.derfakegamer.sentinel.command.MaintenanceCommand(this));
         getCommand("broadcast").setExecutor(new de.derfakegamer.sentinel.command.BroadcastCommand(this));
         getCommand("restart").setExecutor(new de.derfakegamer.sentinel.command.RestartCommand(this));
+        getCommand("playtime").setExecutor(new de.derfakegamer.sentinel.command.PlaytimeCommand(this));
         this.autoAnnouncer.start();
         this.updateChecker = new de.derfakegamer.sentinel.updater.UpdateChecker(this);
         this.updateChecker.start();

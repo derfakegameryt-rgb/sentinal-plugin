@@ -83,6 +83,9 @@ public final class Database implements AutoCloseable {
                 )""");
             st.executeUpdate("CREATE INDEX IF NOT EXISTS idx_chatlog_uuid ON chatlog(uuid)");
         }
+        try (Statement alter = connection.createStatement()) {
+            alter.executeUpdate("ALTER TABLE players ADD COLUMN playtime INTEGER NOT NULL DEFAULT 0");
+        } catch (SQLException ignored) { /* column already exists */ }
     }
 
     @Override public void close() throws SQLException { connection.close(); }
