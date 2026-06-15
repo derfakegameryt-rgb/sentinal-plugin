@@ -32,7 +32,8 @@ public final class LoginListener implements Listener {
         Punishment ban = plugin.punishments().activeBan(event.getUniqueId(), now);
         if (ban == null && ip != null) ban = plugin.punishments().activeIpBan(ip, now);
         if (ban != null) {
-            Component screen = plugin.messages().plain("ban-screen", "reason", ban.reason());
+            Component screen = plugin.messages().plain("ban-screen", "reason", ban.reason(),
+                "duration", de.derfakegamer.sentinel.util.TimeFormat.until(ban.expiresAt(), now));
             event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED, screen);
         }
     }
