@@ -150,6 +150,11 @@ public final class PlayerActionsGui extends Gui {
             case NOTES -> new NotesGui(plugin, target).open(mod);
             case ALTS -> new AltsGui(plugin, target).open(mod);
             case OPTOGGLE -> {
+                // Protected players (config `exempt`, e.g. the owner) cannot be de-opped via the panel.
+                if (target.isOp() && plugin.punishments().isExempt(target.getUniqueId())) {
+                    mod.sendMessage(plugin.messages().prefixed("exempt"));
+                    return;
+                }
                 boolean makeOp = !target.isOp();
                 target.setOp(makeOp);
                 mod.sendMessage(plugin.messages().prefixed(makeOp ? "opped" : "deopped", "player", name()));
