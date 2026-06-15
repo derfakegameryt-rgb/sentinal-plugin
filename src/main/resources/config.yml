@@ -9,6 +9,17 @@ reasons:            # the 5 presets shown in the Reason GUI
 update:
   # Auto-update is always on and checks every 5 minutes; this cannot be disabled.
   github-token: ''   # optional, raises the GitHub API rate limit
+maintenance:
+  enabled: false
+  kick-message: "The server is under maintenance. Please come back later."
+  motd: "<red>Under maintenance"   # MiniMessage format (e.g. <red>, <#3B82F6>)
+announcements:
+  enabled: true
+  interval-seconds: 300
+  prefix: "<#3B82F6>Info <dark_gray>»</dark_gray> "
+  messages:
+    - "<gray>Read the rules with <white>/rules</white>."
+    - "<gray>Need help? Use <white>/report</white> for staff."
 chat:
   slowmode-seconds: 0          # 0 = off; minimum gap between a player's messages
   anti-spam:
