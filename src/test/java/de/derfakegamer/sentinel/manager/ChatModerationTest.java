@@ -49,4 +49,11 @@ class ChatModerationTest {
         assertEquals(ChatModeration.Action.CENSOR, out.action());
         assertFalse(out.censored().contains("badword"));
     }
+
+    @Test void ordinaryDottedWordsAreNotFlaggedAsAds() {
+        ChatModeration cm = fresh();
+        assertEquals(ChatModeration.Action.ALLOW, cm.evaluate(UUID.randomUUID(), "good.bye everyone", 1000).action());
+        assertEquals(ChatModeration.Action.ALLOW, cm.evaluate(UUID.randomUUID(), "open file.txt please", 1000).action());
+        assertEquals(ChatModeration.Action.ALLOW, cm.evaluate(UUID.randomUUID(), "e.g. 1.5 is fine", 1000).action());
+    }
 }

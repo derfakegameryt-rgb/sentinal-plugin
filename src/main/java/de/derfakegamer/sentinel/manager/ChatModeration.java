@@ -18,8 +18,14 @@ public final class ChatModeration {
         static Outcome censor(String text) { return new Outcome(Action.CENSOR, null, text); }
     }
 
+    // Matches a URL scheme / www. prefix, a domain ending in a known TLD, or an IPv4 address.
+    // Restricting bare domains to known TLDs avoids false positives on ordinary chat
+    // ("good.bye", "file.txt", "e.g.", "1.5") while still catching real server adverts.
     private static final Pattern ADVERT = Pattern.compile(
-        "(?i)\\b((https?://)?[\\w-]+\\.[a-z]{2,}(/\\S*)?|\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}(:\\d+)?)\\b");
+        "(?i)\\b((https?://|www\\.)\\S+"
+        + "|[\\w-]+\\.(com|net|org|gg|io|me|tv|de|xyz|info|co|uk|eu|live|shop|store|app|dev"
+        + "|fun|club|online|site|pro|cc|ru|nl|us|biz|gg|ly|to)\\b(/\\S*)?"
+        + "|\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}(:\\d+)?)\\b");
 
     private final long slowmodeMs;
     private final boolean antiSpam; private final int maxRepeats;
