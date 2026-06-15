@@ -24,6 +24,8 @@ commands:
   sc: { description: Staff chat, permission: sentinel.use }
   clearchat: { description: Clear the chat, aliases: [cc], permission: sentinel.use }
   orbitalstrike: { description: Open the orbital strike console, permission: sentinel.use }
+  maintenance: { description: Toggle maintenance mode, permission: sentinel.use }
+  broadcast: { description: Broadcast a message, aliases: [bc], permission: sentinel.use }
 permissions:
   sentinel.use:
     description: Access Sentinel's operator commands

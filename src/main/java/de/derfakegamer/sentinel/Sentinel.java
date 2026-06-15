@@ -32,6 +32,8 @@ public class Sentinel extends JavaPlugin {
     private de.derfakegamer.sentinel.manager.ChatLogManager chatLogManager;
     private de.derfakegamer.sentinel.util.DiscordWebhook discordWebhook;
     private de.derfakegamer.sentinel.util.OrbitalConsoleFilter orbitalConsoleFilter;
+    private de.derfakegamer.sentinel.manager.MaintenanceManager maintenanceManager;
+    private de.derfakegamer.sentinel.manager.AutoAnnouncer autoAnnouncer;
 
     @Override
     public void onEnable() {
@@ -73,6 +75,8 @@ public class Sentinel extends JavaPlugin {
             new de.derfakegamer.sentinel.storage.ChatLogDao(database));
         try { this.chatLogManager.prune(getConfig().getInt("logging.retention-days", 30)); } catch (Exception ignored) {}
         this.discordWebhook = new de.derfakegamer.sentinel.util.DiscordWebhook(this);
+        this.maintenanceManager = new de.derfakegamer.sentinel.manager.MaintenanceManager(this);
+        this.autoAnnouncer = new de.derfakegamer.sentinel.manager.AutoAnnouncer(this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.gui.GuiListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.LoginListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.ChatListener(this), this);
@@ -80,6 +84,7 @@ public class Sentinel extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.JoinQuitListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.OrbitalRodListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.CommandLogListener(this), this);
+        getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.ServerPingListener(this), this);
         SentinelCommand sentinelCmd = new de.derfakegamer.sentinel.command.SentinelCommand(this);
         getCommand("sentinel").setExecutor(sentinelCmd);
         getCommand("sn").setExecutor(sentinelCmd);
@@ -95,6 +100,9 @@ public class Sentinel extends JavaPlugin {
         getCommand("sc").setExecutor(new de.derfakegamer.sentinel.command.StaffChatCommand(this));
         getCommand("clearchat").setExecutor(new de.derfakegamer.sentinel.command.ClearChatCommand(this));
         getCommand("orbitalstrike").setExecutor(new de.derfakegamer.sentinel.command.OrbitalStrikeCommand(this));
+        getCommand("maintenance").setExecutor(new de.derfakegamer.sentinel.command.MaintenanceCommand(this));
+        getCommand("broadcast").setExecutor(new de.derfakegamer.sentinel.command.BroadcastCommand(this));
+        this.autoAnnouncer.start();
         this.updateChecker = new de.derfakegamer.sentinel.updater.UpdateChecker(this);
         this.updateChecker.start();
         getLogger().info("Sentinel enabled.");
@@ -128,6 +136,8 @@ public class Sentinel extends JavaPlugin {
     public de.derfakegamer.sentinel.manager.OrbitalStrike orbital() { return orbitalStrike; }
     public de.derfakegamer.sentinel.manager.ChatLogManager chatLog() { return chatLogManager; }
     public de.derfakegamer.sentinel.util.DiscordWebhook discord() { return discordWebhook; }
+    public de.derfakegamer.sentinel.manager.MaintenanceManager maintenance() { return maintenanceManager; }
+    public de.derfakegamer.sentinel.manager.AutoAnnouncer announcer() { return autoAnnouncer; }
 
     public java.io.File pluginJar() { return getFile(); }
 
