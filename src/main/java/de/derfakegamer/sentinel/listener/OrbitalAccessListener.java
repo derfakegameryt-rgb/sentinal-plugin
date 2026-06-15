@@ -5,6 +5,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.permissions.PermissionAttachment;
 
 import java.util.Map;
@@ -19,6 +20,13 @@ public final class OrbitalAccessListener implements Listener {
 
     @EventHandler
     public void onJoin(PlayerJoinEvent event) { apply(event.getPlayer()); }
+
+    /** Drop the tracked attachment on disconnect so the map can't grow without bound. */
+    @EventHandler
+    public void onQuit(PlayerQuitEvent event) {
+        PermissionAttachment att = attachments.remove(event.getPlayer().getUniqueId());
+        if (att != null) { try { event.getPlayer().removeAttachment(att); } catch (IllegalArgumentException ignored) {} }
+    }
 
     /** Grants or revokes the orbital permission for a player based on the current allowlist. */
     public void apply(Player player) {
