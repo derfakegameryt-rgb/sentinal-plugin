@@ -15,7 +15,7 @@ import java.util.List;
 
 public final class PlayersGui extends Gui {
     private static final int PAGE_SIZE = 45;
-    private static final int PREV = 45, SEARCH = 46, REPORTS = 47, STAFF = 48, VANISH = 49, CLOSE = 52, NEXT = 53;
+    private static final int PREV = 45, SEARCH = 46, REPORTS = 47, STAFF = 48, VANISH = 49, PANEL = 50, CLOSE = 52, NEXT = 53;
 
     private final int page;
     private final List<Player> players;
@@ -46,6 +46,10 @@ public final class PlayersGui extends Gui {
             List.of(hint("Toggle your staff-only chat"))));
         inventory.setItem(VANISH, Items.button(Material.ENDER_EYE, Component.text("Toggle vanish", NamedTextColor.AQUA),
             List.of(hint("Toggle your own vanish"))));
+        inventory.setItem(PANEL, Items.button(Material.COMPARATOR,
+            Component.text("Admin Panel", NamedTextColor.AQUA),
+            List.of(Component.text("Server info, ops, bans, mutes, reports", NamedTextColor.GRAY)
+                .decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false))));
         inventory.setItem(CLOSE, Items.button(Material.BARRIER, Component.text("Close", NamedTextColor.RED),
             List.of(hint("Close this menu"))));
         if (from + PAGE_SIZE < players.size()) inventory.setItem(NEXT, Items.button(Material.ARROW, Component.text("Next", NamedTextColor.GRAY),
@@ -76,6 +80,7 @@ public final class PlayersGui extends Gui {
             return;
         }
         if (slot == REPORTS) { new ReportsGui(plugin, 0).open(mod); return; }
+        if (slot == PANEL) { new AdminPanelGui(plugin).open(mod); return; }
         if (slot == STAFF) {
             boolean on = plugin.staffChat().toggle(mod.getUniqueId());
             mod.sendMessage(plugin.messages().prefixed(on ? "staffchat-on" : "staffchat-off"));
