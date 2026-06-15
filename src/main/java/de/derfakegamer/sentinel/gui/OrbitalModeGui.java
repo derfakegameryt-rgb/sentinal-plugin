@@ -17,7 +17,7 @@ public final class OrbitalModeGui extends Gui {
 
     public OrbitalModeGui(Sentinel plugin) {
         super(plugin);
-        this.inventory = Bukkit.createInventory(this, 27, plugin.messages().plain("gui-orbital-mode-title"));
+        this.inventory = Bukkit.createInventory(this, 27, plugin.secret().plain("gui-orbital-mode-title"));
         inventory.setItem(ROD, Items.button(Material.FISHING_ROD, Component.text("Targeted (rod)", NamedTextColor.AQUA),
             List.of(hint("Pick a payload, then fire with the rod"))));
         inventory.setItem(COORDS, Items.button(Material.COMPASS, Component.text("Coordinates", NamedTextColor.AQUA),
