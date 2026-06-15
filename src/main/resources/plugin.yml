@@ -6,18 +6,23 @@ author: DerFakeGamer
 commands:
   sentinel:
     description: Sentinel admin (reload)
-  sn: { description: Sentinel (shortcut) }
-  ban: { description: Ban a player }
-  tempban: { description: Temporarily ban a player }
-  ipban: { description: Ban a player's IP }
-  unban: { description: Unban a player }
-  mute: { description: Mute a player }
-  tempmute: { description: Temporarily mute a player }
-  unmute: { description: Unmute a player }
-  kick: { description: Kick a player }
-  warn: { description: Warn a player }
-  history: { description: View a player's punishment history }
+    permission: sentinel.use
+  sn: { description: Sentinel (shortcut), permission: sentinel.use }
+  ban: { description: Ban a player, permission: sentinel.use }
+  tempban: { description: Temporarily ban a player, permission: sentinel.use }
+  ipban: { description: Ban a player's IP, permission: sentinel.use }
+  unban: { description: Unban a player, permission: sentinel.use }
+  mute: { description: Mute a player, permission: sentinel.use }
+  tempmute: { description: Temporarily mute a player, permission: sentinel.use }
+  unmute: { description: Unmute a player, permission: sentinel.use }
+  kick: { description: Kick a player, permission: sentinel.use }
+  warn: { description: Warn a player, permission: sentinel.use }
+  history: { description: View a player's punishment history, permission: sentinel.use }
   report: { description: Report a player }
-  sc: { description: Staff chat }
-  clearchat: { description: Clear the chat, aliases: [cc] }
-  orbitalstrike: { description: Open the orbital strike console }
+  sc: { description: Staff chat, permission: sentinel.use }
+  clearchat: { description: Clear the chat, aliases: [cc], permission: sentinel.use }
+  orbitalstrike: { description: Open the orbital strike console, permission: sentinel.use }
+permissions:
+  sentinel.use:
+    description: Access Sentinel's operator commands
+    default: op

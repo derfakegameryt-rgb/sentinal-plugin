@@ -18,6 +18,7 @@ repositories {
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
     compileOnly("com.google.code.gson:gson:2.11.0")
+    compileOnly("org.apache.logging.log4j:log4j-core:2.22.1")
     implementation("org.xerial:sqlite-jdbc:3.47.1.0")
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.11.3")

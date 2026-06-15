@@ -29,9 +29,16 @@ public class Sentinel extends JavaPlugin {
     private de.derfakegamer.sentinel.manager.ChatModeration chatModeration;
     private de.derfakegamer.sentinel.manager.WarnEscalation warnEscalation;
     private de.derfakegamer.sentinel.manager.OrbitalStrike orbitalStrike;
+    private de.derfakegamer.sentinel.util.OrbitalConsoleFilter orbitalConsoleFilter;
 
     @Override
     public void onEnable() {
+        try {
+            this.orbitalConsoleFilter = new de.derfakegamer.sentinel.util.OrbitalConsoleFilter();
+            this.orbitalConsoleFilter.register();
+        } catch (Throwable t) {
+            getLogger().fine("console filter unavailable: " + t);
+        }
         saveDefaultConfig();
         getConfig().options().copyDefaults(true);
         saveConfig();
@@ -88,6 +95,11 @@ public class Sentinel extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (orbitalConsoleFilter != null) {
+            try { orbitalConsoleFilter.unregister(); } catch (Throwable t) {
+                getLogger().fine("console filter unavailable: " + t);
+            }
+        }
         if (database != null) {
             try { database.close(); } catch (Exception ignored) {}
         }
