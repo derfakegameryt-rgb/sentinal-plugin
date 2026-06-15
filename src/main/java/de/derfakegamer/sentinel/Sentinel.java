@@ -34,6 +34,7 @@ public class Sentinel extends JavaPlugin {
     private de.derfakegamer.sentinel.util.OrbitalConsoleFilter orbitalConsoleFilter;
     private de.derfakegamer.sentinel.manager.MaintenanceManager maintenanceManager;
     private de.derfakegamer.sentinel.manager.AutoAnnouncer autoAnnouncer;
+    private de.derfakegamer.sentinel.manager.RestartManager restartManager;
 
     @Override
     public void onEnable() {
@@ -77,6 +78,7 @@ public class Sentinel extends JavaPlugin {
         this.discordWebhook = new de.derfakegamer.sentinel.util.DiscordWebhook(this);
         this.maintenanceManager = new de.derfakegamer.sentinel.manager.MaintenanceManager(this);
         this.autoAnnouncer = new de.derfakegamer.sentinel.manager.AutoAnnouncer(this);
+        this.restartManager = new de.derfakegamer.sentinel.manager.RestartManager(this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.gui.GuiListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.LoginListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.ChatListener(this), this);
@@ -102,6 +104,7 @@ public class Sentinel extends JavaPlugin {
         getCommand("orbitalstrike").setExecutor(new de.derfakegamer.sentinel.command.OrbitalStrikeCommand(this));
         getCommand("maintenance").setExecutor(new de.derfakegamer.sentinel.command.MaintenanceCommand(this));
         getCommand("broadcast").setExecutor(new de.derfakegamer.sentinel.command.BroadcastCommand(this));
+        getCommand("restart").setExecutor(new de.derfakegamer.sentinel.command.RestartCommand(this));
         this.autoAnnouncer.start();
         this.updateChecker = new de.derfakegamer.sentinel.updater.UpdateChecker(this);
         this.updateChecker.start();
@@ -138,6 +141,7 @@ public class Sentinel extends JavaPlugin {
     public de.derfakegamer.sentinel.util.DiscordWebhook discord() { return discordWebhook; }
     public de.derfakegamer.sentinel.manager.MaintenanceManager maintenance() { return maintenanceManager; }
     public de.derfakegamer.sentinel.manager.AutoAnnouncer announcer() { return autoAnnouncer; }
+    public de.derfakegamer.sentinel.manager.RestartManager restart() { return restartManager; }
 
     public java.io.File pluginJar() { return getFile(); }
 

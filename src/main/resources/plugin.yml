@@ -26,6 +26,7 @@ commands:
   orbitalstrike: { description: Open the orbital strike console, permission: sentinel.use }
   maintenance: { description: Toggle maintenance mode, permission: sentinel.use }
   broadcast: { description: Broadcast a message, aliases: [bc], permission: sentinel.use }
+  restart: { description: Schedule a server restart, permission: sentinel.use }
 permissions:
   sentinel.use:
     description: Access Sentinel's operator commands
