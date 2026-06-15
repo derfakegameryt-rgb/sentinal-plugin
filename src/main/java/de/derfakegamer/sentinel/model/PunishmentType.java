@@ -1,3 +1,3 @@
 package de.derfakegamer.sentinel.model;
 
-public enum PunishmentType { BAN, MUTE, WARN, KICK, IPBAN }
+public enum PunishmentType { BAN, MUTE, WARN, KICK, IPBAN, SHADOWMUTE }

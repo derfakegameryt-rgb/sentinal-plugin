@@ -38,6 +38,15 @@ public final class ChatListener implements Listener {
             return;
         }
 
+        de.derfakegamer.sentinel.model.Punishment shadow =
+            plugin.punishments().activeShadowMute(id, System.currentTimeMillis());
+        if (shadow != null) {
+            // Restrict the audience to the sender only: they see their own message normally,
+            // everyone else sees nothing. Do NOT cancel — the message must still render to them.
+            event.viewers().removeIf(a -> !(a instanceof org.bukkit.entity.Player p) || !p.getUniqueId().equals(id));
+            return;
+        }
+
         Punishment mute = plugin.punishments().activeMute(id, System.currentTimeMillis());
         if (mute != null) {
             event.setCancelled(true);

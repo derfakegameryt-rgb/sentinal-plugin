@@ -68,6 +68,7 @@ public final class HistoryGui extends Gui {
             case MUTE       -> Material.BOOK;
             case WARN       -> Material.YELLOW_BANNER;
             case KICK       -> Material.LEATHER_BOOTS;
+            case SHADOWMUTE -> Material.BOOK;
         };
     }
 

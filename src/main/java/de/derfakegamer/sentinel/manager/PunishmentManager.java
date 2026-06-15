@@ -99,6 +99,22 @@ public final class PunishmentManager {
         return true;
     }
 
+    public Result shadowMute(java.util.UUID target, String targetName, java.util.UUID issuer,
+                             String issuerName, String reason, long expiresAt) {
+        return record(PunishmentType.SHADOWMUTE, target, targetName, null, issuer, issuerName, reason, expiresAt);
+    }
+
+    public Punishment activeShadowMute(java.util.UUID target, long now) {
+        return activeOrExpire(PunishmentType.SHADOWMUTE, target, now);
+    }
+
+    public boolean unShadowMute(java.util.UUID target, String remover, long now) {
+        Punishment p = dao.findActive(PunishmentType.SHADOWMUTE, target);
+        if (p == null) return false;
+        dao.deactivate(p.id(), remover, now);
+        return true;
+    }
+
     /** All currently-active punishments of a type, lazily dropping any that have expired. */
     public java.util.List<Punishment> activeList(PunishmentType type, long now) {
         java.util.List<Punishment> out = new java.util.ArrayList<>();
