@@ -74,6 +74,7 @@ public class Sentinel extends JavaPlugin {
         }
         getCommand("report").setExecutor(new de.derfakegamer.sentinel.command.ReportCommand(this));
         getCommand("sc").setExecutor(new de.derfakegamer.sentinel.command.StaffChatCommand(this));
+        getCommand("clearchat").setExecutor(new de.derfakegamer.sentinel.command.ClearChatCommand(this));
         this.updateChecker = new de.derfakegamer.sentinel.updater.UpdateChecker(this);
         this.updateChecker.start();
         getLogger().info("Sentinel enabled.");
