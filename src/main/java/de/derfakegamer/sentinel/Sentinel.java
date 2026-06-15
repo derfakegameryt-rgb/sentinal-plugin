@@ -26,6 +26,8 @@ public class Sentinel extends JavaPlugin {
     private de.derfakegamer.sentinel.updater.UpdateChecker updateChecker;
     private de.derfakegamer.sentinel.manager.PlayerDirectory playerDirectory;
     private de.derfakegamer.sentinel.manager.NoteManager noteManager;
+    private de.derfakegamer.sentinel.manager.ChatModeration chatModeration;
+    private de.derfakegamer.sentinel.manager.WarnEscalation warnEscalation;
 
     @Override
     public void onEnable() {
@@ -54,7 +56,9 @@ public class Sentinel extends JavaPlugin {
         this.staffChatManager = new de.derfakegamer.sentinel.manager.StaffChatManager(this);
         this.freezeManager = new de.derfakegamer.sentinel.manager.FreezeManager();
         this.vanishManager = new de.derfakegamer.sentinel.manager.VanishManager(this);
-        getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.gui.GuiListener(), this);
+        this.chatModeration = new de.derfakegamer.sentinel.manager.ChatModeration(this);
+        this.warnEscalation = new de.derfakegamer.sentinel.manager.WarnEscalation(this);
+        getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.gui.GuiListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.LoginListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.ChatListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.MoveListener(this), this);
@@ -72,6 +76,7 @@ public class Sentinel extends JavaPlugin {
         }
         getCommand("report").setExecutor(new de.derfakegamer.sentinel.command.ReportCommand(this));
         getCommand("sc").setExecutor(new de.derfakegamer.sentinel.command.StaffChatCommand(this));
+        getCommand("clearchat").setExecutor(new de.derfakegamer.sentinel.command.ClearChatCommand(this));
         this.updateChecker = new de.derfakegamer.sentinel.updater.UpdateChecker(this);
         this.updateChecker.start();
         getLogger().info("Sentinel enabled.");
@@ -95,6 +100,8 @@ public class Sentinel extends JavaPlugin {
     public de.derfakegamer.sentinel.updater.UpdateChecker updater() { return updateChecker; }
     public de.derfakegamer.sentinel.manager.PlayerDirectory players() { return playerDirectory; }
     public de.derfakegamer.sentinel.manager.NoteManager notes() { return noteManager; }
+    public de.derfakegamer.sentinel.manager.ChatModeration chatModeration() { return chatModeration; }
+    public de.derfakegamer.sentinel.manager.WarnEscalation escalation() { return warnEscalation; }
 
     public java.io.File pluginJar() { return getFile(); }
 
@@ -103,6 +110,8 @@ public class Sentinel extends JavaPlugin {
         this.messages.reload(loadMessages());
         this.punishmentManager = new PunishmentManager(new PunishmentDao(database), loadExempt());
         this.moderationService = new de.derfakegamer.sentinel.manager.ModerationService(this);
+        this.chatModeration = new de.derfakegamer.sentinel.manager.ChatModeration(this);
+        this.warnEscalation = new de.derfakegamer.sentinel.manager.WarnEscalation(this);
     }
 
     private Set<UUID> loadExempt() {

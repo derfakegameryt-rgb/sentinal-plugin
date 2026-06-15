@@ -1,6 +1,7 @@
 package de.derfakegamer.sentinel.listener;
 
 import de.derfakegamer.sentinel.Sentinel;
+import de.derfakegamer.sentinel.manager.ChatModeration;
 import de.derfakegamer.sentinel.model.Punishment;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
@@ -41,6 +42,19 @@ public final class ChatListener implements Listener {
         if (mute != null) {
             event.setCancelled(true);
             event.getPlayer().sendMessage(plugin.messages().prefixed("you-are-muted", "reason", mute.reason()));
+        }
+
+        if (!event.isCancelled() && !event.getPlayer().isOp()) {
+            String text = PlainTextComponentSerializer.plainText().serialize(event.message());
+            ChatModeration.Outcome outcome = plugin.chatModeration().evaluate(id, text, System.currentTimeMillis());
+            switch (outcome.action()) {
+                case BLOCK -> {
+                    event.setCancelled(true);
+                    event.getPlayer().sendMessage(plugin.messages().prefixed(outcome.messageKey()));
+                }
+                case CENSOR -> event.message(net.kyori.adventure.text.Component.text(outcome.censored()));
+                case ALLOW -> {}
+            }
         }
     }
 

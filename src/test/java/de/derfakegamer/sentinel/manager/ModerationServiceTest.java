@@ -38,4 +38,14 @@ class ModerationServiceTest {
     @Test void removeBanReturnsFalseWhenNotBanned() {
         assertFalse(plugin.moderation().removeBan(new UUID(0,0), "Admin", UUID.randomUUID(), "Nobody"));
     }
+
+    @Test void warnEscalationAutoBansAtThreshold() {
+        plugin.getConfig().set("warn-actions.2", "ban escalated for repeated warnings");
+        UUID target = UUID.randomUUID();
+        long now = System.currentTimeMillis();
+        plugin.moderation().apply(new UUID(0,0), "Admin", target, "Repeat", null, PunishmentType.WARN, 0, "w1");
+        assertNull(plugin.punishments().activeBan(target, now), "not banned after the first warning");
+        plugin.moderation().apply(new UUID(0,0), "Admin", target, "Repeat", null, PunishmentType.WARN, 0, "w2");
+        assertNotNull(plugin.punishments().activeBan(target, now), "auto-banned when warnings reach the threshold");
+    }
 }

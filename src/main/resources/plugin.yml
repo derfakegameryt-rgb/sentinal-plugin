@@ -19,3 +19,4 @@ commands:
   history: { description: View a player's punishment history }
   report: { description: Report a player }
   sc: { description: Staff chat }
+  clearchat: { description: Clear the chat, aliases: [cc] }

@@ -15,7 +15,7 @@ import java.util.List;
 
 public final class PlayersGui extends Gui {
     private static final int PAGE_SIZE = 45;
-    private static final int PREV = 45, REPORTS = 47, STAFF = 48, VANISH = 49, CLOSE = 52, NEXT = 53;
+    private static final int PREV = 45, SEARCH = 46, REPORTS = 47, STAFF = 48, VANISH = 49, CLOSE = 52, NEXT = 53;
 
     private final int page;
     private final List<Player> players;
@@ -37,6 +37,8 @@ public final class PlayersGui extends Gui {
         }
         if (page > 0) inventory.setItem(PREV, Items.button(Material.ARROW, Component.text("Previous", NamedTextColor.GRAY),
             List.of(hint("Go to the previous page"))));
+        inventory.setItem(SEARCH, Items.button(Material.OAK_SIGN, Component.text("Search", NamedTextColor.AQUA),
+            List.of(hint("Find a player by name"))));
         inventory.setItem(REPORTS, Items.button(Material.BOOK, Component.text("Reports", NamedTextColor.AQUA),
             List.of(hint("View open player reports"),
                     line("Open: " + plugin.reports().open().size(), NamedTextColor.GRAY))));
@@ -67,6 +69,12 @@ public final class PlayersGui extends Gui {
         if (slot == PREV) { new PlayersGui(plugin, page - 1).open(mod); return; }
         if (slot == NEXT) { new PlayersGui(plugin, page + 1).open(mod); return; }
         if (slot == CLOSE) { mod.closeInventory(); return; }
+        if (slot == SEARCH) {
+            mod.closeInventory();
+            mod.sendMessage(plugin.messages().prefixed("enter-search"));
+            plugin.chatInput().await(mod.getUniqueId(), q -> new SearchResultsGui(plugin, q).open(mod));
+            return;
+        }
         if (slot == REPORTS) { new ReportsGui(plugin, 0).open(mod); return; }
         if (slot == STAFF) {
             boolean on = plugin.staffChat().toggle(mod.getUniqueId());

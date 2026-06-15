@@ -35,6 +35,14 @@ public final class ModerationService {
         Bukkit.broadcast(plugin.messages().prefixed(key, "player", targetName, "reason", reason));
         if (type == PunishmentType.BAN || type == PunishmentType.IPBAN || type == PunishmentType.KICK)
             kickIfOnline(targetId, reason);
+        if (type == PunishmentType.WARN) {
+            int count = plugin.punishments().warnCount(targetId);
+            de.derfakegamer.sentinel.model.EscalationAction esc = plugin.escalation().actionFor(count);
+            if (esc != null) {
+                long escExpiresAt = esc.durationMs() == 0 ? 0 : System.currentTimeMillis() + esc.durationMs();
+                apply(issuerId, issuerName, targetId, targetName, ip, esc.type(), escExpiresAt, esc.reason());
+            }
+        }
         return true;
     }
 
