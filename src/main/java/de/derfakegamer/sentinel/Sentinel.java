@@ -27,6 +27,7 @@ public class Sentinel extends JavaPlugin {
     private de.derfakegamer.sentinel.manager.PlayerDirectory playerDirectory;
     private de.derfakegamer.sentinel.manager.NoteManager noteManager;
     private de.derfakegamer.sentinel.manager.ChatModeration chatModeration;
+    private de.derfakegamer.sentinel.manager.WarnEscalation warnEscalation;
 
     @Override
     public void onEnable() {
@@ -56,6 +57,7 @@ public class Sentinel extends JavaPlugin {
         this.freezeManager = new de.derfakegamer.sentinel.manager.FreezeManager();
         this.vanishManager = new de.derfakegamer.sentinel.manager.VanishManager(this);
         this.chatModeration = new de.derfakegamer.sentinel.manager.ChatModeration(this);
+        this.warnEscalation = new de.derfakegamer.sentinel.manager.WarnEscalation(this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.gui.GuiListener(), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.LoginListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.ChatListener(this), this);
@@ -99,6 +101,7 @@ public class Sentinel extends JavaPlugin {
     public de.derfakegamer.sentinel.manager.PlayerDirectory players() { return playerDirectory; }
     public de.derfakegamer.sentinel.manager.NoteManager notes() { return noteManager; }
     public de.derfakegamer.sentinel.manager.ChatModeration chatModeration() { return chatModeration; }
+    public de.derfakegamer.sentinel.manager.WarnEscalation escalation() { return warnEscalation; }
 
     public java.io.File pluginJar() { return getFile(); }
 
@@ -108,6 +111,7 @@ public class Sentinel extends JavaPlugin {
         this.punishmentManager = new PunishmentManager(new PunishmentDao(database), loadExempt());
         this.moderationService = new de.derfakegamer.sentinel.manager.ModerationService(this);
         this.chatModeration = new de.derfakegamer.sentinel.manager.ChatModeration(this);
+        this.warnEscalation = new de.derfakegamer.sentinel.manager.WarnEscalation(this);
     }
 
     private Set<UUID> loadExempt() {

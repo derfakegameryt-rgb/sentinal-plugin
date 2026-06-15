@@ -22,3 +22,6 @@ chat:
     enabled: true
     mode: block                # block | censor
     words: []                  # words to block/censor (case-insensitive)
+warn-actions:            # warns count -> action: "<kick|ban|tempban|mute|tempmute> [duration] <reason>"
+  3: "tempban 1d Reached 3 warnings"
+  5: "ban Reached 5 warnings"
