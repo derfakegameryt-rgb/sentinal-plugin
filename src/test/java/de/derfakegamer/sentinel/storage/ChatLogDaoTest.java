@@ -29,4 +29,12 @@ class ChatLogDaoTest {
         for (int i = 0; i < 20; i++) dao.log(who, "Bob", "CHAT", "m" + i, i);
         assertEquals(5, dao.recent(who, 5).size());
     }
+
+    @Test void deleteOlderThanRemovesOldKeepsRecent() {
+        dao.log(who, "Bob", "CHAT", "old", 100);
+        dao.log(who, "Bob", "CHAT", "new", 5000);
+        assertEquals(1, dao.deleteOlderThan(1000)); // removed the old one
+        assertEquals(1, dao.recent(who, 10).size());
+        assertEquals("new", dao.recent(who, 10).get(0).text());
+    }
 }

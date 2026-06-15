@@ -42,7 +42,10 @@ public final class DiscordWebhook {
                 case '\n' -> b.append("\\n");
                 case '\r' -> b.append("\\r");
                 case '\t' -> b.append("\\t");
-                default -> b.append(c);
+                default -> {
+                    if (c < 0x20) b.append(String.format("\\u%04x", (int) c)); // other control chars
+                    else b.append(c);
+                }
             }
         }
         return b.toString();

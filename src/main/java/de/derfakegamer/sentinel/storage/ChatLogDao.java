@@ -26,6 +26,16 @@ public final class ChatLogDao {
         }
     }
 
+    /** Deletes log rows created before {@code cutoff} (epoch millis). Returns rows removed. */
+    public int deleteOlderThan(long cutoff) {
+        synchronized (db) {
+            try (PreparedStatement ps = db.connection().prepareStatement("DELETE FROM chatlog WHERE created_at < ?")) {
+                ps.setLong(1, cutoff);
+                return ps.executeUpdate();
+            } catch (SQLException e) { throw new RuntimeException(e); }
+        }
+    }
+
     public List<ChatLogEntry> recent(UUID uuid, int limit) {
         synchronized (db) {
             List<ChatLogEntry> out = new ArrayList<>();

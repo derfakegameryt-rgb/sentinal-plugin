@@ -29,6 +29,21 @@ gui:
   sound-name: UI_BUTTON_CLICK
 discord:
   webhook-url: ''   # paste a Discord webhook URL to mirror punishments & reports; empty = off
+logging:
+  retention-days: 30          # delete chat/command log entries older than this (0 = keep forever)
+  ignore-commands:            # never log these commands (they carry passwords)
+    - login
+    - l
+    - register
+    - reg
+    - changepassword
+    - changepass
+    - 2fa
+    - authme
+    - msg
+    - w
+    - tell
+    - whisper
 templates:        # quick punishments: "<type> [duration] <reason>"
   - "ban Cheating / hacked client"
   - "tempban 7d Severe griefing"

@@ -71,6 +71,7 @@ public class Sentinel extends JavaPlugin {
         this.orbitalStrike = new de.derfakegamer.sentinel.manager.OrbitalStrike(this);
         this.chatLogManager = new de.derfakegamer.sentinel.manager.ChatLogManager(
             new de.derfakegamer.sentinel.storage.ChatLogDao(database));
+        try { this.chatLogManager.prune(getConfig().getInt("logging.retention-days", 30)); } catch (Exception ignored) {}
         this.discordWebhook = new de.derfakegamer.sentinel.util.DiscordWebhook(this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.gui.GuiListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.LoginListener(this), this);
