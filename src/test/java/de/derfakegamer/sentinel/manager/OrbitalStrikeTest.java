@@ -25,4 +25,12 @@ class OrbitalStrikeTest {
     @Test void spacingIsClampedToAtLeastOne() {
         assertFalse(new OrbitalStrike(plugin).columnYs(0).isEmpty());
     }
+
+    @Test void biggerPayloadHasMorePower() {
+        OrbitalStrike s = new OrbitalStrike(plugin);
+        assertTrue(s.power(de.derfakegamer.sentinel.model.OrbitalPayload.CHARGED_CREEPER)
+                 > s.power(de.derfakegamer.sentinel.model.OrbitalPayload.TNT_MINECART));
+        assertTrue(s.power(de.derfakegamer.sentinel.model.OrbitalPayload.TNT_MINECART)
+                 > s.power(de.derfakegamer.sentinel.model.OrbitalPayload.TNT));
+    }
 }
