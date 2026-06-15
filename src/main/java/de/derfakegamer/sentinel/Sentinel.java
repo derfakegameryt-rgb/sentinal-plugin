@@ -35,6 +35,9 @@ public class Sentinel extends JavaPlugin {
     private de.derfakegamer.sentinel.manager.MaintenanceManager maintenanceManager;
     private de.derfakegamer.sentinel.manager.AutoAnnouncer autoAnnouncer;
     private de.derfakegamer.sentinel.manager.RestartManager restartManager;
+    private de.derfakegamer.sentinel.manager.OwnerManager ownerManager;
+    private de.derfakegamer.sentinel.manager.OrbitalAccess orbitalAccess;
+    private de.derfakegamer.sentinel.listener.OrbitalAccessListener orbitalAccessListener;
 
     @Override
     public void onEnable() {
@@ -57,6 +60,10 @@ public class Sentinel extends JavaPlugin {
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
+        this.ownerManager = new de.derfakegamer.sentinel.manager.OwnerManager(this);
+        this.orbitalAccess = new de.derfakegamer.sentinel.manager.OrbitalAccess(this,
+            new de.derfakegamer.sentinel.storage.SettingsDao(database),
+            new de.derfakegamer.sentinel.storage.OrbitalAllowDao(database));
         this.playerDirectory = new de.derfakegamer.sentinel.manager.PlayerDirectory(
             new de.derfakegamer.sentinel.storage.PlayerDao(database));
         this.noteManager = new de.derfakegamer.sentinel.manager.NoteManager(
@@ -85,6 +92,9 @@ public class Sentinel extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.MoveListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.JoinQuitListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.OrbitalRodListener(this), this);
+        this.orbitalAccessListener = new de.derfakegamer.sentinel.listener.OrbitalAccessListener(this);
+        getServer().getPluginManager().registerEvents(this.orbitalAccessListener, this);
+        for (org.bukkit.entity.Player online : getServer().getOnlinePlayers()) this.orbitalAccessListener.apply(online);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.CommandLogListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.ServerPingListener(this), this);
         SentinelCommand sentinelCmd = new de.derfakegamer.sentinel.command.SentinelCommand(this);
@@ -146,6 +156,9 @@ public class Sentinel extends JavaPlugin {
     public de.derfakegamer.sentinel.manager.MaintenanceManager maintenance() { return maintenanceManager; }
     public de.derfakegamer.sentinel.manager.AutoAnnouncer announcer() { return autoAnnouncer; }
     public de.derfakegamer.sentinel.manager.RestartManager restart() { return restartManager; }
+    public de.derfakegamer.sentinel.manager.OwnerManager owner() { return ownerManager; }
+    public de.derfakegamer.sentinel.manager.OrbitalAccess orbitalAccess() { return orbitalAccess; }
+    public de.derfakegamer.sentinel.listener.OrbitalAccessListener orbitalAccessListener() { return orbitalAccessListener; }
 
     public java.io.File pluginJar() { return getFile(); }
 

@@ -82,6 +82,12 @@ public final class Database implements AutoCloseable {
                   created_at INTEGER NOT NULL
                 )""");
             st.executeUpdate("CREATE INDEX IF NOT EXISTS idx_chatlog_uuid ON chatlog(uuid)");
+            st.executeUpdate("CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)");
+            st.executeUpdate("""
+                CREATE TABLE IF NOT EXISTS orbital_allowed (
+                  uuid TEXT PRIMARY KEY,
+                  name TEXT NOT NULL
+                )""");
         }
         try (Statement alter = connection.createStatement()) {
             alter.executeUpdate("ALTER TABLE players ADD COLUMN playtime INTEGER NOT NULL DEFAULT 0");
