@@ -53,4 +53,21 @@ class PlayerActionsGuiToolsTest {
         assertNotNull(gui.getInventory().getItem(19));
         assertEquals(org.bukkit.Material.IRON_BARS, gui.getInventory().getItem(19).getType());
     }
+
+    @Test void exemptPlayerCannotBeDeOpped() {
+        org.mockbukkit.mockbukkit.entity.PlayerMock mod = server.addPlayer("Mod");
+        org.mockbukkit.mockbukkit.entity.PlayerMock owner = server.addPlayer("Owner");
+        owner.setOp(true);
+        plugin.getConfig().set("exempt", java.util.List.of(owner.getUniqueId().toString()));
+        plugin.saveConfig();
+        plugin.reloadAll(); // rebuilds the punishment manager with the exempt set
+
+        PlayerActionsGui gui = new PlayerActionsGui(plugin, owner);
+        gui.open(mod);
+        org.bukkit.event.inventory.InventoryClickEvent ev = ConfirmGuiTest.clickSlot(mod, gui, 26); // OPTOGGLE
+        gui.onClick(ev);
+
+        assertTrue(ev.isCancelled());
+        assertTrue(owner.isOp(), "an exempt (owner) player must not be de-opped via the panel");
+    }
 }

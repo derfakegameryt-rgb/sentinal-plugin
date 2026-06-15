@@ -18,7 +18,7 @@ import java.util.List;
 public final class PlayerActionsGui extends Gui {
     private static final int HEAD = 4;
     private static final int BAN = 10, TEMPBAN = 11, MUTE = 12, TEMPMUTE = 13, KICK = 14, WARN = 15;
-    private static final int IPBAN = 19, FREEZE = 20, INVSEE = 21, ECHEST = 22, HISTORY = 23, NOTES = 24, ALTS = 25, BACK = 36, CLOSE = 44;
+    private static final int IPBAN = 19, FREEZE = 20, INVSEE = 21, ECHEST = 22, HISTORY = 23, NOTES = 24, ALTS = 25, OPTOGGLE = 26, BACK = 36, CLOSE = 44;
 
     private final OfflinePlayer target;
     private final boolean banned;
@@ -72,6 +72,12 @@ public final class PlayerActionsGui extends Gui {
             List.of(hint("Staff notes about this player"))));
         inventory.setItem(ALTS, Items.button(Material.PLAYER_HEAD, Component.text("Alts", NamedTextColor.AQUA),
             List.of(hint("Accounts sharing this IP"))));
+        inventory.setItem(OPTOGGLE, Items.button(target.isOp() ? Material.NETHERITE_BLOCK : Material.NETHERITE_SCRAP,
+            net.kyori.adventure.text.Component.text(target.isOp() ? "De-OP" : "Make OP",
+                target.isOp() ? net.kyori.adventure.text.format.NamedTextColor.RED
+                               : net.kyori.adventure.text.format.NamedTextColor.GREEN),
+            List.of(net.kyori.adventure.text.Component.text("Toggle operator status", net.kyori.adventure.text.format.NamedTextColor.GRAY)
+                .decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false))));
         inventory.setItem(BACK, Items.button(Material.ARROW, Component.text("Back", NamedTextColor.GRAY),
             List.of(hint("Return to the player list"))));
         inventory.setItem(CLOSE, Items.button(Material.BARRIER, Component.text("Close", NamedTextColor.RED),
@@ -143,6 +149,17 @@ public final class PlayerActionsGui extends Gui {
             case HISTORY -> new HistoryGui(plugin, target, 0).open(mod);
             case NOTES -> new NotesGui(plugin, target).open(mod);
             case ALTS -> new AltsGui(plugin, target).open(mod);
+            case OPTOGGLE -> {
+                // Protected players (config `exempt`, e.g. the owner) cannot be de-opped via the panel.
+                if (target.isOp() && plugin.punishments().isExempt(target.getUniqueId())) {
+                    mod.sendMessage(plugin.messages().prefixed("exempt"));
+                    return;
+                }
+                boolean makeOp = !target.isOp();
+                target.setOp(makeOp);
+                mod.sendMessage(plugin.messages().prefixed(makeOp ? "opped" : "deopped", "player", name()));
+                mod.closeInventory();
+            }
             case BACK -> new PlayersGui(plugin, 0).open(mod);
             case CLOSE -> mod.closeInventory();
         }
