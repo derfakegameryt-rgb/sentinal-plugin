@@ -27,3 +27,5 @@ warn-actions:            # warns count -> action: "<kick|ban|tempban|mute|tempmu
 gui:
   sound: true
   sound-name: UI_BUTTON_CLICK
+discord:
+  webhook-url: ''   # paste a Discord webhook URL to mirror punishments & reports; empty = off

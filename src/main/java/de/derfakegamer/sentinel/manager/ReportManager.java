@@ -22,6 +22,7 @@ public final class ReportManager {
         if (reporterId.equals(targetId)) return false;
         dao.insert(new Report(0, reporterId, reporter.getName(), targetId, targetName,
             reason, System.currentTimeMillis(), false, null));
+        plugin.discord().post(":triangular_flag_on_post: **" + reporter.getName() + "** reported **" + targetName + "**: " + reason);
         for (Player staff : Bukkit.getOnlinePlayers()) {
             if (staff.isOp()) staff.sendMessage(plugin.messages().plain("report-alert",
                 "reporter", reporter.getName(), "player", targetName, "reason", reason));

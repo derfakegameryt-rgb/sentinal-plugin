@@ -40,6 +40,8 @@ public final class ModerationService {
             case SHADOWMUTE -> "muted";
         };
         Bukkit.broadcast(plugin.messages().prefixed(key, "player", targetName, "reason", reason));
+        plugin.discord().post("**" + targetName + "** was " + key + " by " + issuerName
+            + (reason == null || reason.isBlank() ? "" : ": " + reason));
         if (type == PunishmentType.BAN || type == PunishmentType.IPBAN || type == PunishmentType.KICK)
             kickIfOnline(targetId, reason);
         if (type == PunishmentType.WARN) {
