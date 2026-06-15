@@ -21,6 +21,7 @@ public final class JoinQuitListener implements Listener {
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         plugin.staffChat().clear(event.getPlayer().getUniqueId());
+        plugin.chatModeration().forget(event.getPlayer().getUniqueId());
         plugin.players().endSession(event.getPlayer().getUniqueId());
     }
 }

@@ -31,6 +31,9 @@ public final class ChatModeration {
     private final boolean antiSpam; private final int maxRepeats;
     private final boolean antiAd; private final List<String> whitelist;
     private final boolean wordFilter; private final boolean censorMode; private final List<String> words;
+    private final List<CensorRule> censorRules = new java.util.ArrayList<>();
+
+    private record CensorRule(Pattern pattern, String mask) {}
 
     private final Map<UUID, Long> lastTime = new ConcurrentHashMap<>();
     private final Map<UUID, String> lastMsg = new ConcurrentHashMap<>();
@@ -46,6 +49,17 @@ public final class ChatModeration {
         this.wordFilter = c.getBoolean("chat.word-filter.enabled", true);
         this.censorMode = c.getString("chat.word-filter.mode", "block").equalsIgnoreCase("censor");
         this.words = c.getStringList("chat.word-filter.words");
+        for (String w : words) {
+            if (w.isBlank()) continue;
+            censorRules.add(new CensorRule(Pattern.compile("(?i)" + Pattern.quote(w)), "*".repeat(w.length())));
+        }
+    }
+
+    /** Drops a player's spam/slowmode tracking on quit so the per-player maps can't grow forever. */
+    public void forget(UUID id) {
+        lastTime.remove(id);
+        lastMsg.remove(id);
+        repeats.remove(id);
     }
 
     public Outcome evaluate(UUID id, String message, long now) {
@@ -94,9 +108,8 @@ public final class ChatModeration {
 
     private String censor(String message) {
         String out = message;
-        for (String w : words) {
-            if (w.isBlank()) continue;
-            out = out.replaceAll("(?i)" + Pattern.quote(w), "*".repeat(w.length()));
+        for (CensorRule r : censorRules) {
+            out = r.pattern().matcher(out).replaceAll(java.util.regex.Matcher.quoteReplacement(r.mask()));
         }
         return out;
     }
