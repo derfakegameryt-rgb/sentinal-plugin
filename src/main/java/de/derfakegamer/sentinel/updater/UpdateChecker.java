@@ -102,7 +102,11 @@ public final class UpdateChecker {
         String token = plugin.getConfig().getString("update.github-token", "");
         if (token != null && !token.isBlank()) req.header("Authorization", "Bearer " + token);
         HttpResponse<String> resp = http.send(req.build(), HttpResponse.BodyHandlers.ofString());
-        if (resp.statusCode() / 100 != 2) throw new IllegalStateException("HTTP " + resp.statusCode());
+        int code = resp.statusCode();
+        if (code == 403 || code == 429)
+            throw new IllegalStateException("rate limited by GitHub (HTTP " + code
+                + ") — transient; optionally set update.github-token to raise the limit");
+        if (code / 100 != 2) throw new IllegalStateException("HTTP " + code);
         return resp.body();
     }
 
@@ -133,8 +137,15 @@ public final class UpdateChecker {
 
     private void report(CommandSender requester, String key, String... placeholders) {
         if (requester == null) {
-            if (key.equals("update-failed"))
-                plugin.getLogger().warning("Update check failed: " + lastValue(placeholders));
+            if (key.equals("update-failed")) {
+                String err = lastValue(placeholders);
+                // GitHub rate-limit / transient network blips are expected and self-heal next interval;
+                // keep them out of the console at WARNING level so they don't look alarming.
+                if (err.contains("rate limited") || err.contains("HTTP 5") || err.toLowerCase().contains("timed out"))
+                    plugin.getLogger().fine("Update check skipped: " + err);
+                else
+                    plugin.getLogger().warning("Update check failed: " + err);
+            }
             return;
         }
         plugin.getServer().getScheduler().runTask(plugin,
