@@ -19,6 +19,7 @@ public final class PlayerActionsGui extends Gui {
     private static final int HEAD = 4;
     private static final int BAN = 10, TEMPBAN = 11, MUTE = 12, TEMPMUTE = 13, KICK = 14, WARN = 15;
     private static final int SHADOWMUTE_SLOT = 16;
+    private static final int LOGS = 17;
     private static final int IPBAN = 19, FREEZE = 20, INVSEE = 21, ECHEST = 22, HISTORY = 23, NOTES = 24, ALTS = 25, OPTOGGLE = 26, BACK = 36, CLOSE = 44;
 
     private final OfflinePlayer target;
@@ -62,6 +63,8 @@ public final class PlayerActionsGui extends Gui {
             List.of(net.kyori.adventure.text.Component.text("Covert mute — only they see their chat",
                 net.kyori.adventure.text.format.NamedTextColor.GRAY)
                 .decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false))));
+        inventory.setItem(LOGS, Items.button(Material.WRITTEN_BOOK, Component.text("Chat logs", NamedTextColor.AQUA),
+            List.of(hint("View recent chat & commands"))));
         if (ip() != null) {
             inventory.setItem(IPBAN, Items.button(Material.IRON_BARS, Component.text("IP-Ban", NamedTextColor.DARK_RED),
                 List.of(hint("Ban the last known IP"))));
@@ -160,6 +163,7 @@ public final class PlayerActionsGui extends Gui {
                 Player online = target.getPlayer();
                 if (online != null) mod.openInventory(online.getEnderChest());
             }
+            case LOGS -> new ChatLogGui(plugin, target).open(mod);
             case HISTORY -> new HistoryGui(plugin, target, 0).open(mod);
             case NOTES -> new NotesGui(plugin, target).open(mod);
             case ALTS -> new AltsGui(plugin, target).open(mod);

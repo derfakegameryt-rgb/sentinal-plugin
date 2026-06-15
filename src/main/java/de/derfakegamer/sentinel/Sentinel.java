@@ -29,6 +29,8 @@ public class Sentinel extends JavaPlugin {
     private de.derfakegamer.sentinel.manager.ChatModeration chatModeration;
     private de.derfakegamer.sentinel.manager.WarnEscalation warnEscalation;
     private de.derfakegamer.sentinel.manager.OrbitalStrike orbitalStrike;
+    private de.derfakegamer.sentinel.manager.ChatLogManager chatLogManager;
+    private de.derfakegamer.sentinel.util.DiscordWebhook discordWebhook;
     private de.derfakegamer.sentinel.util.OrbitalConsoleFilter orbitalConsoleFilter;
 
     @Override
@@ -67,12 +69,16 @@ public class Sentinel extends JavaPlugin {
         this.chatModeration = new de.derfakegamer.sentinel.manager.ChatModeration(this);
         this.warnEscalation = new de.derfakegamer.sentinel.manager.WarnEscalation(this);
         this.orbitalStrike = new de.derfakegamer.sentinel.manager.OrbitalStrike(this);
+        this.chatLogManager = new de.derfakegamer.sentinel.manager.ChatLogManager(
+            new de.derfakegamer.sentinel.storage.ChatLogDao(database));
+        this.discordWebhook = new de.derfakegamer.sentinel.util.DiscordWebhook(this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.gui.GuiListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.LoginListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.ChatListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.MoveListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.JoinQuitListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.OrbitalRodListener(this), this);
+        getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.CommandLogListener(this), this);
         SentinelCommand sentinelCmd = new de.derfakegamer.sentinel.command.SentinelCommand(this);
         getCommand("sentinel").setExecutor(sentinelCmd);
         getCommand("sn").setExecutor(sentinelCmd);
@@ -119,6 +125,8 @@ public class Sentinel extends JavaPlugin {
     public de.derfakegamer.sentinel.manager.ChatModeration chatModeration() { return chatModeration; }
     public de.derfakegamer.sentinel.manager.WarnEscalation escalation() { return warnEscalation; }
     public de.derfakegamer.sentinel.manager.OrbitalStrike orbital() { return orbitalStrike; }
+    public de.derfakegamer.sentinel.manager.ChatLogManager chatLog() { return chatLogManager; }
+    public de.derfakegamer.sentinel.util.DiscordWebhook discord() { return discordWebhook; }
 
     public java.io.File pluginJar() { return getFile(); }
 

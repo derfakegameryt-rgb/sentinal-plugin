@@ -21,6 +21,9 @@ public final class ChatListener implements Listener {
     public void onChat(AsyncChatEvent event) {
         UUID id = event.getPlayer().getUniqueId();
 
+        plugin.chatLog().logChat(event.getPlayer().getUniqueId(), event.getPlayer().getName(),
+            net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(event.message()));
+
         if (plugin.chatInput().has(id)) {
             event.setCancelled(true);
             String text = PlainTextComponentSerializer.plainText().serialize(event.message()).trim();
