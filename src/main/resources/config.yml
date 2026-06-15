@@ -10,3 +10,15 @@ update:
   enabled: true
   check-interval-seconds: 300    # check every 5 minutes (minimum enforced: 60)
   github-token: ''               # optional, raises GitHub API rate limit
+chat:
+  slowmode-seconds: 0          # 0 = off; minimum gap between a player's messages
+  anti-spam:
+    enabled: true
+    max-repeats: 3             # blocked after the same message this many times in a row
+  anti-advertising:
+    enabled: true
+    whitelist: []              # domains/IPs that are allowed (substring match)
+  word-filter:
+    enabled: true
+    mode: block                # block | censor
+    words: []                  # words to block/censor (case-insensitive)

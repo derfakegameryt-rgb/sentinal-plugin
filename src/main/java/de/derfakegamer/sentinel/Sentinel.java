@@ -26,6 +26,7 @@ public class Sentinel extends JavaPlugin {
     private de.derfakegamer.sentinel.updater.UpdateChecker updateChecker;
     private de.derfakegamer.sentinel.manager.PlayerDirectory playerDirectory;
     private de.derfakegamer.sentinel.manager.NoteManager noteManager;
+    private de.derfakegamer.sentinel.manager.ChatModeration chatModeration;
 
     @Override
     public void onEnable() {
@@ -54,6 +55,7 @@ public class Sentinel extends JavaPlugin {
         this.staffChatManager = new de.derfakegamer.sentinel.manager.StaffChatManager(this);
         this.freezeManager = new de.derfakegamer.sentinel.manager.FreezeManager();
         this.vanishManager = new de.derfakegamer.sentinel.manager.VanishManager(this);
+        this.chatModeration = new de.derfakegamer.sentinel.manager.ChatModeration(this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.gui.GuiListener(), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.LoginListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.ChatListener(this), this);
@@ -95,6 +97,7 @@ public class Sentinel extends JavaPlugin {
     public de.derfakegamer.sentinel.updater.UpdateChecker updater() { return updateChecker; }
     public de.derfakegamer.sentinel.manager.PlayerDirectory players() { return playerDirectory; }
     public de.derfakegamer.sentinel.manager.NoteManager notes() { return noteManager; }
+    public de.derfakegamer.sentinel.manager.ChatModeration chatModeration() { return chatModeration; }
 
     public java.io.File pluginJar() { return getFile(); }
 
@@ -103,6 +106,7 @@ public class Sentinel extends JavaPlugin {
         this.messages.reload(loadMessages());
         this.punishmentManager = new PunishmentManager(new PunishmentDao(database), loadExempt());
         this.moderationService = new de.derfakegamer.sentinel.manager.ModerationService(this);
+        this.chatModeration = new de.derfakegamer.sentinel.manager.ChatModeration(this);
     }
 
     private Set<UUID> loadExempt() {
