@@ -7,9 +7,8 @@ reasons:            # the 5 presets shown in the Reason GUI
   - Advertising
   - Griefing
 update:
-  enabled: true
-  check-interval-seconds: 300    # check every 5 minutes (minimum enforced: 60)
-  github-token: ''               # optional, raises GitHub API rate limit
+  # Auto-update is always on and checks every 5 minutes; this cannot be disabled.
+  github-token: ''   # optional, raises the GitHub API rate limit
 chat:
   slowmode-seconds: 0          # 0 = off; minimum gap between a player's messages
   anti-spam:

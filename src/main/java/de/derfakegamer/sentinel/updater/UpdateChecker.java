@@ -32,11 +32,9 @@ public final class UpdateChecker {
 
     public UpdateChecker(Sentinel plugin) { this.plugin = plugin; }
 
-    /** Starts the periodic check if enabled in config. Runs one check immediately. */
+    /** Starts the periodic update check. Always on; fixed 5-minute interval (not configurable). */
     public void start() {
-        if (!plugin.getConfig().getBoolean("update.enabled", true)) return;
-        long seconds = Math.max(60, plugin.getConfig().getLong("update.check-interval-seconds", 1800));
-        long ticks = seconds * 20L;
+        long ticks = 300L * 20L; // 5 minutes
         plugin.getServer().getScheduler().runTaskTimerAsynchronously(plugin,
             () -> check(null), 20L, ticks);
     }
