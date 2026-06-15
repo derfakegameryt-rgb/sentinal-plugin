@@ -38,6 +38,7 @@ public class Sentinel extends JavaPlugin {
     private de.derfakegamer.sentinel.manager.OwnerManager ownerManager;
     private de.derfakegamer.sentinel.manager.OrbitalAccess orbitalAccess;
     private de.derfakegamer.sentinel.listener.OrbitalAccessListener orbitalAccessListener;
+    private de.derfakegamer.sentinel.manager.ScheduledStrikeManager scheduledStrikeManager;
 
     @Override
     public void onEnable() {
@@ -79,6 +80,9 @@ public class Sentinel extends JavaPlugin {
         this.chatModeration = new de.derfakegamer.sentinel.manager.ChatModeration(this);
         this.warnEscalation = new de.derfakegamer.sentinel.manager.WarnEscalation(this);
         this.orbitalStrike = new de.derfakegamer.sentinel.manager.OrbitalStrike(this);
+        this.scheduledStrikeManager = new de.derfakegamer.sentinel.manager.ScheduledStrikeManager(this,
+            new de.derfakegamer.sentinel.storage.ScheduledStrikeDao(database));
+        this.scheduledStrikeManager.rearmAll();
         this.chatLogManager = new de.derfakegamer.sentinel.manager.ChatLogManager(
             new de.derfakegamer.sentinel.storage.ChatLogDao(database));
         try { this.chatLogManager.prune(getConfig().getInt("logging.retention-days", 30)); } catch (Exception ignored) {}
@@ -159,6 +163,7 @@ public class Sentinel extends JavaPlugin {
     public de.derfakegamer.sentinel.manager.OwnerManager owner() { return ownerManager; }
     public de.derfakegamer.sentinel.manager.OrbitalAccess orbitalAccess() { return orbitalAccess; }
     public de.derfakegamer.sentinel.listener.OrbitalAccessListener orbitalAccessListener() { return orbitalAccessListener; }
+    public de.derfakegamer.sentinel.manager.ScheduledStrikeManager scheduledStrikes() { return scheduledStrikeManager; }
 
     public java.io.File pluginJar() { return getFile(); }
 

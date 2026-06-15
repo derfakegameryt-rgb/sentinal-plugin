@@ -88,6 +88,12 @@ public final class Database implements AutoCloseable {
                   uuid TEXT PRIMARY KEY,
                   name TEXT NOT NULL
                 )""");
+            st.executeUpdate("""
+                CREATE TABLE IF NOT EXISTS scheduled_strikes (
+                  id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  world TEXT NOT NULL, x INTEGER NOT NULL, z INTEGER NOT NULL,
+                  payload TEXT NOT NULL, fire_at INTEGER NOT NULL
+                )""");
         }
         try (Statement alter = connection.createStatement()) {
             alter.executeUpdate("ALTER TABLE players ADD COLUMN playtime INTEGER NOT NULL DEFAULT 0");
