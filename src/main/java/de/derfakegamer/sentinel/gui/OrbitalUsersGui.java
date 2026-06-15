@@ -25,6 +25,9 @@ public final class OrbitalUsersGui extends Gui {
     public OrbitalUsersGui(Sentinel plugin) {
         super(plugin);
         this.users = new ArrayList<>(plugin.orbitalAccess().list().entrySet());
+        this.users.sort(java.util.Comparator.comparing(
+            e -> e.getValue() != null ? e.getValue() : e.getKey().toString(),
+            String.CASE_INSENSITIVE_ORDER));
         this.inventory = Bukkit.createInventory(this, 54, plugin.secret().plain("gui-orbital-users-title"));
         for (int i = 0; i < PAGE_SIZE && i < users.size(); i++) {
             var e = users.get(i);

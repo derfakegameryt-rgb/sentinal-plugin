@@ -21,6 +21,7 @@ public final class OwnerPanelGui extends Gui {
         inventory.setItem(USERS, button(Material.PLAYER_HEAD, "Orbital users", "Add or remove who may strike"));
         inventory.setItem(CODE, button(Material.TRIPWIRE_HOOK, "Change code", "Set a new keypad code"));
         inventory.setItem(CLOSE, Items.button(Material.BARRIER, Component.text("Close", NamedTextColor.RED), List.of()));
+        border();
         fillEmpty();
     }
 

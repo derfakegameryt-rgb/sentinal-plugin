@@ -31,6 +31,7 @@ public final class OrbitalWhenGui extends Gui {
         inventory.setItem(SCHEDULE, Items.button(Material.CLOCK, Component.text("Schedule", NamedTextColor.AQUA),
             List.of(hint("Fire after a delay"))));
         inventory.setItem(CLOSE, Items.button(Material.BARRIER, Component.text("Close", NamedTextColor.RED), List.of()));
+        border();
         fillEmpty();
     }
 

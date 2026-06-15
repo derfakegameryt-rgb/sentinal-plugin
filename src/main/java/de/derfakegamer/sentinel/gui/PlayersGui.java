@@ -24,6 +24,9 @@ public final class PlayersGui extends Gui {
         super(plugin);
         this.page = page;
         this.players = new ArrayList<>(Bukkit.getOnlinePlayers());
+        this.players.sort(java.util.Comparator.comparing(
+            p -> p.getName() != null ? p.getName() : p.getUniqueId().toString(),
+            String.CASE_INSENSITIVE_ORDER));
         this.inventory = Bukkit.createInventory(this, 54, plugin.messages().plain("gui-players-title"));
 
         int from = page * PAGE_SIZE;
