@@ -12,7 +12,7 @@ update:
 maintenance:
   enabled: false
   kick-message: "The server is under maintenance. Please come back later."
-  motd: "&cUnder maintenance"
+  motd: "<red>Under maintenance"   # MiniMessage format (e.g. <red>, <#3B82F6>)
 announcements:
   enabled: true
   interval-seconds: 300

@@ -119,6 +119,9 @@ public class Sentinel extends JavaPlugin {
                 getLogger().fine("console filter unavailable: " + t);
             }
         }
+        if (playerDirectory != null) {
+            try { playerDirectory.flushSessions(); } catch (Exception ignored) {}
+        }
         if (database != null) {
             try { database.close(); } catch (Exception ignored) {}
         }
