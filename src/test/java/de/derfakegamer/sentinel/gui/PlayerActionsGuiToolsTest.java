@@ -70,4 +70,12 @@ class PlayerActionsGuiToolsTest {
         assertTrue(ev.isCancelled());
         assertTrue(owner.isOp(), "an exempt (owner) player must not be de-opped via the panel");
     }
+
+    @Test void shadowMuteButtonIsShown() {
+        org.mockbukkit.mockbukkit.entity.PlayerMock mod = server.addPlayer("Mod");
+        org.mockbukkit.mockbukkit.entity.PlayerMock target = server.addPlayer("Sneaky");
+        PlayerActionsGui gui = new PlayerActionsGui(plugin, target);
+        assertNotNull(gui.getInventory().getItem(16));
+        assertEquals(org.bukkit.Material.INK_SAC, gui.getInventory().getItem(16).getType());
+    }
 }

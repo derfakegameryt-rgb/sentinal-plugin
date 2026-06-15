@@ -72,6 +72,16 @@ public final class Database implements AutoCloseable {
                   created_at INTEGER NOT NULL
                 )""");
             st.executeUpdate("CREATE INDEX IF NOT EXISTS idx_notes_target ON notes(target_uuid)");
+            st.executeUpdate("""
+                CREATE TABLE IF NOT EXISTS chatlog (
+                  id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  uuid TEXT NOT NULL,
+                  name TEXT NOT NULL,
+                  kind TEXT NOT NULL,      -- CHAT or COMMAND
+                  text TEXT NOT NULL,
+                  created_at INTEGER NOT NULL
+                )""");
+            st.executeUpdate("CREATE INDEX IF NOT EXISTS idx_chatlog_uuid ON chatlog(uuid)");
         }
     }
 

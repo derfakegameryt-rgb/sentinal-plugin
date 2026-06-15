@@ -23,16 +23,25 @@ public final class ModerationService {
             case MUTE  -> pm.mute(targetId, targetName, issuerId, issuerName, reason, expiresAt);
             case WARN  -> pm.warn(targetId, targetName, issuerId, issuerName, reason);
             case KICK  -> pm.kick(targetId, targetName, issuerId, issuerName, reason);
+            case SHADOWMUTE -> pm.shadowMute(targetId, targetName, issuerId, issuerName, reason, expiresAt);
         };
         if (!result.isSuccess()) return false;
+
+        if (type == PunishmentType.SHADOWMUTE) {
+            notifyStaff(plugin.messages().plain("shadowmuted", "player", targetName, "reason", reason));
+            return true; // covert: no public broadcast, no kick
+        }
 
         String key = switch (type) {
             case BAN, IPBAN -> "banned";
             case MUTE       -> "muted";
             case WARN       -> "warned";
             case KICK       -> "kicked";
+            case SHADOWMUTE -> "muted";
         };
         Bukkit.broadcast(plugin.messages().prefixed(key, "player", targetName, "reason", reason));
+        plugin.discord().post("**" + targetName + "** was " + key + " by " + issuerName
+            + (reason == null || reason.isBlank() ? "" : ": " + reason));
         if (type == PunishmentType.BAN || type == PunishmentType.IPBAN || type == PunishmentType.KICK)
             kickIfOnline(targetId, reason);
         if (type == PunishmentType.WARN) {
@@ -55,6 +64,17 @@ public final class ModerationService {
     public boolean removeMute(UUID issuerId, String issuerName, UUID targetId, String targetName) {
         boolean ok = plugin.punishments().unmute(targetId, issuerName, System.currentTimeMillis());
         if (ok) Bukkit.broadcast(plugin.messages().prefixed("unmuted", "player", targetName, "reason", ""));
+        return ok;
+    }
+
+    private void notifyStaff(net.kyori.adventure.text.Component message) {
+        for (org.bukkit.entity.Player op : org.bukkit.Bukkit.getOnlinePlayers())
+            if (op.isOp()) op.sendMessage(message);
+    }
+
+    public boolean removeShadowMute(java.util.UUID issuerId, String issuerName, java.util.UUID targetId, String targetName) {
+        boolean ok = plugin.punishments().unShadowMute(targetId, issuerName, System.currentTimeMillis());
+        if (ok) notifyStaff(plugin.messages().plain("unshadowmuted", "player", targetName));
         return ok;
     }
 

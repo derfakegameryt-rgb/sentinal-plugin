@@ -19,7 +19,7 @@ import java.util.List;
 
 public final class AltsGui extends Gui {
     private static final int PAGE_SIZE = 45;
-    private static final int BACK = 45, CLOSE = 53;
+    private static final int BACK = 45, CLOSE = 53, BAN_ALL = 49;
     private static final DateTimeFormatter DATE =
         DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").withZone(ZoneOffset.UTC);
 
@@ -43,6 +43,9 @@ public final class AltsGui extends Gui {
         if (alts.isEmpty())
             inventory.setItem(22, Items.button(Material.BARRIER,
                 plugin.messages().plain("alts-empty"), List.of()));
+        inventory.setItem(BAN_ALL, Items.button(Material.TNT,
+            Component.text("Ban all alts", NamedTextColor.RED),
+            List.of(grey(alts.size() + " accounts + the target"))));
         inventory.setItem(BACK, Items.button(Material.ARROW, Component.text("Back", NamedTextColor.GRAY), List.of()));
         inventory.setItem(CLOSE, Items.button(Material.BARRIER, Component.text("Close", NamedTextColor.RED), List.of()));
         fillEmpty();
@@ -61,6 +64,18 @@ public final class AltsGui extends Gui {
         int slot = event.getRawSlot();
         if (slot == BACK) { new PlayerActionsGui(plugin, target).open(mod); return; }
         if (slot == CLOSE) { mod.closeInventory(); return; }
+        if (slot == BAN_ALL) {
+            Player p = mod;
+            new ConfirmGui(plugin, Component.text("Ban " + (alts.size() + 1) + " accounts?", NamedTextColor.RED), () -> {
+                plugin.moderation().apply(p.getUniqueId(), p.getName(), target.getUniqueId(),
+                    target.getName() == null ? "?" : target.getName(), null,
+                    de.derfakegamer.sentinel.model.PunishmentType.BAN, 0, "Alt of a banned account");
+                for (PlayerRecord r : alts)
+                    plugin.moderation().apply(p.getUniqueId(), p.getName(), r.uuid(), r.name(), null,
+                        de.derfakegamer.sentinel.model.PunishmentType.BAN, 0, "Alt of a banned account");
+            }, null).open(p);
+            return;
+        }
         if (slot >= 0 && slot < PAGE_SIZE && slot < alts.size()) {
             OfflinePlayer alt = Bukkit.getOfflinePlayer(alts.get(slot).uuid());
             new PlayerActionsGui(plugin, alt).open(mod);
