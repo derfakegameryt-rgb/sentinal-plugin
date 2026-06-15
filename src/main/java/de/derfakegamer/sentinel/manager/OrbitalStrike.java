@@ -10,7 +10,7 @@ import java.util.List;
 public final class OrbitalStrike {
     private static final int BOTTOM = -60, TOP = 320;
     private static final int SPACING = 8;       // exposed y-levels (used by columnYs / tests)
-    private static final int STRIKE_STEP = 4;   // explosions every 4 blocks → one continuous shaft
+    private static final int STRIKE_STEP = 1;   // an explosion at EVERY block → a clean shaft to bedrock
 
     private final Sentinel plugin;
 
