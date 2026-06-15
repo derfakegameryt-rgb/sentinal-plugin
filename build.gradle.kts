@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "de.derfakegamer"
-version = "1.1.2"
+version = "1.1.3"
 
 java {
     toolchain.languageVersion.set(JavaLanguageVersion.of(21))
