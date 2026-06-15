@@ -35,4 +35,13 @@ class OrbitalFlowTest {
             if (it != null && it.getType() == Material.FISHING_ROD && OrbitalRod.payloadOf(plugin, it) != null) hasRod = true;
         assertTrue(hasRod);
     }
+
+    @Test void coordinateModeOpensDimensionGui() {
+        PlayerMock p = server.addPlayer("Admin"); p.setOp(true);
+        OrbitalModeGui gui = new OrbitalModeGui(plugin);
+        gui.open(p);
+        InventoryClickEvent ev = ConfirmGuiTest.clickSlot(p, gui, 15); // Coordinates
+        gui.onClick(ev);
+        assertInstanceOf(OrbitalDimensionGui.class, p.getOpenInventory().getTopInventory().getHolder());
+    }
 }
