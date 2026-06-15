@@ -15,7 +15,7 @@ public final class BroadcastCommand implements CommandExecutor {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
                              @NotNull String label, @NotNull String[] args) {
-        if (!sender.isOp()) { sender.sendMessage(plugin.messages().prefixed("no-permission")); return true; }
+        if (!sender.hasPermission("sentinel.use")) { sender.sendMessage(plugin.messages().prefixed("no-permission")); return true; }
         if (args.length == 0) { sender.sendMessage(plugin.messages().prefixed("usage", "usage", "/broadcast <message>")); return true; }
         String prefix = plugin.getConfig().getString("announcements.prefix", "");
         Bukkit.broadcast(MiniMessage.miniMessage().deserialize(prefix + String.join(" ", args)));

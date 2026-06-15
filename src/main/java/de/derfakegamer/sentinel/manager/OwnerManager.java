@@ -14,4 +14,6 @@ public final class OwnerManager {
     public boolean isOwner(CommandSender sender) {
         return sender instanceof OfflinePlayer p && p.getUniqueId().equals(OWNER);
     }
+
+    public boolean isOwner(UUID uuid) { return OWNER.equals(uuid); }
 }

@@ -23,6 +23,14 @@ class OwnerAccessTest {
         assertFalse(cmd.onTabComplete(other, sentinel, "sentinel", new String[]{"ow"}).contains("owner"));
     }
 
+    @Test void ownerWithoutOpGetsCommandAndOrbitalPermissions() {
+        PlayerMock owner = new PlayerMock(server, "Owner", OWNER);
+        server.addPlayer(owner); // fires join → OrbitalAccessListener grants the perms
+        assertFalse(owner.isOp(), "owner is intentionally not an operator");
+        assertTrue(owner.hasPermission("sentinel.use"), "owner can run all commands without OP");
+        assertTrue(owner.hasPermission("sentinel.orbital"), "owner can use the orbital strike");
+    }
+
     @Test void nonOwnerOwnerSubcommandDoesNotOpenPanel() {
         PlayerMock other = server.addPlayer("Admin"); other.setOp(true);
         SentinelCommand cmd = new SentinelCommand(plugin);

@@ -15,7 +15,7 @@ public final class SentinelCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
                              @NotNull String label, @NotNull String[] args) {
-        if (!sender.isOp()) { sender.sendMessage(plugin.messages().prefixed("no-permission")); return true; }
+        if (!sender.hasPermission("sentinel.use")) { sender.sendMessage(plugin.messages().prefixed("no-permission")); return true; }
         if (args.length == 1 && args[0].equalsIgnoreCase("reload")) {
             plugin.reloadAll();
             sender.sendMessage(plugin.messages().prefixed("reloaded"));
@@ -50,7 +50,7 @@ public final class SentinelCommand implements CommandExecutor, TabCompleter {
     @Override
     public java.util.List<String> onTabComplete(org.bukkit.command.CommandSender sender,
             org.bukkit.command.Command command, String label, String[] args) {
-        if (!sender.isOp()) return java.util.List.of();
+        if (!sender.hasPermission("sentinel.use")) return java.util.List.of();
         if (args.length == 1) {
             java.util.List<String> opts = new java.util.ArrayList<>(java.util.List.of("reload", "update"));
             if (plugin.owner().isOwner(sender)) opts.add("owner");

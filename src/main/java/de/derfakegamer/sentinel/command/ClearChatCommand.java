@@ -17,7 +17,7 @@ public final class ClearChatCommand implements CommandExecutor {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
                              @NotNull String label, @NotNull String[] args) {
-        if (!sender.isOp()) { sender.sendMessage(plugin.messages().prefixed("no-permission")); return true; }
+        if (!sender.hasPermission("sentinel.use")) { sender.sendMessage(plugin.messages().prefixed("no-permission")); return true; }
         for (Player p : Bukkit.getOnlinePlayers()) {
             if (p.isOp()) continue; // keep staff's view; clear for everyone else
             for (int i = 0; i < 100; i++) p.sendMessage(Component.empty());

@@ -16,7 +16,7 @@ public final class PlaytimeCommand implements CommandExecutor {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
                              @NotNull String label, @NotNull String[] args) {
-        if (!sender.isOp()) { sender.sendMessage(plugin.messages().prefixed("no-permission")); return true; }
+        if (!sender.hasPermission("sentinel.use")) { sender.sendMessage(plugin.messages().prefixed("no-permission")); return true; }
         OfflinePlayer target = args.length >= 1 ? Bukkit.getOfflinePlayer(args[0])
             : (sender instanceof Player p ? p : null);
         if (target == null) { sender.sendMessage(plugin.messages().prefixed("usage", "usage", "/playtime <player>")); return true; }

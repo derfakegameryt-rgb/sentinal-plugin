@@ -23,7 +23,7 @@ public final class PunishmentCommands implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
                              @NotNull String label, @NotNull String[] args) {
-        if (!sender.isOp()) { sender.sendMessage(plugin.messages().prefixed("no-permission")); return true; }
+        if (!sender.hasPermission("sentinel.use")) { sender.sendMessage(plugin.messages().prefixed("no-permission")); return true; }
         String cmd = command.getName().toLowerCase();
         PunishmentManager pm = plugin.punishments();
         UUID issuerId = (sender instanceof Player p) ? p.getUniqueId() : new UUID(0, 0);
@@ -123,7 +123,7 @@ public final class PunishmentCommands implements CommandExecutor, TabCompleter {
     @Override
     public java.util.List<String> onTabComplete(org.bukkit.command.CommandSender sender,
             org.bukkit.command.Command command, String label, String[] args) {
-        if (!sender.isOp()) return java.util.List.of();
+        if (!sender.hasPermission("sentinel.use")) return java.util.List.of();
         boolean temp = command.getName().equalsIgnoreCase("tempban")
             || command.getName().equalsIgnoreCase("tempmute");
         if (args.length == 1) {

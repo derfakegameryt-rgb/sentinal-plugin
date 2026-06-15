@@ -14,7 +14,7 @@ public final class RestartCommand implements CommandExecutor {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
                              @NotNull String label, @NotNull String[] args) {
-        if (!sender.isOp()) { sender.sendMessage(plugin.messages().prefixed("no-permission")); return true; }
+        if (!sender.hasPermission("sentinel.use")) { sender.sendMessage(plugin.messages().prefixed("no-permission")); return true; }
         if (args.length == 1 && args[0].equalsIgnoreCase("cancel")) {
             if (!plugin.restart().cancel()) sender.sendMessage(plugin.messages().prefixed("usage", "usage", "/restart <duration>|cancel"));
             return true;

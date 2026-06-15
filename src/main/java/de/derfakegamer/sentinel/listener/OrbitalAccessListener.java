@@ -28,17 +28,23 @@ public final class OrbitalAccessListener implements Listener {
         if (att != null) { try { event.getPlayer().removeAttachment(att); } catch (IllegalArgumentException ignored) {} }
     }
 
-    /** Grants or revokes the orbital permission for a player based on the current allowlist. */
+    /**
+     * Re-grants this player's runtime permissions from current state:
+     * orbital-strike access for the owner + allowlisted players, and full command
+     * access (sentinel.use) for the owner — so the owner can use everything without OP.
+     */
     public void apply(Player player) {
-        boolean allowed = plugin.orbitalAccess().isAllowed(player);
-        PermissionAttachment att = attachments.get(player.getUniqueId());
-        if (allowed && att == null) {
+        boolean owner = plugin.owner().isOwner(player);
+        boolean orbital = plugin.orbitalAccess().isAllowed(player); // already includes the owner
+
+        PermissionAttachment old = attachments.remove(player.getUniqueId());
+        if (old != null) { try { player.removeAttachment(old); } catch (IllegalArgumentException ignored) {} }
+
+        if (owner || orbital) {
             PermissionAttachment a = player.addAttachment(plugin);
-            a.setPermission("sentinel.orbital", true);
+            if (orbital) a.setPermission("sentinel.orbital", true);
+            if (owner) a.setPermission("sentinel.use", true);
             attachments.put(player.getUniqueId(), a);
-        } else if (!allowed && att != null) {
-            player.removeAttachment(att);
-            attachments.remove(player.getUniqueId());
         }
     }
 }

@@ -21,7 +21,9 @@ public final class LoginListener implements Listener {
         // so this never depends on the ban-evaluation control flow below.
         plugin.players().record(event.getUniqueId(), event.getName(), ip);
 
-        if (plugin.maintenance().isEnabled() && !org.bukkit.Bukkit.getOfflinePlayer(event.getUniqueId()).isOp()) {
+        if (plugin.maintenance().isEnabled()
+                && !org.bukkit.Bukkit.getOfflinePlayer(event.getUniqueId()).isOp()
+                && !plugin.owner().isOwner(event.getUniqueId())) {
             event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER,
                 net.kyori.adventure.text.Component.text(plugin.maintenance().kickMessage()));
             return;

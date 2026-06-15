@@ -15,7 +15,7 @@ public final class StaffChatCommand implements CommandExecutor {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
                              @NotNull String label, @NotNull String[] args) {
-        if (!sender.isOp()) { sender.sendMessage(plugin.messages().prefixed("no-permission")); return true; }
+        if (!sender.hasPermission("sentinel.use")) { sender.sendMessage(plugin.messages().prefixed("no-permission")); return true; }
         if (args.length == 0) {
             if (!(sender instanceof Player p)) return true;
             boolean on = plugin.staffChat().toggle(p.getUniqueId());

@@ -16,12 +16,12 @@ public final class MaintenanceCommand implements CommandExecutor {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
                              @NotNull String label, @NotNull String[] args) {
-        if (!sender.isOp()) { sender.sendMessage(plugin.messages().prefixed("no-permission")); return true; }
+        if (!sender.hasPermission("sentinel.use")) { sender.sendMessage(plugin.messages().prefixed("no-permission")); return true; }
         boolean on = args.length == 0 ? !plugin.maintenance().isEnabled() : args[0].equalsIgnoreCase("on");
         plugin.maintenance().setEnabled(on);
         if (on) {
             for (Player p : Bukkit.getOnlinePlayers())
-                if (!p.isOp()) p.kick(Component.text(plugin.maintenance().kickMessage()));
+                if (!p.isOp() && !plugin.owner().isOwner(p)) p.kick(Component.text(plugin.maintenance().kickMessage()));
         }
         sender.sendMessage(plugin.messages().prefixed(on ? "maintenance-on" : "maintenance-off"));
         return true;
