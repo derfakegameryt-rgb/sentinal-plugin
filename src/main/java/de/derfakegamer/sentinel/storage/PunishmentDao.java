@@ -87,6 +87,19 @@ public final class PunishmentDao {
       }
     }
 
+    public java.util.List<de.derfakegamer.sentinel.model.Punishment> findActiveByType(
+            de.derfakegamer.sentinel.model.PunishmentType type) {
+        synchronized (db) {
+            java.util.List<de.derfakegamer.sentinel.model.Punishment> out = new java.util.ArrayList<>();
+            String sql = "SELECT * FROM punishments WHERE type=? AND active=1 ORDER BY created_at DESC";
+            try (java.sql.PreparedStatement ps = db.connection().prepareStatement(sql)) {
+                ps.setString(1, type.name());
+                try (java.sql.ResultSet rs = ps.executeQuery()) { while (rs.next()) out.add(map(rs)); }
+            } catch (java.sql.SQLException e) { throw new RuntimeException(e); }
+            return out;
+        }
+    }
+
     public int countWarns(UUID target) {
       synchronized (db) {
         String sql = "SELECT COUNT(*) FROM punishments WHERE type='WARN' AND target_uuid=? AND active=1";

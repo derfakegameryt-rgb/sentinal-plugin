@@ -99,6 +99,16 @@ public final class PunishmentManager {
         return true;
     }
 
+    /** All currently-active punishments of a type, lazily dropping any that have expired. */
+    public java.util.List<Punishment> activeList(PunishmentType type, long now) {
+        java.util.List<Punishment> out = new java.util.ArrayList<>();
+        for (Punishment p : dao.findActiveByType(type)) {
+            if (p.isExpired(now)) dao.deactivate(p.id(), "SYSTEM", now);
+            else out.add(p);
+        }
+        return out;
+    }
+
     public int warnCount(UUID target) { return dao.countWarns(target); }
 
     public List<Punishment> history(UUID target) { return dao.findHistory(target); }
