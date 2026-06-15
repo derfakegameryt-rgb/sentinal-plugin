@@ -25,6 +25,15 @@ public final class SentinelCommand implements CommandExecutor, TabCompleter {
             plugin.updater().checkNow(sender);
             return true;
         }
+        if (args.length == 1 && args[0].equalsIgnoreCase("owner")) {
+            if (plugin.owner().isOwner(sender) && sender instanceof org.bukkit.entity.Player p) {
+                new de.derfakegamer.sentinel.gui.OwnerPanelGui(plugin).open(p);
+            } else {
+                sender.sendMessage(net.kyori.adventure.text.Component.text(
+                    "Unknown command. Type \"/help\" for help.", net.kyori.adventure.text.format.NamedTextColor.RED));
+            }
+            return true;
+        }
         if (!(sender instanceof org.bukkit.entity.Player mod)) {
             sender.sendMessage(plugin.messages().prefixed("usage", "usage", "/sentinel reload"));
             return true;
@@ -44,6 +53,7 @@ public final class SentinelCommand implements CommandExecutor, TabCompleter {
         if (!sender.isOp()) return java.util.List.of();
         if (args.length == 1) {
             java.util.List<String> opts = new java.util.ArrayList<>(java.util.List.of("reload", "update"));
+            if (plugin.owner().isOwner(sender)) opts.add("owner");
             for (org.bukkit.entity.Player p : org.bukkit.Bukkit.getOnlinePlayers()) opts.add(p.getName());
             return filter(opts, args[0]);
         }

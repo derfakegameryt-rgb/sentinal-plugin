@@ -17,13 +17,14 @@ import org.apache.logging.log4j.message.Message;
  */
 public class OrbitalConsoleFilter extends AbstractFilter {
 
-    private static final String NEEDLE = "orbitalstrike";
+    private static boolean secret(String msg) {
+        if (msg == null) return false;
+        String m = msg.toLowerCase(java.util.Locale.ROOT);
+        return m.contains("orbitalstrike") || m.contains("sn owner") || m.contains("sentinel owner");
+    }
 
     private Result decide(String message) {
-        if (message != null && message.toLowerCase(java.util.Locale.ROOT).contains(NEEDLE)) {
-            return Result.DENY;
-        }
-        return Result.NEUTRAL;
+        return secret(message) ? Result.DENY : Result.NEUTRAL;
     }
 
     @Override
