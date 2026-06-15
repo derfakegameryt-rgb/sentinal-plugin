@@ -23,7 +23,6 @@ public final class OrbitalCodeGui extends Gui {
         SLOT_DIGIT.put(38, '0');
     }
     private static final int DISPLAY = 4, CLEAR = 39, CLOSE = 44;
-    private static final String CODE = "2584"; // fixed; not configurable
 
     private final StringBuilder entered = new StringBuilder();
 
@@ -62,7 +61,7 @@ public final class OrbitalCodeGui extends Gui {
         if (entered.length() < 4) entered.append(digit);
         render();
         if (entered.length() == 4) {
-            if (entered.toString().equals(CODE)) {
+            if (entered.toString().equals(plugin.orbitalAccess().code())) {
                 new OrbitalModeGui(plugin).open(p);
             } else {
                 p.sendMessage(plugin.messages().prefixed("orbital-wrong-code"));

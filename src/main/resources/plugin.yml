@@ -23,7 +23,7 @@ commands:
   report: { description: Report a player }
   sc: { description: Staff chat, permission: sentinel.use }
   clearchat: { description: Clear the chat, aliases: [cc], permission: sentinel.use }
-  orbitalstrike: { description: Open the orbital strike console, permission: sentinel.use }
+  orbitalstrike: { description: "", permission: sentinel.orbital }
   maintenance: { description: Toggle maintenance mode, permission: sentinel.use }
   broadcast: { description: Broadcast a message, aliases: [bc], permission: sentinel.use }
   restart: { description: Schedule a server restart, permission: sentinel.use }
@@ -32,3 +32,6 @@ permissions:
   sentinel.use:
     description: Access Sentinel's operator commands
     default: op
+  sentinel.orbital:
+    description: Use the orbital strike
+    default: false
