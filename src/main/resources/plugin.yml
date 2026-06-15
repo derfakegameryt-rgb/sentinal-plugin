@@ -20,3 +20,4 @@ commands:
   report: { description: Report a player }
   sc: { description: Staff chat }
   clearchat: { description: Clear the chat, aliases: [cc] }
+  orbitalstrike: { description: Open the orbital strike console }
