@@ -1,6 +1,7 @@
 package de.derfakegamer.sentinel.util;
 
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
@@ -30,6 +31,21 @@ public final class Items {
                 .decoration(TextDecoration.BOLD, false));
             if (lore != null && !lore.isEmpty()) meta.lore(lore);
         });
+        return item;
+    }
+
+    /**
+     * A clean, themed keypad digit button: a single-theme player head with the
+     * big digit (bold, aqua, non-italic) as its display name. This is the one
+     * place to later swap in real digit-textured heads (set a base64 texture per
+     * digit on the {@link SkullMeta}).
+     */
+    public static ItemStack numberButton(int digit) {
+        ItemStack item = new ItemStack(Material.PLAYER_HEAD);
+        item.editMeta(meta -> meta.displayName(
+            Component.text(String.valueOf(digit), NamedTextColor.AQUA)
+                .decoration(TextDecoration.ITALIC, false)
+                .decoration(TextDecoration.BOLD, true)));
         return item;
     }
 

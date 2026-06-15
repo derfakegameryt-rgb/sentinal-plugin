@@ -39,8 +39,7 @@ public final class OrbitalCodeGui extends Gui {
 
     private void render() {
         for (var e : SLOT_DIGIT.entrySet())
-            inventory.setItem(e.getKey(), Items.button(Material.PAPER,
-                Component.text(String.valueOf(e.getValue()), NamedTextColor.AQUA), List.of()));
+            inventory.setItem(e.getKey(), Items.numberButton(e.getValue() - '0'));
         inventory.setItem(DISPLAY, Items.button(Material.NAME_TAG,
             Component.text("Code: " + "•".repeat(entered.length()) + "_".repeat(4 - entered.length()),
                 NamedTextColor.WHITE), List.of()));
