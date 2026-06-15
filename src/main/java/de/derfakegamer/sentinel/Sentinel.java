@@ -15,10 +15,10 @@ import java.util.UUID;
 
 public class Sentinel extends JavaPlugin {
     private Database database;
-    private PunishmentManager punishmentManager;
-    private Messages messages;
+    private volatile PunishmentManager punishmentManager;
+    private volatile Messages messages;
     private de.derfakegamer.sentinel.manager.SecretMessages secret;
-    private de.derfakegamer.sentinel.manager.ModerationService moderationService;
+    private volatile de.derfakegamer.sentinel.manager.ModerationService moderationService;
     private de.derfakegamer.sentinel.manager.ChatInputManager chatInputManager;
     private de.derfakegamer.sentinel.manager.ReportManager reportManager;
     private de.derfakegamer.sentinel.manager.StaffChatManager staffChatManager;
@@ -27,8 +27,8 @@ public class Sentinel extends JavaPlugin {
     private de.derfakegamer.sentinel.updater.UpdateChecker updateChecker;
     private de.derfakegamer.sentinel.manager.PlayerDirectory playerDirectory;
     private de.derfakegamer.sentinel.manager.NoteManager noteManager;
-    private de.derfakegamer.sentinel.manager.ChatModeration chatModeration;
-    private de.derfakegamer.sentinel.manager.WarnEscalation warnEscalation;
+    private volatile de.derfakegamer.sentinel.manager.ChatModeration chatModeration;
+    private volatile de.derfakegamer.sentinel.manager.WarnEscalation warnEscalation;
     private de.derfakegamer.sentinel.manager.OrbitalStrike orbitalStrike;
     private de.derfakegamer.sentinel.manager.ChatLogManager chatLogManager;
     private de.derfakegamer.sentinel.util.DiscordWebhook discordWebhook;
@@ -40,6 +40,7 @@ public class Sentinel extends JavaPlugin {
     private de.derfakegamer.sentinel.manager.OrbitalAccess orbitalAccess;
     private de.derfakegamer.sentinel.listener.OrbitalAccessListener orbitalAccessListener;
     private de.derfakegamer.sentinel.manager.ScheduledStrikeManager scheduledStrikeManager;
+    private de.derfakegamer.sentinel.command.OrbitalBukkitCommand orbitalCommand;
 
     @Override
     public void onEnable() {
@@ -132,6 +133,17 @@ public class Sentinel extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        getServer().getScheduler().cancelTasks(this);
+        if (orbitalAccessListener != null) {
+            try { orbitalAccessListener.removeAll(); } catch (Throwable t) {
+                getLogger().fine("orbital access cleanup failed: " + t);
+            }
+        }
+        if (orbitalCommand != null) {
+            try { orbitalCommand.unregister(getServer().getCommandMap()); } catch (Throwable t) {
+                getLogger().fine("orbital command unregister failed: " + t);
+            }
+        }
         if (orbitalConsoleFilter != null) {
             try { orbitalConsoleFilter.unregister(); } catch (Throwable t) {
                 getLogger().fine("console filter unavailable: " + t);
@@ -162,6 +174,7 @@ public class Sentinel extends JavaPlugin {
             var delegate = new de.derfakegamer.sentinel.command.OrbitalStrikeCommand(this);
             var cmd = new de.derfakegamer.sentinel.command.OrbitalBukkitCommand(delegate);
             getServer().getCommandMap().register("sentinel", cmd);
+            this.orbitalCommand = cmd;
         } catch (Throwable ignored) {
             // command map unavailable (e.g. test JVM)
         }

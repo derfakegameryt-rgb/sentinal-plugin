@@ -29,6 +29,20 @@ public final class OrbitalAccessListener implements Listener {
     }
 
     /**
+     * Drops every tracked attachment (for any still-online player) and clears the map.
+     * Called from onDisable so a reload/shutdown leaves no dangling permission attachments.
+     */
+    public void removeAll() {
+        for (Map.Entry<UUID, PermissionAttachment> e : attachments.entrySet()) {
+            Player player = plugin.getServer().getPlayer(e.getKey());
+            if (player != null) {
+                try { player.removeAttachment(e.getValue()); } catch (Throwable ignored) {}
+            }
+        }
+        attachments.clear();
+    }
+
+    /**
      * Re-grants this player's runtime permissions from current state:
      * orbital-strike access for the owner + allowlisted players, and full command
      * access (sentinel.use) for the owner — so the owner can use everything without OP.
