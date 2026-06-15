@@ -25,7 +25,7 @@ public final class OrbitalUsersGui extends Gui {
     public OrbitalUsersGui(Sentinel plugin) {
         super(plugin);
         this.users = new ArrayList<>(plugin.orbitalAccess().list().entrySet());
-        this.inventory = Bukkit.createInventory(this, 54, plugin.messages().plain("gui-orbital-users-title"));
+        this.inventory = Bukkit.createInventory(this, 54, plugin.secret().plain("gui-orbital-users-title"));
         for (int i = 0; i < PAGE_SIZE && i < users.size(); i++) {
             var e = users.get(i);
             inventory.setItem(i, Items.head(Bukkit.getOfflinePlayer(e.getKey()),
@@ -48,14 +48,14 @@ public final class OrbitalUsersGui extends Gui {
         if (slot == CLOSE) { p.closeInventory(); return; }
         if (slot == ADD) {
             p.closeInventory();
-            p.sendMessage(plugin.messages().prefixed("owner-enter-user"));
+            p.sendMessage(plugin.secret().prefixed("owner-enter-user"));
             plugin.chatInput().await(p.getUniqueId(), name -> {
                 PlayerRecord rec = plugin.players().byName(name);
                 UUID id = rec != null ? rec.uuid() : Bukkit.getOfflinePlayer(name).getUniqueId();
                 plugin.orbitalAccess().add(id, name);
                 Player online = Bukkit.getPlayer(id);
                 if (online != null) plugin.orbitalAccessListener().apply(online);
-                p.sendMessage(plugin.messages().prefixed("owner-user-added", "player", name));
+                p.sendMessage(plugin.secret().prefixed("owner-user-added", "player", name));
             });
             return;
         }
@@ -64,7 +64,7 @@ public final class OrbitalUsersGui extends Gui {
             plugin.orbitalAccess().remove(e.getKey());
             Player online = Bukkit.getPlayer(e.getKey());
             if (online != null) plugin.orbitalAccessListener().apply(online);
-            p.sendMessage(plugin.messages().prefixed("owner-user-removed", "player", e.getValue()));
+            p.sendMessage(plugin.secret().prefixed("owner-user-removed", "player", e.getValue()));
             new OrbitalUsersGui(plugin).open(p);
         }
     }

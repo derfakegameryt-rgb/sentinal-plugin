@@ -25,9 +25,9 @@ public final class OrbitalRodListener implements Listener {
         Player p = event.getPlayer();
         if (!plugin.orbitalAccess().isAllowed(p)) return;
         Block target = p.getTargetBlockExact(320);
-        if (target == null) { p.sendMessage(plugin.messages().prefixed("orbital-no-target")); return; }
+        if (target == null) { p.sendMessage(plugin.secret().prefixed("orbital-no-target")); return; }
         plugin.orbital().strike(p.getWorld(), target.getX(), target.getZ(), payload);
-        p.sendMessage(plugin.messages().prefixed("orbital-fired",
+        p.sendMessage(plugin.secret().prefixed("orbital-fired",
             "x", String.valueOf(target.getX()), "z", String.valueOf(target.getZ())));
         // consume the one-shot rod
         if (event.getHand() == EquipmentSlot.OFF_HAND) p.getInventory().setItemInOffHand(null);

@@ -28,7 +28,7 @@ public final class OrbitalCodeGui extends Gui {
 
     public OrbitalCodeGui(Sentinel plugin) {
         super(plugin);
-        this.inventory = Bukkit.createInventory(this, 45, plugin.messages().plain("gui-orbital-code-title"));
+        this.inventory = Bukkit.createInventory(this, 45, plugin.secret().plain("gui-orbital-code-title"));
         render();
     }
 
@@ -63,7 +63,7 @@ public final class OrbitalCodeGui extends Gui {
             if (entered.toString().equals(plugin.orbitalAccess().code())) {
                 new OrbitalModeGui(plugin).open(p);
             } else {
-                p.sendMessage(plugin.messages().prefixed("orbital-wrong-code"));
+                p.sendMessage(plugin.secret().prefixed("orbital-wrong-code"));
                 entered.setLength(0);
                 render();
             }

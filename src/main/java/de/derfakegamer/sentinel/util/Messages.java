@@ -15,6 +15,8 @@ public final class Messages {
 
     private String raw(String key) { return config.getString(key, key); }
 
+    public String prefix() { return raw("prefix"); }
+
     public Component prefixed(String key, String... placeholders) {
         return mm.deserialize(raw("prefix") + raw(key), resolvers(placeholders));
     }

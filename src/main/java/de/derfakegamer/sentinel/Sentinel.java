@@ -17,6 +17,7 @@ public class Sentinel extends JavaPlugin {
     private Database database;
     private PunishmentManager punishmentManager;
     private Messages messages;
+    private de.derfakegamer.sentinel.manager.SecretMessages secret;
     private de.derfakegamer.sentinel.manager.ModerationService moderationService;
     private de.derfakegamer.sentinel.manager.ChatInputManager chatInputManager;
     private de.derfakegamer.sentinel.manager.ReportManager reportManager;
@@ -52,8 +53,10 @@ public class Sentinel extends JavaPlugin {
         getConfig().options().copyDefaults(true);
         saveConfig();
         saveResource("messages.yml", false);
+        saveResource("rules.txt", false);
         mergeMessagesDefaults();
         this.messages = new Messages(loadMessages());
+        this.secret = new de.derfakegamer.sentinel.manager.SecretMessages(this.messages.prefix());
         try {
             this.database = new Database(new File(getDataFolder(), "sentinel.db"));
         } catch (Exception e) {
@@ -113,9 +116,10 @@ public class Sentinel extends JavaPlugin {
             getCommand(c).setTabCompleter(pc);
         }
         getCommand("report").setExecutor(new de.derfakegamer.sentinel.command.ReportCommand(this));
+        getCommand("rules").setExecutor(new de.derfakegamer.sentinel.command.RulesCommand(this));
         getCommand("sc").setExecutor(new de.derfakegamer.sentinel.command.StaffChatCommand(this));
         getCommand("clearchat").setExecutor(new de.derfakegamer.sentinel.command.ClearChatCommand(this));
-        getCommand("orbitalstrike").setExecutor(new de.derfakegamer.sentinel.command.OrbitalStrikeCommand(this));
+        registerOrbital();
         getCommand("maintenance").setExecutor(new de.derfakegamer.sentinel.command.MaintenanceCommand(this));
         getCommand("broadcast").setExecutor(new de.derfakegamer.sentinel.command.BroadcastCommand(this));
         getCommand("restart").setExecutor(new de.derfakegamer.sentinel.command.RestartCommand(this));
@@ -141,8 +145,31 @@ public class Sentinel extends JavaPlugin {
         }
     }
 
+    /**
+     * Dynamically registers the orbital command and its permission so they leave no
+     * trace in plugin.yml. Fully guarded so it can never break onEnable in the test JVM.
+     */
+    private void registerOrbital() {
+        try {
+            getServer().getPluginManager().addPermission(new org.bukkit.permissions.Permission(
+                "sentinel.orbital", org.bukkit.permissions.PermissionDefault.FALSE));
+        } catch (IllegalArgumentException ignored) {
+            // already registered
+        } catch (Throwable ignored) {
+            // permission manager unavailable (e.g. test JVM)
+        }
+        try {
+            var delegate = new de.derfakegamer.sentinel.command.OrbitalStrikeCommand(this);
+            var cmd = new de.derfakegamer.sentinel.command.OrbitalBukkitCommand(delegate);
+            getServer().getCommandMap().register("sentinel", cmd);
+        } catch (Throwable ignored) {
+            // command map unavailable (e.g. test JVM)
+        }
+    }
+
     public PunishmentManager punishments() { return punishmentManager; }
     public Messages messages() { return messages; }
+    public de.derfakegamer.sentinel.manager.SecretMessages secret() { return secret; }
     public de.derfakegamer.sentinel.manager.ModerationService moderation() { return moderationService; }
     public de.derfakegamer.sentinel.manager.ChatInputManager chatInput() { return chatInputManager; }
     public de.derfakegamer.sentinel.manager.ReportManager reports() { return reportManager; }

@@ -23,7 +23,7 @@ public final class OrbitalPayloadGui extends Gui {
     public OrbitalPayloadGui(Sentinel plugin, World world, int x, int z) {
         super(plugin);
         this.world = world; this.x = x; this.z = z;
-        this.inventory = Bukkit.createInventory(this, 27, plugin.messages().plain("gui-orbital-payload-title"));
+        this.inventory = Bukkit.createInventory(this, 27, plugin.secret().plain("gui-orbital-payload-title"));
         inventory.setItem(TNT, button(Material.TNT, OrbitalPayload.TNT));
         inventory.setItem(CART, button(Material.TNT_MINECART, OrbitalPayload.TNT_MINECART));
         inventory.setItem(CREEPER, button(Material.CREEPER_HEAD, OrbitalPayload.CHARGED_CREEPER));
@@ -57,7 +57,7 @@ public final class OrbitalPayloadGui extends Gui {
 
         Component summary = Component.text("Give rod: " + payload.label(), NamedTextColor.AQUA);
         Runnable action = () -> { p.getInventory().addItem(OrbitalRod.create(plugin, payload));
-                      p.sendMessage(plugin.messages().prefixed("orbital-rod-received")); };
+                      p.sendMessage(plugin.secret().prefixed("orbital-rod-received")); };
         new ConfirmGui(plugin, summary, action, null).open(p);
     }
 }

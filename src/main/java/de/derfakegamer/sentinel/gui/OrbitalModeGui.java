@@ -13,15 +13,17 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import java.util.List;
 
 public final class OrbitalModeGui extends Gui {
-    private static final int ROD = 11, COORDS = 15, CLOSE = 26;
+    private static final int ROD = 10, COORDS = 12, SCHEDULED = 14, CLOSE = 26;
 
     public OrbitalModeGui(Sentinel plugin) {
         super(plugin);
-        this.inventory = Bukkit.createInventory(this, 27, plugin.messages().plain("gui-orbital-mode-title"));
+        this.inventory = Bukkit.createInventory(this, 27, plugin.secret().plain("gui-orbital-mode-title"));
         inventory.setItem(ROD, Items.button(Material.FISHING_ROD, Component.text("Targeted (rod)", NamedTextColor.AQUA),
             List.of(hint("Pick a payload, then fire with the rod"))));
         inventory.setItem(COORDS, Items.button(Material.COMPASS, Component.text("Coordinates", NamedTextColor.AQUA),
             List.of(hint("Pick dimension + X/Z + payload"))));
+        inventory.setItem(SCHEDULED, Items.button(Material.CLOCK, Component.text("Scheduled strikes", NamedTextColor.AQUA),
+            List.of(hint("Review / cancel pending launches"))));
         inventory.setItem(CLOSE, Items.button(Material.BARRIER, Component.text("Close", NamedTextColor.RED), List.of()));
         fillEmpty();
     }
@@ -35,6 +37,7 @@ public final class OrbitalModeGui extends Gui {
         switch (event.getRawSlot()) {
             case ROD -> new OrbitalPayloadGui(plugin, null, 0, 0).open(p);
             case COORDS -> new OrbitalDimensionGui(plugin).open(p);
+            case SCHEDULED -> new ScheduledStrikesGui(plugin).open(p);
             case CLOSE -> p.closeInventory();
         }
     }

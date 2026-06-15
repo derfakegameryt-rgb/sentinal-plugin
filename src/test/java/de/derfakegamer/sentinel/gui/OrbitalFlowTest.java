@@ -40,8 +40,17 @@ class OrbitalFlowTest {
         PlayerMock p = server.addPlayer("Admin"); p.setOp(true);
         OrbitalModeGui gui = new OrbitalModeGui(plugin);
         gui.open(p);
-        InventoryClickEvent ev = ConfirmGuiTest.clickSlot(p, gui, 15); // Coordinates
+        InventoryClickEvent ev = ConfirmGuiTest.clickSlot(p, gui, 12); // Coordinates
         gui.onClick(ev);
         assertInstanceOf(OrbitalDimensionGui.class, p.getOpenInventory().getTopInventory().getHolder());
+    }
+
+    @Test void scheduledStrikesOpenFromOrbitalMenu() {
+        PlayerMock p = server.addPlayer("Admin"); p.setOp(true);
+        OrbitalModeGui gui = new OrbitalModeGui(plugin);
+        gui.open(p);
+        InventoryClickEvent ev = ConfirmGuiTest.clickSlot(p, gui, 14); // Scheduled strikes
+        gui.onClick(ev);
+        assertInstanceOf(ScheduledStrikesGui.class, p.getOpenInventory().getTopInventory().getHolder());
     }
 }

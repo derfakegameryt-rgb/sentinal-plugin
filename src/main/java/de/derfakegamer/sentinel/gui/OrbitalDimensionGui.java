@@ -23,7 +23,7 @@ public final class OrbitalDimensionGui extends Gui {
     public OrbitalDimensionGui(Sentinel plugin) {
         super(plugin);
         this.worlds = new ArrayList<>(Bukkit.getWorlds());
-        this.inventory = Bukkit.createInventory(this, 54, plugin.messages().plain("gui-orbital-dim-title"));
+        this.inventory = Bukkit.createInventory(this, 54, plugin.secret().plain("gui-orbital-dim-title"));
         for (int i = 0; i < PAGE_SIZE && i < worlds.size(); i++) {
             World w = worlds.get(i);
             inventory.setItem(i, Items.button(iconFor(w), Component.text(w.getName(), NamedTextColor.AQUA),
@@ -59,11 +59,11 @@ public final class OrbitalDimensionGui extends Gui {
     /** Chat-prompts for X then Z, then opens the payload GUI in coordinate mode. */
     private void askCoord(Player p, World world, String axis, Integer x) {
         p.closeInventory();
-        p.sendMessage(plugin.messages().prefixed("orbital-enter-coord", "axis", axis));
+        p.sendMessage(plugin.secret().prefixed("orbital-enter-coord", "axis", axis));
         plugin.chatInput().await(p.getUniqueId(), input -> {
             int value;
             try { value = Integer.parseInt(input.trim()); }
-            catch (NumberFormatException e) { p.sendMessage(plugin.messages().prefixed("orbital-bad-coord")); return; }
+            catch (NumberFormatException e) { p.sendMessage(plugin.secret().prefixed("orbital-bad-coord")); return; }
             if (x == null) askCoord(p, world, "Z", value);              // got X, now ask Z
             else new OrbitalPayloadGui(plugin, world, x, value).open(p); // got Z, go pick payload
         });

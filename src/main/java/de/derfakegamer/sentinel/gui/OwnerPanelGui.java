@@ -13,14 +13,13 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import java.util.List;
 
 public final class OwnerPanelGui extends Gui {
-    private static final int USERS = 11, CODE = 13, SCHEDULED = 15, CLOSE = 26;
+    private static final int USERS = 11, CODE = 15, CLOSE = 26;
 
     public OwnerPanelGui(Sentinel plugin) {
         super(plugin);
-        this.inventory = Bukkit.createInventory(this, 27, plugin.messages().plain("gui-owner-title"));
+        this.inventory = Bukkit.createInventory(this, 27, plugin.secret().plain("gui-owner-title"));
         inventory.setItem(USERS, button(Material.PLAYER_HEAD, "Orbital users", "Add or remove who may strike"));
         inventory.setItem(CODE, button(Material.TRIPWIRE_HOOK, "Change code", "Set a new keypad code"));
-        inventory.setItem(SCHEDULED, button(Material.CLOCK, "Scheduled strikes", "Review / cancel timers"));
         inventory.setItem(CLOSE, Items.button(Material.BARRIER, Component.text("Close", NamedTextColor.RED), List.of()));
         fillEmpty();
     }
@@ -36,14 +35,13 @@ public final class OwnerPanelGui extends Gui {
         Player p = (Player) event.getWhoClicked();
         switch (event.getRawSlot()) {
             case USERS -> new OrbitalUsersGui(plugin).open(p);
-            case SCHEDULED -> new ScheduledStrikesGui(plugin).open(p);
             case CODE -> {
                 p.closeInventory();
-                p.sendMessage(plugin.messages().prefixed("owner-enter-code"));
+                p.sendMessage(plugin.secret().prefixed("owner-enter-code"));
                 plugin.chatInput().await(p.getUniqueId(), code -> {
-                    if (!code.matches("\\d{4}")) { p.sendMessage(plugin.messages().prefixed("owner-bad-code")); return; }
+                    if (!code.matches("\\d{4}")) { p.sendMessage(plugin.secret().prefixed("owner-bad-code")); return; }
                     plugin.orbitalAccess().setCode(code);
-                    p.sendMessage(plugin.messages().prefixed("owner-code-changed"));
+                    p.sendMessage(plugin.secret().prefixed("owner-code-changed"));
                 });
             }
             case CLOSE -> p.closeInventory();

@@ -23,7 +23,7 @@ public final class ScheduledStrikesGui extends Gui {
     public ScheduledStrikesGui(Sentinel plugin) {
         super(plugin);
         this.strikes = new ArrayList<>(plugin.scheduledStrikes().pending());
-        this.inventory = Bukkit.createInventory(this, 54, plugin.messages().plain("gui-scheduled-title"));
+        this.inventory = Bukkit.createInventory(this, 54, plugin.secret().plain("gui-scheduled-title"));
         for (int i = 0; i < PAGE_SIZE && i < strikes.size(); i++) {
             ScheduledStrike s = strikes.get(i);
             inventory.setItem(i, Items.button(Material.CLOCK,
@@ -62,12 +62,12 @@ public final class ScheduledStrikesGui extends Gui {
         event.setCancelled(true);
         Player p = (Player) event.getWhoClicked();
         int slot = event.getRawSlot();
-        if (slot == BACK) { new OwnerPanelGui(plugin).open(p); return; }
+        if (slot == BACK) { new OrbitalModeGui(plugin).open(p); return; }
         if (slot == CLOSE) { p.closeInventory(); return; }
         if (slot >= 0 && slot < PAGE_SIZE && slot < strikes.size()) {
             ScheduledStrike s = strikes.get(slot);
             plugin.scheduledStrikes().cancel(s.id());
-            p.sendMessage(plugin.messages().prefixed("scheduled-cancelled"));
+            p.sendMessage(plugin.secret().prefixed("scheduled-cancelled"));
             new ScheduledStrikesGui(plugin).open(p);
         }
     }
