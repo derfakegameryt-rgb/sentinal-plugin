@@ -14,7 +14,7 @@ import java.util.List;
 
 public final class AdminPanelGui extends Gui {
     private static final int INFO = 10, OPS = 11, BANS = 12, MUTES = 13, REPORTS = 14, STATS = 16;
-    private static final int BACK = 18, CLOSE = 26;
+    private static final int BACK = 19, CLOSE = 25;
 
     public AdminPanelGui(Sentinel plugin) {
         super(plugin);
@@ -27,6 +27,7 @@ public final class AdminPanelGui extends Gui {
         inventory.setItem(STATS, button(Material.CLOCK, "Playtime", "Top players by playtime"));
         inventory.setItem(BACK, Items.button(Material.ARROW, Component.text("Back", NamedTextColor.GRAY), List.of()));
         inventory.setItem(CLOSE, Items.button(Material.BARRIER, Component.text("Close", NamedTextColor.RED), List.of()));
+        border();
         fillEmpty();
     }
 

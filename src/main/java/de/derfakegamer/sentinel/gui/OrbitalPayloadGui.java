@@ -29,6 +29,7 @@ public final class OrbitalPayloadGui extends Gui {
         inventory.setItem(CREEPER, button(Material.CREEPER_HEAD, OrbitalPayload.CHARGED_CREEPER));
         inventory.setItem(BACK, Items.button(Material.ARROW, Component.text("Back", NamedTextColor.GRAY), List.of()));
         inventory.setItem(CLOSE, Items.button(Material.BARRIER, Component.text("Close", NamedTextColor.RED), List.of()));
+        border();
         fillEmpty();
     }
 

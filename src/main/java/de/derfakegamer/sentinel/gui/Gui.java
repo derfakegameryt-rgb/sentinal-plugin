@@ -30,4 +30,27 @@ public abstract class Gui implements InventoryHolder {
             if (inventory.getItem(i) == null) inventory.setItem(i, Items.filler());
         }
     }
+
+    /** Fills the outer border (top row, bottom row, left+right columns) with gray-glass filler. */
+    protected void border() {
+        int size = inventory.getSize();
+        int rows = size / 9;
+        for (int c = 0; c < 9; c++) { set(c); set((rows - 1) * 9 + c); }       // top + bottom rows
+        for (int r = 0; r < rows; r++) { set(r * 9); set(r * 9 + 8); }          // left + right columns
+    }
+
+    private void set(int slot) { if (inventory.getItem(slot) == null) inventory.setItem(slot, Items.filler()); }
+
+    /** Standard bottom nav for paginated list GUIs (54-slot): prev (45), back (48), close (50), next (53). */
+    protected void navBar(boolean hasPrev, boolean hasNext) {
+        for (int i = 45; i <= 53; i++) if (inventory.getItem(i) == null) inventory.setItem(i, Items.filler());
+        if (hasPrev) inventory.setItem(45, Items.button(org.bukkit.Material.ARROW,
+            net.kyori.adventure.text.Component.text("Previous", net.kyori.adventure.text.format.NamedTextColor.GRAY), java.util.List.of()));
+        inventory.setItem(48, Items.button(org.bukkit.Material.ARROW,
+            net.kyori.adventure.text.Component.text("Back", net.kyori.adventure.text.format.NamedTextColor.GRAY), java.util.List.of()));
+        inventory.setItem(50, Items.button(org.bukkit.Material.BARRIER,
+            net.kyori.adventure.text.Component.text("Close", net.kyori.adventure.text.format.NamedTextColor.RED), java.util.List.of()));
+        if (hasNext) inventory.setItem(53, Items.button(org.bukkit.Material.ARROW,
+            net.kyori.adventure.text.Component.text("Next", net.kyori.adventure.text.format.NamedTextColor.GRAY), java.util.List.of()));
+    }
 }

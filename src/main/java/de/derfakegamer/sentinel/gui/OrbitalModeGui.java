@@ -25,6 +25,7 @@ public final class OrbitalModeGui extends Gui {
         inventory.setItem(SCHEDULED, Items.button(Material.CLOCK, Component.text("Scheduled strikes", NamedTextColor.AQUA),
             List.of(hint("Review / cancel pending launches"))));
         inventory.setItem(CLOSE, Items.button(Material.BARRIER, Component.text("Close", NamedTextColor.RED), List.of()));
+        border();
         fillEmpty();
     }
 

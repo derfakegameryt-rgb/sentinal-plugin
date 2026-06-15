@@ -25,6 +25,9 @@ public final class OperatorsGui extends Gui {
         super(plugin);
         this.page = page;
         this.ops = new ArrayList<>(Bukkit.getOperators());
+        this.ops.sort(java.util.Comparator.comparing(
+            op -> op.getName() != null ? op.getName() : op.getUniqueId().toString(),
+            String.CASE_INSENSITIVE_ORDER));
         this.inventory = Bukkit.createInventory(this, 54, plugin.messages().plain("gui-operators-title"));
         int from = page * PAGE_SIZE;
         for (int i = 0; i < PAGE_SIZE && from + i < ops.size(); i++) {

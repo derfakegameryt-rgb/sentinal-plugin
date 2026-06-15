@@ -31,6 +31,7 @@ public final class ConfirmGui extends Gui {
         inventory.setItem(CANCEL, Items.button(Material.RED_WOOL,
             Component.text("Cancel", NamedTextColor.RED),
             List.of(hint("Discard and go back"))));
+        border();
         fillEmpty();
     }
 
