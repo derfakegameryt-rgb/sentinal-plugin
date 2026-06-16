@@ -99,6 +99,22 @@ class PunishmentCommandsTest {
     }
 
     @Test
+    void unknownOfflineNameIsRejected() {
+        Player admin = server.addPlayer("Admin");
+        admin.setOp(true);
+
+        Command banCmd = server.getCommandMap().getCommand("ban");
+        assertNotNull(banCmd, "ban command must be registered");
+
+        boolean handled = new PunishmentCommands(plugin).onCommand(admin, banCmd, "ban",
+                new String[]{"NeverSeenXYZ", "spam"});
+        assertTrue(handled);
+        assertTrue(plugin.punishments().activeList(
+                de.derfakegamer.sentinel.model.PunishmentType.BAN, System.currentTimeMillis()).isEmpty(),
+                "a never-seen name must not produce a phantom ban");
+    }
+
+    @Test
     void historyRendersAfterBan() {
         Player target = server.addPlayer("Offender");
         Player admin = server.addPlayer("Admin");
