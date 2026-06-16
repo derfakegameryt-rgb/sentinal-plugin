@@ -19,8 +19,11 @@ import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 
 public final class UpdateChecker {
+    // List ALL releases and pick the highest version ourselves. Relying on GitHub's single
+    // "latest" flag is unreliable when several release tags point at the same commit (it can
+    // surface an older tag like 1.0.0 instead of the newest) — see parseBestRelease.
     private static final String API =
-        "https://api.github.com/repos/derfakegameryt-rgb/sentinal-plugin/releases/latest";
+        "https://api.github.com/repos/derfakegameryt-rgb/sentinal-plugin/releases?per_page=100";
 
     private final Sentinel plugin;
     private final HttpClient http = HttpClient.newBuilder()
@@ -56,9 +59,13 @@ public final class UpdateChecker {
     }
 
     static String parseJarDownloadUrl(String json) {
-        JsonObject root = JsonParser.parseString(json).getAsJsonObject();
-        if (!root.has("assets")) return null;
-        JsonArray assets = root.getAsJsonArray("assets");
+        return firstJarUrl(JsonParser.parseString(json).getAsJsonObject());
+    }
+
+    /** The first .jar asset's download URL in a single release object, or null. */
+    private static String firstJarUrl(JsonObject release) {
+        if (!release.has("assets")) return null;
+        JsonArray assets = release.getAsJsonArray("assets");
         for (var element : assets) {
             JsonObject asset = element.getAsJsonObject();
             String name = asset.has("name") ? asset.get("name").getAsString() : "";
@@ -68,12 +75,36 @@ public final class UpdateChecker {
         return null;
     }
 
+    /**
+     * From a {@code /releases} (array) response, returns the highest-version, non-draft,
+     * non-prerelease release that ships a .jar, as {@code [tag, jarUrl]} — or null if none.
+     * This is what makes the updater always pick the genuinely newest version, independent of
+     * GitHub's "latest" flag (which misbehaves when tags share a commit).
+     */
+    static String[] parseBestRelease(String json) {
+        JsonArray arr = JsonParser.parseString(json).getAsJsonArray();
+        String bestTag = null, bestUrl = null;
+        for (var element : arr) {
+            JsonObject rel = element.getAsJsonObject();
+            if (rel.has("draft") && rel.get("draft").getAsBoolean()) continue;
+            if (rel.has("prerelease") && rel.get("prerelease").getAsBoolean()) continue;
+            String tag = rel.has("tag_name") ? rel.get("tag_name").getAsString() : null;
+            if (tag == null) continue;
+            String jar = firstJarUrl(rel);
+            if (jar == null) continue;
+            if (bestTag == null || Version.isNewer(tag, bestTag)) { bestTag = tag; bestUrl = jar; }
+        }
+        return bestTag == null ? null : new String[]{bestTag, bestUrl};
+    }
+
     /** Network check (runs async). Downloads if newer; notifies the requester (or staff on a scheduled run). */
     private void check(CommandSender requester) {
         try {
             String body = httpGet(API);
-            String tag = parseLatestTag(body);
-            if (tag == null) { report(requester, "update-failed", "error", "no release tag"); return; }
+            String[] best = parseBestRelease(body);
+            if (best == null) { report(requester, "update-failed", "error", "no downloadable release found"); return; }
+            String tag = best[0];
+            String jarUrl = best[1];
 
             if (!isNewer(tag)) {
                 if (requester != null) report(requester, "update-up-to-date",
@@ -81,9 +112,6 @@ public final class UpdateChecker {
                 return;
             }
             if (tag.equals(downloadedVersion)) return; // already downloaded this release this session
-
-            String jarUrl = parseJarDownloadUrl(body);
-            if (jarUrl == null) { report(requester, "update-failed", "error", "no jar asset in release"); return; }
 
             File dest = new File(Bukkit.getUpdateFolderFile(), plugin.pluginJar().getName());
             download(jarUrl, dest);
