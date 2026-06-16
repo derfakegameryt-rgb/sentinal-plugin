@@ -61,3 +61,7 @@ templates:        # quick punishments: "<type> [duration] <reason>"
   - "mute 1d Spam"
   - "kick Please read the rules"
   - "warn Inappropriate language"
+
+afk:
+  enabled: true
+  kick-minutes: 15   # kick a player idle this long; 0 disables
