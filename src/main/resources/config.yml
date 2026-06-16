@@ -61,3 +61,15 @@ templates:        # quick punishments: "<type> [duration] <reason>"
   - "mute 1d Spam"
   - "kick Please read the rules"
   - "warn Inappropriate language"
+
+afk:
+  enabled: true
+  minutes: 5   # flag a player AFK after this many idle minutes (detection only, no kick); 0 disables
+
+backup:
+  keep: 5   # how many backup zips to retain
+
+# Scheduled console commands. Each entry needs a "do" plus either "every" (interval) or "at" (daily HH:mm).
+scheduled-tasks: []
+#  - { every: "2h", do: "say Remember to vote!" }
+#  - { at: "04:00", do: "restart 60s" }

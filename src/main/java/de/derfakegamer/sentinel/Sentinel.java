@@ -41,6 +41,9 @@ public class Sentinel extends JavaPlugin {
     private de.derfakegamer.sentinel.listener.OrbitalAccessListener orbitalAccessListener;
     private de.derfakegamer.sentinel.manager.ScheduledStrikeManager scheduledStrikeManager;
     private de.derfakegamer.sentinel.command.OrbitalBukkitCommand orbitalCommand;
+    private de.derfakegamer.sentinel.manager.AfkManager afkManager;
+    private de.derfakegamer.sentinel.manager.BackupManager backupManager;
+    private de.derfakegamer.sentinel.manager.CronManager cronManager;
 
     @Override
     public void onEnable() {
@@ -94,6 +97,8 @@ public class Sentinel extends JavaPlugin {
         this.maintenanceManager = new de.derfakegamer.sentinel.manager.MaintenanceManager(this);
         this.autoAnnouncer = new de.derfakegamer.sentinel.manager.AutoAnnouncer(this);
         this.restartManager = new de.derfakegamer.sentinel.manager.RestartManager(this);
+        this.afkManager = new de.derfakegamer.sentinel.manager.AfkManager();
+        this.backupManager = new de.derfakegamer.sentinel.manager.BackupManager(this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.gui.GuiListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.LoginListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.ChatListener(this), this);
@@ -105,6 +110,17 @@ public class Sentinel extends JavaPlugin {
         for (org.bukkit.entity.Player online : getServer().getOnlinePlayers()) this.orbitalAccessListener.apply(online);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.CommandLogListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.ServerPingListener(this), this);
+        getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.ActivityListener(this), this);
+        getServer().getScheduler().runTaskTimer(this, () -> {
+            if (!getConfig().getBoolean("afk.enabled", true)) return;
+            int mins = getConfig().getInt("afk.minutes", 5);
+            if (mins <= 0) return;
+            long now = System.currentTimeMillis();
+            for (org.bukkit.entity.Player p : getServer().getOnlinePlayers()) {
+                if (afk().idleMs(p.getUniqueId(), now) > mins * 60_000L && afk().markAfk(p.getUniqueId()))
+                    getServer().broadcast(messages().plain("afk-now", "player", p.getName()));
+            }
+        }, 600L, 600L);
         SentinelCommand sentinelCmd = new de.derfakegamer.sentinel.command.SentinelCommand(this);
         getCommand("sentinel").setExecutor(sentinelCmd);
         getCommand("sn").setExecutor(sentinelCmd);
@@ -125,7 +141,10 @@ public class Sentinel extends JavaPlugin {
         getCommand("broadcast").setExecutor(new de.derfakegamer.sentinel.command.BroadcastCommand(this));
         getCommand("restart").setExecutor(new de.derfakegamer.sentinel.command.RestartCommand(this));
         getCommand("playtime").setExecutor(new de.derfakegamer.sentinel.command.PlaytimeCommand(this));
+        getCommand("backup").setExecutor(new de.derfakegamer.sentinel.command.BackupCommand(this));
         this.autoAnnouncer.start();
+        this.cronManager = new de.derfakegamer.sentinel.manager.CronManager(this);
+        this.cronManager.start();
         this.updateChecker = new de.derfakegamer.sentinel.updater.UpdateChecker(this);
         this.updateChecker.start();
         getLogger().info("Sentinel enabled.");
@@ -204,6 +223,9 @@ public class Sentinel extends JavaPlugin {
     public de.derfakegamer.sentinel.manager.OrbitalAccess orbitalAccess() { return orbitalAccess; }
     public de.derfakegamer.sentinel.listener.OrbitalAccessListener orbitalAccessListener() { return orbitalAccessListener; }
     public de.derfakegamer.sentinel.manager.ScheduledStrikeManager scheduledStrikes() { return scheduledStrikeManager; }
+    public de.derfakegamer.sentinel.manager.AfkManager afk() { return afkManager; }
+    public de.derfakegamer.sentinel.manager.CronManager cron() { return cronManager; }
+    public de.derfakegamer.sentinel.manager.BackupManager backup() { return backupManager; }
 
     public java.io.File pluginJar() { return getFile(); }
 

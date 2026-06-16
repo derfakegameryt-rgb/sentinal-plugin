@@ -5,7 +5,6 @@ import de.derfakegamer.sentinel.manager.PunishmentManager;
 import de.derfakegamer.sentinel.model.Punishment;
 import de.derfakegamer.sentinel.util.DurationParser;
 import org.bukkit.Bukkit;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -145,15 +144,14 @@ public final class PunishmentCommands implements CommandExecutor, TabCompleter {
     private record Target(UUID id, String name, String ip) {}
 
     private Target resolve(CommandSender sender, String name) {
-        OfflinePlayer op = Bukkit.getOfflinePlayer(name);
-        if (op.getUniqueId() == null) { sender.sendMessage(plugin.messages().prefixed("player-not-found")); return null; }
-        String ip = (op.getPlayer() != null && op.getPlayer().getAddress() != null)
-            ? op.getPlayer().getAddress().getAddress().getHostAddress() : null;
-        if (ip == null) {
-            var rec = plugin.players().byUuid(op.getUniqueId());
-            if (rec != null) ip = rec.lastIp();
+        Player online = Bukkit.getPlayerExact(name);
+        if (online != null) {
+            String ip = online.getAddress() != null ? online.getAddress().getAddress().getHostAddress() : null;
+            return new Target(online.getUniqueId(), online.getName(), ip);
         }
-        return new Target(op.getUniqueId(), name, ip);
+        de.derfakegamer.sentinel.model.PlayerRecord rec = plugin.players().byName(name);
+        if (rec == null) { sender.sendMessage(plugin.messages().prefixed("player-not-found")); return null; }
+        return new Target(rec.uuid(), rec.name(), rec.lastIp());
     }
 
     private boolean usage(CommandSender sender, String usage) {
