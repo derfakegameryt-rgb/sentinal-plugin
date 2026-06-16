@@ -77,6 +77,11 @@ afk:
 backup:
   keep: 5   # how many backup zips to retain
 
+# Appeals: a public URL shown on the ban screen so banned players know where to appeal
+# (banned players cannot run commands). Leave blank to show no appeal line.
+appeals:
+  url: ""
+
 # Scheduled console commands. Each entry needs a "do" plus either "every" (interval) or "at" (daily HH:mm).
 scheduled-tasks: []
 #  - { every: "2h", do: "say Remember to vote!" }

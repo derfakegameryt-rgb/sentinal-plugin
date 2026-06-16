@@ -48,7 +48,11 @@ public final class ModerationService {
         Player online = Bukkit.getPlayer(targetId);
         if (online != null) {
             switch (type) {
-                case BAN, IPBAN -> online.kick(plugin.messages().plain("ban-screen", "reason", reason, "duration", dur));
+                case BAN, IPBAN -> {
+                    String url = plugin.getConfig().getString("appeals.url", "");
+                    String appealSuffix = url.isBlank() ? "" : "\n\nAppeal at: " + url;
+                    online.kick(plugin.messages().plain("ban-screen", "reason", reason, "duration", dur, "appeal", appealSuffix));
+                }
                 case KICK -> online.kick(plugin.messages().plain("kick-screen", "reason", reason));
                 case MUTE -> online.sendMessage(plugin.messages().prefixed("you-were-muted", "reason", reason, "duration", dur));
                 case WARN -> online.sendMessage(plugin.messages().prefixed("you-were-warned", "reason", reason));

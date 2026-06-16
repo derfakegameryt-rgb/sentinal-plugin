@@ -45,6 +45,7 @@ public class Sentinel extends JavaPlugin {
     private de.derfakegamer.sentinel.manager.AfkManager afkManager;
     private de.derfakegamer.sentinel.manager.BackupManager backupManager;
     private de.derfakegamer.sentinel.manager.CronManager cronManager;
+    private de.derfakegamer.sentinel.manager.AppealManager appealManager;
 
     @Override
     public void onEnable() {
@@ -83,6 +84,8 @@ public class Sentinel extends JavaPlugin {
         this.chatInputManager = new de.derfakegamer.sentinel.manager.ChatInputManager();
         this.reportManager = new de.derfakegamer.sentinel.manager.ReportManager(this,
             new de.derfakegamer.sentinel.storage.ReportDao(database));
+        this.appealManager = new de.derfakegamer.sentinel.manager.AppealManager(this,
+            new de.derfakegamer.sentinel.storage.AppealDao(database));
         this.staffChatManager = new de.derfakegamer.sentinel.manager.StaffChatManager(this);
         this.freezeManager = new de.derfakegamer.sentinel.manager.FreezeManager();
         this.vanishManager = new de.derfakegamer.sentinel.manager.VanishManager(this);
@@ -134,6 +137,7 @@ public class Sentinel extends JavaPlugin {
             getCommand(c).setTabCompleter(pc);
         }
         getCommand("report").setExecutor(new de.derfakegamer.sentinel.command.ReportCommand(this));
+        getCommand("appeal").setExecutor(new de.derfakegamer.sentinel.command.AppealCommand(this));
         getCommand("rules").setExecutor(new de.derfakegamer.sentinel.command.RulesCommand(this));
         getCommand("sc").setExecutor(new de.derfakegamer.sentinel.command.StaffChatCommand(this));
         getCommand("clearchat").setExecutor(new de.derfakegamer.sentinel.command.ClearChatCommand(this));
@@ -206,6 +210,7 @@ public class Sentinel extends JavaPlugin {
     public de.derfakegamer.sentinel.manager.ModerationService moderation() { return moderationService; }
     public de.derfakegamer.sentinel.manager.ChatInputManager chatInput() { return chatInputManager; }
     public de.derfakegamer.sentinel.manager.ReportManager reports() { return reportManager; }
+    public de.derfakegamer.sentinel.manager.AppealManager appeals() { return appealManager; }
     public de.derfakegamer.sentinel.manager.StaffChatManager staffChat() { return staffChatManager; }
     public de.derfakegamer.sentinel.manager.FreezeManager freeze() { return freezeManager; }
     public de.derfakegamer.sentinel.manager.VanishManager vanish() { return vanishManager; }
