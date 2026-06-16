@@ -22,7 +22,7 @@ public final class StatsGui extends Gui {
         List<PlayerRecord> top = plugin.players().topByPlaytime(45);
         for (int i = 0; i < top.size() && i < 45; i++) {
             PlayerRecord r = top.get(i);
-            long ms = plugin.players().playtime(r.uuid());
+            long ms = r.playtime();
             inventory.setItem(i, Items.head(Bukkit.getOfflinePlayer(r.uuid()),
                 Component.text("#" + (i + 1) + " " + r.name(), NamedTextColor.AQUA),
                 List.of(Component.text("Playtime: " + (ms / 3600000) + "h " + (ms / 60000 % 60) + "m", NamedTextColor.GRAY)

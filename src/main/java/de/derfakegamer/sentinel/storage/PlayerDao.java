@@ -95,6 +95,6 @@ public final class PlayerDao {
 
     private PlayerRecord map(ResultSet rs) throws SQLException {
         return new PlayerRecord(UUID.fromString(rs.getString("uuid")), rs.getString("name"),
-            rs.getString("last_ip"), rs.getLong("first_seen"), rs.getLong("last_seen"));
+            rs.getString("last_ip"), rs.getLong("first_seen"), rs.getLong("last_seen"), rs.getLong("playtime"));
     }
 }

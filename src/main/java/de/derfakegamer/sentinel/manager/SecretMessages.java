@@ -55,11 +55,32 @@ public final class SecretMessages {
     private String raw(String key) { return templates.getOrDefault(key, key); }
 
     public Component prefixed(String key, String... placeholders) {
-        return mm.deserialize(prefix + raw(key), resolvers(placeholders));
+        return deserialize(prefix + raw(key), placeholders);
     }
 
     public Component plain(String key, String... placeholders) {
-        return mm.deserialize(raw(key), resolvers(placeholders));
+        return deserialize(raw(key), placeholders);
+    }
+
+    /**
+     * Deserializes a MiniMessage template, but never throws: a single bad tag must not blow up
+     * a command or listener. On any parse failure we fall back to the raw template with
+     * placeholders substituted as plain text.
+     */
+    private Component deserialize(String template, String... placeholders) {
+        try {
+            return mm.deserialize(template, resolvers(placeholders));
+        } catch (Throwable t) {
+            return Component.text(substitute(template, placeholders));
+        }
+    }
+
+    private static String substitute(String template, String... kv) {
+        String out = template;
+        for (int i = 0; i + 1 < kv.length; i += 2) {
+            out = out.replace("<" + kv[i] + ">", kv[i + 1]);
+        }
+        return out;
     }
 
     private TagResolver[] resolvers(String... kv) {

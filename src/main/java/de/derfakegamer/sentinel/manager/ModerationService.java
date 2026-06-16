@@ -42,8 +42,19 @@ public final class ModerationService {
         Bukkit.broadcast(plugin.messages().prefixed(key, "player", targetName, "reason", reason));
         plugin.discord().post("**" + targetName + "** was " + key + " by " + issuerName
             + (reason == null || reason.isBlank() ? "" : ": " + reason));
-        if (type == PunishmentType.BAN || type == PunishmentType.IPBAN || type == PunishmentType.KICK)
-            kickIfOnline(targetId, reason);
+
+        long now = System.currentTimeMillis();
+        String dur = de.derfakegamer.sentinel.util.TimeFormat.until(expiresAt, now);
+        Player online = Bukkit.getPlayer(targetId);
+        if (online != null) {
+            switch (type) {
+                case BAN, IPBAN -> online.kick(plugin.messages().plain("ban-screen", "reason", reason, "duration", dur));
+                case KICK -> online.kick(plugin.messages().plain("kick-screen", "reason", reason));
+                case MUTE -> online.sendMessage(plugin.messages().prefixed("you-were-muted", "reason", reason, "duration", dur));
+                case WARN -> online.sendMessage(plugin.messages().prefixed("you-were-warned", "reason", reason));
+                default -> {}
+            }
+        }
         if (type == PunishmentType.WARN) {
             int count = plugin.punishments().warnCount(targetId);
             de.derfakegamer.sentinel.model.EscalationAction esc = plugin.escalation().actionFor(count);
@@ -78,8 +89,4 @@ public final class ModerationService {
         return ok;
     }
 
-    private void kickIfOnline(UUID id, String reason) {
-        Player online = Bukkit.getPlayer(id);
-        if (online != null) online.kick(plugin.messages().plain("ban-screen", "reason", reason));
-    }
 }

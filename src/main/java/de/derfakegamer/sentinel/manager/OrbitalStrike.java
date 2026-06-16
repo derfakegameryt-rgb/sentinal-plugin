@@ -33,22 +33,39 @@ public final class OrbitalStrike {
         };
     }
 
+    /** How many in-block explosions to detonate per server tick (avoids a single-tick freeze). */
+    private static final int BATCH_PER_TICK = 8;
+
     /**
-     * Instantly carves a hole straight down to bedrock at X/Z by detonating in-block
-     * explosions all the way up the column (no falling entities — they would just destroy
-     * each other). Bigger payloads = bigger blast. Server-only.
+     * Carves a hole straight down to bedrock at X/Z by detonating in-block explosions all the
+     * way up the column (no falling entities — they would just destroy each other). Bigger
+     * payloads = bigger blast. The explosions are staggered across ticks ({@link #BATCH_PER_TICK}
+     * per tick) so a tall column never freezes the server in a single tick. Server-only.
      */
     public void strike(World world, int x, int z, OrbitalPayload payload) {
         float power = power(payload);
         int top = TOP;
         try { top = Math.min(TOP, world.getHighestBlockYAt(x, z) + 8); } catch (Throwable ignored) { /* test env */ }
-        for (int y = BOTTOM; y <= top; y += STRIKE_STEP) {
-            try {
-                world.createExplosion(x + 0.5, y, z + 0.5, power, false, true);
-            } catch (Throwable t) {
-                // one failed explosion (e.g. unloaded edge, test env) must not abort the strike
-                plugin.getLogger().fine("orbital explosion failed at y=" + y + ": " + t.getMessage());
+
+        final List<Integer> ys = new ArrayList<>();
+        for (int y = BOTTOM; y <= top; y += STRIKE_STEP) ys.add(y);
+
+        new org.bukkit.scheduler.BukkitRunnable() {
+            int index = 0;
+            @Override public void run() {
+                int fired = 0;
+                while (index < ys.size() && fired < BATCH_PER_TICK) {
+                    int y = ys.get(index++);
+                    fired++;
+                    try {
+                        world.createExplosion(x + 0.5, y, z + 0.5, power, false, true);
+                    } catch (Throwable t) {
+                        // one failed explosion (e.g. unloaded edge, test env) must not abort the strike
+                        plugin.getLogger().fine("orbital explosion failed at y=" + y + ": " + t.getMessage());
+                    }
+                }
+                if (index >= ys.size()) cancel();
             }
-        }
+        }.runTaskTimer(plugin, 0L, 1L);
     }
 }

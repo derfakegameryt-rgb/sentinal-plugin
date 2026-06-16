@@ -50,10 +50,12 @@ public final class ChatListener implements Listener {
             return;
         }
 
-        Punishment mute = plugin.punishments().activeMute(id, System.currentTimeMillis());
+        long now = System.currentTimeMillis();
+        Punishment mute = plugin.punishments().activeMute(id, now);
         if (mute != null) {
             event.setCancelled(true);
-            event.getPlayer().sendMessage(plugin.messages().prefixed("you-are-muted", "reason", mute.reason()));
+            event.getPlayer().sendMessage(plugin.messages().prefixed("you-are-muted",
+                "reason", mute.reason(), "duration", de.derfakegamer.sentinel.util.TimeFormat.until(mute.expiresAt(), now)));
         }
 
         if (!event.isCancelled() && !event.getPlayer().isOp()) {

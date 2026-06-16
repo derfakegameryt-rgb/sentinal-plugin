@@ -14,14 +14,14 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class ScheduledStrikeManager {
     private final Sentinel plugin;
     private final ScheduledStrikeDao dao;
-    private final Map<Long, List<Integer>> tasks = new HashMap<>();
+    private final Map<Long, List<Integer>> tasks = new ConcurrentHashMap<>();
 
     public ScheduledStrikeManager(Sentinel plugin, ScheduledStrikeDao dao) { this.plugin = plugin; this.dao = dao; }
 
