@@ -67,8 +67,7 @@ public final class CronManager {
         final long intervalMs;          // >0 for interval tasks
         final LocalTime at;             // non-null for daily tasks
         long lastRun = Long.MIN_VALUE;  // for interval de-dup
-        long lastFiredEpochDay = Long.MIN_VALUE;
-        int lastFiredMinuteOfDay = -1;  // for daily de-dup within the same minute
+        long lastFiredEpochDay = Long.MIN_VALUE; // for daily once-per-day de-dup
 
         private Task(String command, long intervalMs, LocalTime at) {
             this.command = command; this.intervalMs = intervalMs; this.at = at;
@@ -78,14 +77,13 @@ public final class CronManager {
 
         boolean isDue(long nowMs, LocalTime time) {
             if (at != null) {
-                // Fire once when the wall clock reaches the same hour:minute, at most once per day.
+                // Fire once per day on the first tick at or after the target time. Using ">=" (rather than an
+                // exact minute match) means a tick that drifts past the target minute — server lag, a missed
+                // tick — still fires that day instead of silently skipping it.
                 long epochDay = Math.floorDiv(nowMs, 86_400_000L);
-                int minuteOfDay = time.getHour() * 60 + time.getMinute();
-                boolean clockMatches = time.getHour() == at.getHour() && time.getMinute() == at.getMinute();
-                boolean alreadyFired = epochDay == lastFiredEpochDay && minuteOfDay == lastFiredMinuteOfDay;
-                if (clockMatches && !alreadyFired) {
+                boolean atOrAfter = !time.isBefore(at);
+                if (atOrAfter && epochDay != lastFiredEpochDay) {
                     lastFiredEpochDay = epochDay;
-                    lastFiredMinuteOfDay = minuteOfDay;
                     return true;
                 }
                 return false;

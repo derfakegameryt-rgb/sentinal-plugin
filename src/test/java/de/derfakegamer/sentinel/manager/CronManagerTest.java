@@ -54,6 +54,16 @@ class CronManagerTest {
         assertEquals(List.of("restart 60s"), cron.due(day2, LocalTime.of(4, 0))); // next day fires again
     }
 
+    @Test void dailyStillFiresWhenTickDriftsPastTargetMinute() {
+        // The 60s tick never lands exactly on 04:00 (lag/drift): 03:59 then 04:01.
+        // It must still fire that day instead of being silently skipped.
+        CronManager cron = withTasks(List.of(Map.of("at", "04:00", "do", "restart 60s")));
+        long day = 0L;
+        assertTrue(cron.due(day, LocalTime.of(3, 59)).isEmpty());
+        assertEquals(List.of("restart 60s"), cron.due(day, LocalTime.of(4, 1)));
+        assertTrue(cron.due(day, LocalTime.of(4, 2)).isEmpty()); // already fired today
+    }
+
     @Test void invalidEntryIsSkippedNotCrashed() {
         CronManager cron = withTasks(List.of(Map.of("do", "noop")));  // no every/at
         assertEquals(0, cron.taskCount());
