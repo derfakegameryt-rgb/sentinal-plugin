@@ -42,6 +42,7 @@ public class Sentinel extends JavaPlugin {
     private de.derfakegamer.sentinel.manager.ScheduledStrikeManager scheduledStrikeManager;
     private de.derfakegamer.sentinel.command.OrbitalBukkitCommand orbitalCommand;
     private de.derfakegamer.sentinel.manager.AfkManager afkManager;
+    private de.derfakegamer.sentinel.manager.BackupManager backupManager;
 
     @Override
     public void onEnable() {
@@ -96,6 +97,7 @@ public class Sentinel extends JavaPlugin {
         this.autoAnnouncer = new de.derfakegamer.sentinel.manager.AutoAnnouncer(this);
         this.restartManager = new de.derfakegamer.sentinel.manager.RestartManager(this);
         this.afkManager = new de.derfakegamer.sentinel.manager.AfkManager();
+        this.backupManager = new de.derfakegamer.sentinel.manager.BackupManager(this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.gui.GuiListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.LoginListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.ChatListener(this), this);
@@ -138,6 +140,7 @@ public class Sentinel extends JavaPlugin {
         getCommand("broadcast").setExecutor(new de.derfakegamer.sentinel.command.BroadcastCommand(this));
         getCommand("restart").setExecutor(new de.derfakegamer.sentinel.command.RestartCommand(this));
         getCommand("playtime").setExecutor(new de.derfakegamer.sentinel.command.PlaytimeCommand(this));
+        getCommand("backup").setExecutor(new de.derfakegamer.sentinel.command.BackupCommand(this));
         this.autoAnnouncer.start();
         this.updateChecker = new de.derfakegamer.sentinel.updater.UpdateChecker(this);
         this.updateChecker.start();
@@ -218,6 +221,7 @@ public class Sentinel extends JavaPlugin {
     public de.derfakegamer.sentinel.listener.OrbitalAccessListener orbitalAccessListener() { return orbitalAccessListener; }
     public de.derfakegamer.sentinel.manager.ScheduledStrikeManager scheduledStrikes() { return scheduledStrikeManager; }
     public de.derfakegamer.sentinel.manager.AfkManager afk() { return afkManager; }
+    public de.derfakegamer.sentinel.manager.BackupManager backup() { return backupManager; }
 
     public java.io.File pluginJar() { return getFile(); }
 

@@ -65,3 +65,6 @@ templates:        # quick punishments: "<type> [duration] <reason>"
 afk:
   enabled: true
   kick-minutes: 15   # kick a player idle this long; 0 disables
+
+backup:
+  keep: 5   # how many backup zips to retain
