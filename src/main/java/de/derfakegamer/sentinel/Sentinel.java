@@ -110,7 +110,6 @@ public class Sentinel extends JavaPlugin {
         this.orbitalAccessListener = new de.derfakegamer.sentinel.listener.OrbitalAccessListener(this);
         getServer().getPluginManager().registerEvents(this.orbitalAccessListener, this);
         for (org.bukkit.entity.Player online : getServer().getOnlinePlayers()) this.orbitalAccessListener.apply(online);
-        getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.CommandLogListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.ServerPingListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.ActivityListener(this), this);
         getServer().getScheduler().runTaskTimer(this, () -> {

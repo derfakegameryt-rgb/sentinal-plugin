@@ -60,5 +60,10 @@ public final class OrbitalAccessListener implements Listener {
             if (owner) a.setPermission("sentinel.use", true);
             attachments.put(player.getUniqueId(), a);
         }
+
+        // Re-send the client's command tree so tab-completion reflects the just-granted
+        // permissions immediately — without this the owner wouldn't see the (runtime-registered)
+        // orbitalstrike command, nor reliably tab-fill the rest, until a relog.
+        try { player.updateCommands(); } catch (Throwable ignored) { /* unsupported in test JVM */ }
     }
 }
