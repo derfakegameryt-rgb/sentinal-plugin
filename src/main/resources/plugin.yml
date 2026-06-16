@@ -21,6 +21,9 @@ commands:
   unshadowmute: { description: Remove a shadow-mute, permission: sentinel.use }
   history: { description: View a player's punishment history, permission: sentinel.use }
   report: { description: Report a player }
+  appeal:
+    description: Appeal an active mute.
+    usage: /appeal <reason>
   rules: { description: Show the server rules }
   sc: { description: Staff chat, permission: sentinel.use }
   clearchat: { description: Clear the chat, aliases: [cc], permission: sentinel.use }
@@ -34,4 +37,28 @@ commands:
 permissions:
   sentinel.use:
     description: Access Sentinel's operator commands
+    default: op
+  sentinel.ban:
+    description: Ban and tempban players
+    default: op
+  sentinel.ipban:
+    description: IP-ban players
+    default: op
+  sentinel.mute:
+    description: Mute and tempmute players
+    default: op
+  sentinel.kick:
+    description: Kick players
+    default: op
+  sentinel.warn:
+    description: Warn players
+    default: op
+  sentinel.shadowmute:
+    description: Shadow-mute players
+    default: op
+  sentinel.unban:
+    description: Remove bans
+    default: op
+  sentinel.unmute:
+    description: Remove mutes
     default: op

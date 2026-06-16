@@ -68,6 +68,7 @@ public final class TemplatesGui extends Gui {
             default -> { return; }
         }
         String reason = reasonFrom >= parts.length ? "" : String.join(" ", java.util.Arrays.copyOfRange(parts, reasonFrom, parts.length));
+        if (!plugin.staffPerms().canPerform(mod, type)) { mod.sendMessage(plugin.messages().prefixed("no-permission")); return; }
         plugin.moderation().apply(mod.getUniqueId(), mod.getName(), target.getUniqueId(),
             target.getName() == null ? "?" : target.getName(),
             target.getPlayer() != null && target.getPlayer().getAddress() != null

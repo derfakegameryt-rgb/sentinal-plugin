@@ -65,6 +65,9 @@ public final class AltsGui extends Gui {
         if (slot == BACK) { new PlayerActionsGui(plugin, target).open(mod); return; }
         if (slot == CLOSE) { mod.closeInventory(); return; }
         if (slot == BAN_ALL) {
+            if (!plugin.staffPerms().canPerform(mod, de.derfakegamer.sentinel.model.PunishmentType.BAN)) {
+                mod.sendMessage(plugin.messages().prefixed("no-permission")); return;
+            }
             Player p = mod;
             new ConfirmGui(plugin, Component.text("Ban " + (alts.size() + 1) + " accounts?", NamedTextColor.RED), () -> {
                 plugin.moderation().apply(p.getUniqueId(), p.getName(), target.getUniqueId(),

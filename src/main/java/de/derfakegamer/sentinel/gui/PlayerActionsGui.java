@@ -129,22 +129,46 @@ public final class PlayerActionsGui extends Gui {
         Player mod = (Player) event.getWhoClicked();
         switch (event.getRawSlot()) {
             case BAN -> {
-                if (banned) { plugin.moderation().removeBan(mod.getUniqueId(), mod.getName(), target.getUniqueId(), name()); mod.closeInventory(); }
-                else new ReasonGui(plugin, target, null, PunishmentType.BAN, 0).open(mod);
+                if (banned) {
+                    if (!plugin.staffPerms().canUse(mod, "sentinel.unban")) { mod.sendMessage(plugin.messages().prefixed("no-permission")); return; }
+                    plugin.moderation().removeBan(mod.getUniqueId(), mod.getName(), target.getUniqueId(), name()); mod.closeInventory();
+                } else {
+                    if (!plugin.staffPerms().canPerform(mod, PunishmentType.BAN)) { mod.sendMessage(plugin.messages().prefixed("no-permission")); return; }
+                    new ReasonGui(plugin, target, null, PunishmentType.BAN, 0).open(mod);
+                }
             }
             case MUTE -> {
-                if (muted) { plugin.moderation().removeMute(mod.getUniqueId(), mod.getName(), target.getUniqueId(), name()); mod.closeInventory(); }
-                else new ReasonGui(plugin, target, null, PunishmentType.MUTE, 0).open(mod);
+                if (muted) {
+                    if (!plugin.staffPerms().canUse(mod, "sentinel.unmute")) { mod.sendMessage(plugin.messages().prefixed("no-permission")); return; }
+                    plugin.moderation().removeMute(mod.getUniqueId(), mod.getName(), target.getUniqueId(), name()); mod.closeInventory();
+                } else {
+                    if (!plugin.staffPerms().canPerform(mod, PunishmentType.MUTE)) { mod.sendMessage(plugin.messages().prefixed("no-permission")); return; }
+                    new ReasonGui(plugin, target, null, PunishmentType.MUTE, 0).open(mod);
+                }
             }
             case SHADOWMUTE_SLOT -> {
+                if (!plugin.staffPerms().canPerform(mod, PunishmentType.SHADOWMUTE)) { mod.sendMessage(plugin.messages().prefixed("no-permission")); return; }
                 if (shadowMuted) { plugin.moderation().removeShadowMute(mod.getUniqueId(), mod.getName(), target.getUniqueId(), name()); mod.closeInventory(); }
                 else new ReasonGui(plugin, target, null, PunishmentType.SHADOWMUTE, 0).open(mod);
             }
-            case TEMPBAN -> awaitDuration(mod, PunishmentType.BAN);
-            case TEMPMUTE -> awaitDuration(mod, PunishmentType.MUTE);
-            case KICK -> new ReasonGui(plugin, target, null, PunishmentType.KICK, 0).open(mod);
-            case WARN -> new ReasonGui(plugin, target, null, PunishmentType.WARN, 0).open(mod);
+            case TEMPBAN -> {
+                if (!plugin.staffPerms().canPerform(mod, PunishmentType.BAN)) { mod.sendMessage(plugin.messages().prefixed("no-permission")); return; }
+                awaitDuration(mod, PunishmentType.BAN);
+            }
+            case TEMPMUTE -> {
+                if (!plugin.staffPerms().canPerform(mod, PunishmentType.MUTE)) { mod.sendMessage(plugin.messages().prefixed("no-permission")); return; }
+                awaitDuration(mod, PunishmentType.MUTE);
+            }
+            case KICK -> {
+                if (!plugin.staffPerms().canPerform(mod, PunishmentType.KICK)) { mod.sendMessage(plugin.messages().prefixed("no-permission")); return; }
+                new ReasonGui(plugin, target, null, PunishmentType.KICK, 0).open(mod);
+            }
+            case WARN -> {
+                if (!plugin.staffPerms().canPerform(mod, PunishmentType.WARN)) { mod.sendMessage(plugin.messages().prefixed("no-permission")); return; }
+                new ReasonGui(plugin, target, null, PunishmentType.WARN, 0).open(mod);
+            }
             case IPBAN -> {
+                if (!plugin.staffPerms().canPerform(mod, PunishmentType.IPBAN)) { mod.sendMessage(plugin.messages().prefixed("no-permission")); return; }
                 String ip = ip();
                 if (ip != null) new ReasonGui(plugin, target, ip, PunishmentType.IPBAN, 0).open(mod);
                 else mod.sendMessage(plugin.messages().prefixed("ipban-requires-online"));

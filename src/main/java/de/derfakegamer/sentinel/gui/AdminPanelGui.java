@@ -14,6 +14,7 @@ import java.util.List;
 
 public final class AdminPanelGui extends Gui {
     private static final int INFO = 10, OPS = 11, BANS = 12, MUTES = 13, REPORTS = 14, WHITELIST = 15, STATS = 16;
+    private static final int APPEALS = 22;
     private static final int BACK = 19, CLOSE = 25;
 
     public AdminPanelGui(Sentinel plugin) {
@@ -26,6 +27,7 @@ public final class AdminPanelGui extends Gui {
         inventory.setItem(REPORTS, button(Material.PAPER, "Open Reports", "Reports waiting for staff"));
         inventory.setItem(WHITELIST, button(Material.NAME_TAG, "Whitelist", "Manage the server whitelist"));
         inventory.setItem(STATS, button(Material.CLOCK, "Playtime", "Top players by playtime"));
+        inventory.setItem(APPEALS, button(Material.WRITABLE_BOOK, "Appeals", "Review ban/mute appeals"));
         inventory.setItem(BACK, Items.button(Material.ARROW, Component.text("Back", NamedTextColor.GRAY), List.of()));
         inventory.setItem(CLOSE, Items.button(Material.BARRIER, Component.text("Close", NamedTextColor.RED), List.of()));
         border();
@@ -49,6 +51,7 @@ public final class AdminPanelGui extends Gui {
             case REPORTS -> new ReportsGui(plugin, 0).open(p);
             case WHITELIST -> new WhitelistGui(plugin, 0).open(p);
             case STATS -> new StatsGui(plugin).open(p);
+            case APPEALS -> new AppealsGui(plugin, 0).open(p);
             case BACK -> new PlayersGui(plugin, 0).open(p);
             case CLOSE -> p.closeInventory();
         }

@@ -37,6 +37,7 @@ public class Sentinel extends JavaPlugin {
     private de.derfakegamer.sentinel.manager.AutoAnnouncer autoAnnouncer;
     private de.derfakegamer.sentinel.manager.RestartManager restartManager;
     private de.derfakegamer.sentinel.manager.OwnerManager ownerManager;
+    private de.derfakegamer.sentinel.util.StaffPermissions staffPermissions;
     private de.derfakegamer.sentinel.manager.OrbitalAccess orbitalAccess;
     private de.derfakegamer.sentinel.listener.OrbitalAccessListener orbitalAccessListener;
     private de.derfakegamer.sentinel.manager.ScheduledStrikeManager scheduledStrikeManager;
@@ -44,6 +45,7 @@ public class Sentinel extends JavaPlugin {
     private de.derfakegamer.sentinel.manager.AfkManager afkManager;
     private de.derfakegamer.sentinel.manager.BackupManager backupManager;
     private de.derfakegamer.sentinel.manager.CronManager cronManager;
+    private de.derfakegamer.sentinel.manager.AppealManager appealManager;
 
     @Override
     public void onEnable() {
@@ -69,6 +71,7 @@ public class Sentinel extends JavaPlugin {
             return;
         }
         this.ownerManager = new de.derfakegamer.sentinel.manager.OwnerManager();
+        this.staffPermissions = new de.derfakegamer.sentinel.util.StaffPermissions(this);
         this.orbitalAccess = new de.derfakegamer.sentinel.manager.OrbitalAccess(this,
             new de.derfakegamer.sentinel.storage.SettingsDao(database),
             new de.derfakegamer.sentinel.storage.OrbitalAllowDao(database));
@@ -81,6 +84,8 @@ public class Sentinel extends JavaPlugin {
         this.chatInputManager = new de.derfakegamer.sentinel.manager.ChatInputManager();
         this.reportManager = new de.derfakegamer.sentinel.manager.ReportManager(this,
             new de.derfakegamer.sentinel.storage.ReportDao(database));
+        this.appealManager = new de.derfakegamer.sentinel.manager.AppealManager(this,
+            new de.derfakegamer.sentinel.storage.AppealDao(database));
         this.staffChatManager = new de.derfakegamer.sentinel.manager.StaffChatManager(this);
         this.freezeManager = new de.derfakegamer.sentinel.manager.FreezeManager();
         this.vanishManager = new de.derfakegamer.sentinel.manager.VanishManager(this);
@@ -108,7 +113,6 @@ public class Sentinel extends JavaPlugin {
         this.orbitalAccessListener = new de.derfakegamer.sentinel.listener.OrbitalAccessListener(this);
         getServer().getPluginManager().registerEvents(this.orbitalAccessListener, this);
         for (org.bukkit.entity.Player online : getServer().getOnlinePlayers()) this.orbitalAccessListener.apply(online);
-        getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.CommandLogListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.ServerPingListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.ActivityListener(this), this);
         getServer().getScheduler().runTaskTimer(this, () -> {
@@ -133,6 +137,7 @@ public class Sentinel extends JavaPlugin {
             getCommand(c).setTabCompleter(pc);
         }
         getCommand("report").setExecutor(new de.derfakegamer.sentinel.command.ReportCommand(this));
+        getCommand("appeal").setExecutor(new de.derfakegamer.sentinel.command.AppealCommand(this));
         getCommand("rules").setExecutor(new de.derfakegamer.sentinel.command.RulesCommand(this));
         getCommand("sc").setExecutor(new de.derfakegamer.sentinel.command.StaffChatCommand(this));
         getCommand("clearchat").setExecutor(new de.derfakegamer.sentinel.command.ClearChatCommand(this));
@@ -205,6 +210,7 @@ public class Sentinel extends JavaPlugin {
     public de.derfakegamer.sentinel.manager.ModerationService moderation() { return moderationService; }
     public de.derfakegamer.sentinel.manager.ChatInputManager chatInput() { return chatInputManager; }
     public de.derfakegamer.sentinel.manager.ReportManager reports() { return reportManager; }
+    public de.derfakegamer.sentinel.manager.AppealManager appeals() { return appealManager; }
     public de.derfakegamer.sentinel.manager.StaffChatManager staffChat() { return staffChatManager; }
     public de.derfakegamer.sentinel.manager.FreezeManager freeze() { return freezeManager; }
     public de.derfakegamer.sentinel.manager.VanishManager vanish() { return vanishManager; }
@@ -220,6 +226,7 @@ public class Sentinel extends JavaPlugin {
     public de.derfakegamer.sentinel.manager.AutoAnnouncer announcer() { return autoAnnouncer; }
     public de.derfakegamer.sentinel.manager.RestartManager restart() { return restartManager; }
     public de.derfakegamer.sentinel.manager.OwnerManager owner() { return ownerManager; }
+    public de.derfakegamer.sentinel.util.StaffPermissions staffPerms() { return staffPermissions; }
     public de.derfakegamer.sentinel.manager.OrbitalAccess orbitalAccess() { return orbitalAccess; }
     public de.derfakegamer.sentinel.listener.OrbitalAccessListener orbitalAccessListener() { return orbitalAccessListener; }
     public de.derfakegamer.sentinel.manager.ScheduledStrikeManager scheduledStrikes() { return scheduledStrikeManager; }

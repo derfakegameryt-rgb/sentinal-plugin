@@ -18,7 +18,7 @@ class PlayerActionsGuiTest {
     @AfterEach void teardown() { MockBukkit.unmock(); }
 
     @Test void banButtonOpensReasonGui() {
-        PlayerMock mod = server.addPlayer("Mod");
+        PlayerMock mod = server.addPlayer("Mod"); mod.setOp(true);
         OfflinePlayer target = server.addPlayer("Griefer");
         PlayerActionsGui gui = new PlayerActionsGui(plugin, target);
         gui.open(mod);
@@ -31,7 +31,7 @@ class PlayerActionsGuiTest {
     }
 
     @Test void unbanButtonShownWhenBannedAndRemovesBan() {
-        PlayerMock mod = server.addPlayer("Mod");
+        PlayerMock mod = server.addPlayer("Mod"); mod.setOp(true);
         OfflinePlayer target = server.addPlayer("Griefer");
         plugin.punishments().ban(target.getUniqueId(), "Griefer", mod.getUniqueId(), "Mod", "x", 0);
         PlayerActionsGui gui = new PlayerActionsGui(plugin, target);
