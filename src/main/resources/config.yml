@@ -32,6 +32,14 @@ chat:
     enabled: true
     mode: block                # block | censor
     words: []                  # words to block/censor (case-insensitive)
+  caps-filter:
+    enabled: true
+    min-length: 8              # ignore short messages
+    max-uppercase-ratio: 0.7   # block/censor if more than this fraction of letters are uppercase
+    mode: censor               # "block" or "censor" (censor = lowercase the message)
+  flood-filter:
+    enabled: true
+    max-run: 5                 # block if the same character repeats more than this many times in a row
 warn-actions:            # warns count -> action: "<kick|ban|tempban|mute|tempmute> [duration] <reason>"
   3: "tempban 1d Reached 3 warnings"
   5: "ban Reached 5 warnings"

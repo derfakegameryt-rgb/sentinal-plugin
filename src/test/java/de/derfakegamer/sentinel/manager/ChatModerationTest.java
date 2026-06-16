@@ -56,4 +56,33 @@ class ChatModerationTest {
         assertEquals(ChatModeration.Action.ALLOW, cm.evaluate(UUID.randomUUID(), "open file.txt please", 1000).action());
         assertEquals(ChatModeration.Action.ALLOW, cm.evaluate(UUID.randomUUID(), "e.g. 1.5 is fine", 1000).action());
     }
+
+    @Test void allCapsIsBlockedOrCensored() {
+        ChatModeration cm = fresh();
+        ChatModeration.Outcome o = cm.evaluate(java.util.UUID.randomUUID(), "STOP DOING THAT RIGHT NOW", 1000);
+        assertNotEquals(ChatModeration.Action.ALLOW, o.action());
+    }
+
+    @Test void shortShoutIsAllowed() {
+        assertEquals(ChatModeration.Action.ALLOW, fresh().evaluate(java.util.UUID.randomUUID(), "OK!", 1000).action());
+    }
+
+    @Test void characterFloodIsBlocked() {
+        assertEquals(ChatModeration.Action.BLOCK,
+            fresh().evaluate(java.util.UUID.randomUUID(), "heyyyyyyyyyy", 1000).action());
+    }
+
+    @Test void obfuscatedBadWordIsCaught() {
+        plugin.getConfig().set("chat.word-filter.enabled", true);
+        plugin.getConfig().set("chat.word-filter.mode", "block");
+        plugin.getConfig().set("chat.word-filter.words", java.util.List.of("badword"));
+        ChatModeration cm = fresh();
+        assertEquals(ChatModeration.Action.BLOCK,
+            cm.evaluate(java.util.UUID.randomUUID(), "b.a.d.w.o.r.d", 1000).action());
+    }
+
+    @Test void normalizeHelperCollapsesObfuscation() {
+        assertEquals("badword", ChatModeration.normalize("B.A.D.W.0.R.D"));
+        assertEquals("fuck", ChatModeration.normalize("fuuuuck"));
+    }
 }
