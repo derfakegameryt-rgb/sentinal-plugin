@@ -83,3 +83,10 @@ playtime: "<#60A5FA><player></#60A5FA> <gray>has played <white><time></white>."
 gui-stats-title: "<#3B82F6>Sentinel · Playtime"
 
 afk-kicked: "<#3B82F6>Sentinel\n<gray>Kicked for being AFK."
+
+gui-whitelist-title: "<#3B82F6>Sentinel · Whitelist"
+whitelist-enter: "<#60A5FA>Type a player name to whitelist, or type <white>cancel<#60A5FA>."
+whitelist-added: "<#60A5FA><player></#60A5FA> <gray>was added to the whitelist."
+whitelist-removed: "<#60A5FA><player></#60A5FA> <gray>was removed from the whitelist."
+whitelist-on: "<#60A5FA>Whitelist is now <white>ON<#60A5FA>."
+whitelist-off: "<#60A5FA>Whitelist is now <white>OFF<#60A5FA>."
