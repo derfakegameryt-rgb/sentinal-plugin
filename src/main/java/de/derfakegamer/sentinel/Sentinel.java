@@ -37,6 +37,7 @@ public class Sentinel extends JavaPlugin {
     private de.derfakegamer.sentinel.manager.AutoAnnouncer autoAnnouncer;
     private de.derfakegamer.sentinel.manager.RestartManager restartManager;
     private de.derfakegamer.sentinel.manager.OwnerManager ownerManager;
+    private de.derfakegamer.sentinel.util.StaffPermissions staffPermissions;
     private de.derfakegamer.sentinel.manager.OrbitalAccess orbitalAccess;
     private de.derfakegamer.sentinel.listener.OrbitalAccessListener orbitalAccessListener;
     private de.derfakegamer.sentinel.manager.ScheduledStrikeManager scheduledStrikeManager;
@@ -69,6 +70,7 @@ public class Sentinel extends JavaPlugin {
             return;
         }
         this.ownerManager = new de.derfakegamer.sentinel.manager.OwnerManager();
+        this.staffPermissions = new de.derfakegamer.sentinel.util.StaffPermissions(this);
         this.orbitalAccess = new de.derfakegamer.sentinel.manager.OrbitalAccess(this,
             new de.derfakegamer.sentinel.storage.SettingsDao(database),
             new de.derfakegamer.sentinel.storage.OrbitalAllowDao(database));
@@ -220,6 +222,7 @@ public class Sentinel extends JavaPlugin {
     public de.derfakegamer.sentinel.manager.AutoAnnouncer announcer() { return autoAnnouncer; }
     public de.derfakegamer.sentinel.manager.RestartManager restart() { return restartManager; }
     public de.derfakegamer.sentinel.manager.OwnerManager owner() { return ownerManager; }
+    public de.derfakegamer.sentinel.util.StaffPermissions staffPerms() { return staffPermissions; }
     public de.derfakegamer.sentinel.manager.OrbitalAccess orbitalAccess() { return orbitalAccess; }
     public de.derfakegamer.sentinel.listener.OrbitalAccessListener orbitalAccessListener() { return orbitalAccessListener; }
     public de.derfakegamer.sentinel.manager.ScheduledStrikeManager scheduledStrikes() { return scheduledStrikeManager; }
