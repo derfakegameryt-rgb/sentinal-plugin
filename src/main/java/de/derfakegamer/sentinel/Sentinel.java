@@ -112,12 +112,12 @@ public class Sentinel extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.ActivityListener(this), this);
         getServer().getScheduler().runTaskTimer(this, () -> {
             if (!getConfig().getBoolean("afk.enabled", true)) return;
-            int mins = getConfig().getInt("afk.kick-minutes", 15);
+            int mins = getConfig().getInt("afk.minutes", 5);
             if (mins <= 0) return;
             long now = System.currentTimeMillis();
             for (org.bukkit.entity.Player p : getServer().getOnlinePlayers()) {
-                if (p.isOp() || owner().isOwner(p)) continue;
-                if (afk().idleMs(p.getUniqueId(), now) > mins * 60_000L) p.kick(messages().plain("afk-kicked"));
+                if (afk().idleMs(p.getUniqueId(), now) > mins * 60_000L && afk().markAfk(p.getUniqueId()))
+                    getServer().broadcast(messages().plain("afk-now", "player", p.getName()));
             }
         }, 600L, 600L);
         SentinelCommand sentinelCmd = new de.derfakegamer.sentinel.command.SentinelCommand(this);

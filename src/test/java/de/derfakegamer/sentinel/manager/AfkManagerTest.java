@@ -21,4 +21,22 @@ class AfkManagerTest {
         m.forget(id);
         assertEquals(0, m.idleMs(id, System.currentTimeMillis()));
     }
+    @Test void markAfkIsIdempotentAndBumpClearsIt() {
+        AfkManager m = new AfkManager();
+        UUID id = UUID.randomUUID();
+        assertFalse(m.isAfk(id));
+        assertTrue(m.markAfk(id));   // newly flagged
+        assertFalse(m.markAfk(id));  // already flagged
+        assertTrue(m.isAfk(id));
+        assertTrue(m.bump(id));      // returning from AFK
+        assertFalse(m.isAfk(id));
+        assertFalse(m.bump(id));     // not AFK any more
+    }
+    @Test void forgetClearsAfkFlag() {
+        AfkManager m = new AfkManager();
+        UUID id = UUID.randomUUID();
+        m.markAfk(id);
+        m.forget(id);
+        assertFalse(m.isAfk(id));
+    }
 }
