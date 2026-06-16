@@ -68,3 +68,8 @@ afk:
 
 backup:
   keep: 5   # how many backup zips to retain
+
+# Scheduled console commands. Each entry needs a "do" plus either "every" (interval) or "at" (daily HH:mm).
+scheduled-tasks: []
+#  - { every: "2h", do: "say Remember to vote!" }
+#  - { at: "04:00", do: "restart 60s" }

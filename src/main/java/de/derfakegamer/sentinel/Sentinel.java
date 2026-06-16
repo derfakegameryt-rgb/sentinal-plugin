@@ -43,6 +43,7 @@ public class Sentinel extends JavaPlugin {
     private de.derfakegamer.sentinel.command.OrbitalBukkitCommand orbitalCommand;
     private de.derfakegamer.sentinel.manager.AfkManager afkManager;
     private de.derfakegamer.sentinel.manager.BackupManager backupManager;
+    private de.derfakegamer.sentinel.manager.CronManager cronManager;
 
     @Override
     public void onEnable() {
@@ -142,6 +143,8 @@ public class Sentinel extends JavaPlugin {
         getCommand("playtime").setExecutor(new de.derfakegamer.sentinel.command.PlaytimeCommand(this));
         getCommand("backup").setExecutor(new de.derfakegamer.sentinel.command.BackupCommand(this));
         this.autoAnnouncer.start();
+        this.cronManager = new de.derfakegamer.sentinel.manager.CronManager(this);
+        this.cronManager.start();
         this.updateChecker = new de.derfakegamer.sentinel.updater.UpdateChecker(this);
         this.updateChecker.start();
         getLogger().info("Sentinel enabled.");
@@ -221,6 +224,7 @@ public class Sentinel extends JavaPlugin {
     public de.derfakegamer.sentinel.listener.OrbitalAccessListener orbitalAccessListener() { return orbitalAccessListener; }
     public de.derfakegamer.sentinel.manager.ScheduledStrikeManager scheduledStrikes() { return scheduledStrikeManager; }
     public de.derfakegamer.sentinel.manager.AfkManager afk() { return afkManager; }
+    public de.derfakegamer.sentinel.manager.CronManager cron() { return cronManager; }
     public de.derfakegamer.sentinel.manager.BackupManager backup() { return backupManager; }
 
     public java.io.File pluginJar() { return getFile(); }
