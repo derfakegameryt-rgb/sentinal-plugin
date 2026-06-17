@@ -85,6 +85,26 @@ the bulk of the work and concentrates in the GUI and command classes.
 `AsyncChatEvent`): `executor.submit(...).join()`. The caller thread may block because it is
 not the main thread; ordering and consistency are preserved.
 
+## Synchronous hot reads (in-memory cache)
+
+A few reads happen inside **synchronous** event handlers that must return a value
+immediately and cannot await a callback — notably `OrbitalAccess.isAllowed(...)` and
+`OrbitalAccess.code()`, consulted while cancelling events or gating gameplay. Routing these
+through the executor and blocking the main thread with `.join()` would reintroduce a tick
+stall.
+
+For these small, frequently-read, rarely-written datasets (the orbital allow-list and the
+orbital code) the manager keeps an **in-memory cache as the read source of truth**:
+- loaded once synchronously at `onEnable` (startup, so a blocking load is acceptable);
+- reads (`isAllowed`, `code`) served from memory — no DB touch, stays synchronous;
+- writes (`add`, `remove`, `setCode`) update the cache immediately **and** persist to the
+  DB via `executor.execute(...)`.
+
+This pattern applies only where a synchronous answer on the main thread is unavoidable.
+Large or rarely-read data (history, alts, reports, chat log) uses the Pattern-2 callback
+instead. The already-in-memory `exempt` set in `PunishmentManager` follows the same spirit
+and needs no change.
+
 ## Error handling
 
 - Every executor task catches `SQLException`, logs it with context via the plugin logger,
