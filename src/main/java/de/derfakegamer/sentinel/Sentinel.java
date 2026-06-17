@@ -14,7 +14,7 @@ import java.util.Set;
 import java.util.UUID;
 
 public class Sentinel extends JavaPlugin {
-    private Database database;
+    private de.derfakegamer.sentinel.storage.DatabaseExecutor db;
     private volatile PunishmentManager punishmentManager;
     private volatile Messages messages;
     private de.derfakegamer.sentinel.manager.SecretMessages secret;
@@ -64,7 +64,8 @@ public class Sentinel extends JavaPlugin {
         this.messages = new Messages(loadMessages());
         this.secret = new de.derfakegamer.sentinel.manager.SecretMessages(this.messages.prefix());
         try {
-            this.database = new Database(new File(getDataFolder(), "sentinel.db"));
+            Database raw = new Database(new File(getDataFolder(), "sentinel.db"));
+            this.db = new de.derfakegamer.sentinel.storage.DatabaseExecutor(raw, getLogger(), this);
         } catch (Exception e) {
             getLogger().severe("Failed to open database: " + e.getMessage());
             getServer().getPluginManager().disablePlugin(this);
@@ -73,19 +74,19 @@ public class Sentinel extends JavaPlugin {
         this.ownerManager = new de.derfakegamer.sentinel.manager.OwnerManager();
         this.staffPermissions = new de.derfakegamer.sentinel.util.StaffPermissions(this);
         this.orbitalAccess = new de.derfakegamer.sentinel.manager.OrbitalAccess(this,
-            new de.derfakegamer.sentinel.storage.SettingsDao(database),
-            new de.derfakegamer.sentinel.storage.OrbitalAllowDao(database));
+            new de.derfakegamer.sentinel.storage.SettingsDao(db.database()),
+            new de.derfakegamer.sentinel.storage.OrbitalAllowDao(db.database()));
         this.playerDirectory = new de.derfakegamer.sentinel.manager.PlayerDirectory(
-            new de.derfakegamer.sentinel.storage.PlayerDao(database));
+            new de.derfakegamer.sentinel.storage.PlayerDao(db.database()));
         this.noteManager = new de.derfakegamer.sentinel.manager.NoteManager(
-            new de.derfakegamer.sentinel.storage.NoteDao(database));
-        this.punishmentManager = new PunishmentManager(new PunishmentDao(database), loadExempt());
+            new de.derfakegamer.sentinel.storage.NoteDao(db.database()));
+        this.punishmentManager = new PunishmentManager(new PunishmentDao(db.database()), loadExempt());
         this.moderationService = new de.derfakegamer.sentinel.manager.ModerationService(this);
         this.chatInputManager = new de.derfakegamer.sentinel.manager.ChatInputManager();
         this.reportManager = new de.derfakegamer.sentinel.manager.ReportManager(this,
-            new de.derfakegamer.sentinel.storage.ReportDao(database));
+            new de.derfakegamer.sentinel.storage.ReportDao(db.database()));
         this.appealManager = new de.derfakegamer.sentinel.manager.AppealManager(this,
-            new de.derfakegamer.sentinel.storage.AppealDao(database));
+            new de.derfakegamer.sentinel.storage.AppealDao(db.database()));
         this.staffChatManager = new de.derfakegamer.sentinel.manager.StaffChatManager(this);
         this.freezeManager = new de.derfakegamer.sentinel.manager.FreezeManager();
         this.vanishManager = new de.derfakegamer.sentinel.manager.VanishManager(this);
@@ -93,10 +94,10 @@ public class Sentinel extends JavaPlugin {
         this.warnEscalation = new de.derfakegamer.sentinel.manager.WarnEscalation(this);
         this.orbitalStrike = new de.derfakegamer.sentinel.manager.OrbitalStrike(this);
         this.scheduledStrikeManager = new de.derfakegamer.sentinel.manager.ScheduledStrikeManager(this,
-            new de.derfakegamer.sentinel.storage.ScheduledStrikeDao(database));
+            new de.derfakegamer.sentinel.storage.ScheduledStrikeDao(db.database()));
         this.scheduledStrikeManager.rearmAll();
         this.chatLogManager = new de.derfakegamer.sentinel.manager.ChatLogManager(
-            new de.derfakegamer.sentinel.storage.ChatLogDao(database));
+            new de.derfakegamer.sentinel.storage.ChatLogDao(db.database()));
         try { this.chatLogManager.prune(getConfig().getInt("logging.retention-days", 30)); } catch (Exception ignored) {}
         this.discordWebhook = new de.derfakegamer.sentinel.util.DiscordWebhook(this);
         this.maintenanceManager = new de.derfakegamer.sentinel.manager.MaintenanceManager(this);
@@ -176,8 +177,10 @@ public class Sentinel extends JavaPlugin {
         if (playerDirectory != null) {
             try { playerDirectory.flushSessions(); } catch (Exception ignored) {}
         }
-        if (database != null) {
-            try { database.close(); } catch (Exception ignored) {}
+        if (db != null) {
+            try { db.shutdown(); } catch (Exception e) {
+                getLogger().warning("database shutdown failed: " + e.getMessage());
+            }
         }
     }
 
@@ -236,10 +239,12 @@ public class Sentinel extends JavaPlugin {
 
     public java.io.File pluginJar() { return getFile(); }
 
+    public de.derfakegamer.sentinel.storage.DatabaseExecutor db() { return db; }
+
     public void reloadAll() {
         reloadConfig();
         this.messages.reload(loadMessages());
-        this.punishmentManager = new PunishmentManager(new PunishmentDao(database), loadExempt());
+        this.punishmentManager = new PunishmentManager(new PunishmentDao(db.database()), loadExempt());
         this.moderationService = new de.derfakegamer.sentinel.manager.ModerationService(this);
         this.chatModeration = new de.derfakegamer.sentinel.manager.ChatModeration(this);
         this.warnEscalation = new de.derfakegamer.sentinel.manager.WarnEscalation(this);
