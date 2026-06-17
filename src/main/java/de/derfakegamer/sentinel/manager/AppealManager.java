@@ -26,8 +26,8 @@ public final class AppealManager {
 
     /** Accepts an appeal: lifts the linked punishment (unban/unmute) and marks it accepted. */
     public void accept(Appeal a, String staff, long now) {
-        if (a.type() == PunishmentType.MUTE) plugin.punishments().unmute(a.targetUuid(), staff, now);
-        else plugin.punishments().unban(a.targetUuid(), staff, now);
+        if (a.type() == PunishmentType.MUTE) plugin.punishments().unmute(a.targetUuid(), staff, now).join();
+        else plugin.punishments().unban(a.targetUuid(), staff, now).join();
         dao.setStatus(a.id(), "ACCEPTED", staff, now);
     }
 

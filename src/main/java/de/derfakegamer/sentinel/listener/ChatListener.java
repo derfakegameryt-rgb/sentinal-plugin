@@ -41,8 +41,9 @@ public final class ChatListener implements Listener {
             return;
         }
 
+        long now = System.currentTimeMillis();
         de.derfakegamer.sentinel.model.Punishment shadow =
-            plugin.punishments().activeShadowMute(id, System.currentTimeMillis());
+            plugin.punishments().activeShadowMute(id, now).join();
         if (shadow != null) {
             // Restrict the audience to the sender only: they see their own message normally,
             // everyone else sees nothing. Do NOT cancel — the message must still render to them.
@@ -50,8 +51,7 @@ public final class ChatListener implements Listener {
             return;
         }
 
-        long now = System.currentTimeMillis();
-        Punishment mute = plugin.punishments().activeMute(id, now);
+        Punishment mute = plugin.punishments().activeMute(id, now).join();
         if (mute != null) {
             event.setCancelled(true);
             event.getPlayer().sendMessage(plugin.messages().prefixed("you-are-muted",

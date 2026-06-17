@@ -28,11 +28,16 @@ public final class HistoryGui extends Gui {
     private final int page;
     private final int total;
 
-    public HistoryGui(Sentinel plugin, OfflinePlayer target, int page) {
+    /** Async opener: fetches history then constructs and opens the GUI on the main thread. */
+    public static void open(Sentinel plugin, OfflinePlayer target, Player viewer, int page) {
+        plugin.db().callback(plugin.punishments().history(target.getUniqueId()),
+            all -> new HistoryGui(plugin, target, all != null ? all : List.of(), page).open(viewer));
+    }
+
+    public HistoryGui(Sentinel plugin, OfflinePlayer target, List<Punishment> all, int page) {
         super(plugin);
         this.target = target;
         this.page = page;
-        List<Punishment> all = plugin.punishments().history(target.getUniqueId());
         this.total = all.size();
         this.inventory = Bukkit.createInventory(this, 54,
             plugin.messages().plain("gui-history-title", "player", name()));
@@ -77,8 +82,8 @@ public final class HistoryGui extends Gui {
         event.setCancelled(true);
         Player mod = (Player) event.getWhoClicked();
         switch (event.getRawSlot()) {
-            case PREV -> new HistoryGui(plugin, target, page - 1).open(mod);
-            case NEXT -> new HistoryGui(plugin, target, page + 1).open(mod);
+            case PREV -> open(plugin, target, mod, page - 1);
+            case NEXT -> open(plugin, target, mod, page + 1);
             case BACK -> new PlayerActionsGui(plugin, target).open(mod);
             default -> {}
         }

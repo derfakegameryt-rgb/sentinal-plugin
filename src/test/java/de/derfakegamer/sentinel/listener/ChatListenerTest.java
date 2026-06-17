@@ -14,6 +14,7 @@ import org.mockbukkit.mockbukkit.entity.PlayerMock;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -56,12 +57,12 @@ class ChatListenerTest {
     }
 
     @Test
-    void mutedPlayerChatIsCancelledAndNotified() {
+    void mutedPlayerChatIsCancelledAndNotified() throws Exception {
         PlayerMock p = server.addPlayer("Spammer");
-        plugin.punishments().mute(p.getUniqueId(), "Spammer", p.getUniqueId(), "Admin", "spam", 0);
+        plugin.punishments().mute(p.getUniqueId(), "Spammer", p.getUniqueId(), "Admin", "spam", 0).get(2, TimeUnit.SECONDS);
 
         // Sanity: the mute is genuinely active.
-        assertNotNull(plugin.punishments().activeMute(p.getUniqueId(), System.currentTimeMillis()),
+        assertNotNull(plugin.punishments().activeMute(p.getUniqueId(), System.currentTimeMillis()).get(2, TimeUnit.SECONDS),
                 "test precondition: the mute must be active");
 
         AsyncChatEvent event = chatEvent(p, "hello world");
@@ -80,10 +81,10 @@ class ChatListenerTest {
     }
 
     @Test
-    void unmutedPlayerChatIsNotCancelled() {
+    void unmutedPlayerChatIsNotCancelled() throws Exception {
         PlayerMock p = server.addPlayer("Friendly");
 
-        assertNull(plugin.punishments().activeMute(p.getUniqueId(), System.currentTimeMillis()),
+        assertNull(plugin.punishments().activeMute(p.getUniqueId(), System.currentTimeMillis()).get(2, TimeUnit.SECONDS),
                 "test precondition: the player must not be muted");
 
         AsyncChatEvent event = chatEvent(p, "hello world");

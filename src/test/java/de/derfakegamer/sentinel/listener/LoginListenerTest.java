@@ -8,6 +8,7 @@ import org.mockbukkit.mockbukkit.ServerMock;
 
 import java.net.InetAddress;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -29,7 +30,7 @@ class LoginListenerTest {
     @Test
     void bannedPlayerIsDisallowedAtLogin() throws Exception {
         UUID id = UUID.randomUUID();
-        plugin.punishments().ban(id, "Griefer", UUID.randomUUID(), "Admin", "hax", 0);
+        plugin.punishments().ban(id, "Griefer", UUID.randomUUID(), "Admin", "hax", 0).get(2, TimeUnit.SECONDS);
 
         LoginListener listener = new LoginListener(plugin);
         AsyncPlayerPreLoginEvent event = new AsyncPlayerPreLoginEvent(
@@ -55,7 +56,7 @@ class LoginListenerTest {
     void ipBannedPlayerIsDisallowedAtLogin() throws Exception {
         UUID bannerTarget = UUID.randomUUID();
         plugin.punishments().ipBan(bannerTarget, "Evil", "9.9.9.9",
-                UUID.randomUUID(), "Admin", "ban evasion", 0);
+                UUID.randomUUID(), "Admin", "ban evasion", 0).get(2, TimeUnit.SECONDS);
 
         // A different account, same IP, must be rejected by ip-ban.
         LoginListener listener = new LoginListener(plugin);

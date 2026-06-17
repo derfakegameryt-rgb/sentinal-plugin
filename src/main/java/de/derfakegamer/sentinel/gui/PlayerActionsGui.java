@@ -32,16 +32,16 @@ public final class PlayerActionsGui extends Gui {
         super(plugin);
         this.target = target;
         long now = System.currentTimeMillis();
-        this.banned = plugin.punishments().activeBan(target.getUniqueId(), now) != null;
-        this.muted = plugin.punishments().activeMute(target.getUniqueId(), now) != null;
-        this.shadowMuted = plugin.punishments().activeShadowMute(target.getUniqueId(), now) != null;
+        this.banned = plugin.punishments().activeBan(target.getUniqueId(), now).join() != null;
+        this.muted = plugin.punishments().activeMute(target.getUniqueId(), now).join() != null;
+        this.shadowMuted = plugin.punishments().activeShadowMute(target.getUniqueId(), now).join() != null;
         this.inventory = Bukkit.createInventory(this, 45,
             plugin.messages().plain("gui-actions-title", "player", name()));
 
         inventory.setItem(HEAD, Items.head(target, Component.text(name(), NamedTextColor.AQUA),
             List.of(status(banned ? "Banned" : "Not banned", banned),
                     status(muted ? "Muted" : "Not muted", muted),
-                    line("Warns: " + plugin.punishments().warnCount(target.getUniqueId()), NamedTextColor.GRAY))));
+                    line("Warns: " + plugin.punishments().warnCount(target.getUniqueId()).join(), NamedTextColor.GRAY))));
 
         inventory.setItem(BAN, Items.button(Material.BARRIER,
             Component.text(banned ? "Unban" : "Ban", banned ? NamedTextColor.GREEN : NamedTextColor.RED),
@@ -192,7 +192,7 @@ public final class PlayerActionsGui extends Gui {
             }
             case LOGS -> new ChatLogGui(plugin, target).open(mod);
             case TEMPLATES -> new TemplatesGui(plugin, target).open(mod);
-            case HISTORY -> new HistoryGui(plugin, target, 0).open(mod);
+            case HISTORY -> HistoryGui.open(plugin, target, mod, 0);
             case NOTES -> new NotesGui(plugin, target).open(mod);
             case ALTS -> new AltsGui(plugin, target).open(mod);
             case OPTOGGLE -> {

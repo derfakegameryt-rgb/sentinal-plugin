@@ -21,10 +21,16 @@ public final class ActiveMutesGui extends Gui {
     private final int page;
     private final List<Punishment> mutes;
 
-    public ActiveMutesGui(Sentinel plugin, int page) {
+    /** Async opener: fetches active mutes then constructs and opens the GUI on the main thread. */
+    public static void open(Sentinel plugin, Player viewer, int page) {
+        plugin.db().callback(plugin.punishments().activeList(PunishmentType.MUTE, System.currentTimeMillis()),
+            mutes -> new ActiveMutesGui(plugin, mutes != null ? mutes : List.of(), page).open(viewer));
+    }
+
+    public ActiveMutesGui(Sentinel plugin, List<Punishment> mutes, int page) {
         super(plugin);
         this.page = page;
-        this.mutes = plugin.punishments().activeList(PunishmentType.MUTE, System.currentTimeMillis());
+        this.mutes = mutes;
         this.inventory = Bukkit.createInventory(this, 54, plugin.messages().plain("gui-mutes-title"));
         int from = page * PAGE_SIZE;
         for (int i = 0; i < PAGE_SIZE && from + i < mutes.size(); i++) {
@@ -49,8 +55,8 @@ public final class ActiveMutesGui extends Gui {
         event.setCancelled(true);
         Player p = (Player) event.getWhoClicked();
         int slot = event.getRawSlot();
-        if (slot == PREV) { new ActiveMutesGui(plugin, page - 1).open(p); return; }
-        if (slot == NEXT) { new ActiveMutesGui(plugin, page + 1).open(p); return; }
+        if (slot == PREV) { open(plugin, p, page - 1); return; }
+        if (slot == NEXT) { open(plugin, p, page + 1); return; }
         if (slot == BACK) { new AdminPanelGui(plugin).open(p); return; }
         int index = page * PAGE_SIZE + slot;
         if (slot >= 0 && slot < PAGE_SIZE && index < mutes.size())

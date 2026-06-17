@@ -101,23 +101,24 @@ public final class PunishmentCommands implements CommandExecutor, TabCompleter {
             case "history" -> {
                 if (args.length < 1) return usage(sender, "/history <player>");
                 Target t = resolve(sender, args[0]); if (t == null) return true;
-                var entries = pm.history(t.id);
-                if (entries.isEmpty()) {
-                    sender.sendMessage(plugin.messages().prefixed("history-empty", "player", t.name));
-                    return true;
-                }
-                sender.sendMessage(plugin.messages().prefixed("history-header", "player", t.name));
-                for (Punishment p : entries) {
-                    String date = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
-                        .withZone(java.time.ZoneOffset.UTC)
-                        .format(java.time.Instant.ofEpochMilli(p.createdAt()));
-                    sender.sendMessage(plugin.messages().prefixed("history-entry",
-                        "type", p.type().name(),
-                        "issuer", p.issuerName(),
-                        "reason", p.reason(),
-                        "date", date,
-                        "status", p.active() ? "(active)" : ""));
-                }
+                plugin.db().callback(pm.history(t.id), entries -> {
+                    if (entries == null || entries.isEmpty()) {
+                        sender.sendMessage(plugin.messages().prefixed("history-empty", "player", t.name));
+                        return;
+                    }
+                    sender.sendMessage(plugin.messages().prefixed("history-header", "player", t.name));
+                    for (Punishment p : entries) {
+                        String date = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+                            .withZone(java.time.ZoneOffset.UTC)
+                            .format(java.time.Instant.ofEpochMilli(p.createdAt()));
+                        sender.sendMessage(plugin.messages().prefixed("history-entry",
+                            "type", p.type().name(),
+                            "issuer", p.issuerName(),
+                            "reason", p.reason(),
+                            "date", date,
+                            "status", p.active() ? "(active)" : ""));
+                    }
+                });
             }
         }
         return true;

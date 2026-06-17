@@ -9,6 +9,8 @@ import org.mockbukkit.mockbukkit.MockBukkit;
 import org.mockbukkit.mockbukkit.ServerMock;
 import org.mockbukkit.mockbukkit.entity.PlayerMock;
 
+import java.util.concurrent.TimeUnit;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class PlayerActionsGuiTest {
@@ -30,10 +32,10 @@ class PlayerActionsGuiTest {
         assertInstanceOf(ReasonGui.class, mod.getOpenInventory().getTopInventory().getHolder());
     }
 
-    @Test void unbanButtonShownWhenBannedAndRemovesBan() {
+    @Test void unbanButtonShownWhenBannedAndRemovesBan() throws Exception {
         PlayerMock mod = server.addPlayer("Mod"); mod.setOp(true);
         OfflinePlayer target = server.addPlayer("Griefer");
-        plugin.punishments().ban(target.getUniqueId(), "Griefer", mod.getUniqueId(), "Mod", "x", 0);
+        plugin.punishments().ban(target.getUniqueId(), "Griefer", mod.getUniqueId(), "Mod", "x", 0).get(2, TimeUnit.SECONDS);
         PlayerActionsGui gui = new PlayerActionsGui(plugin, target);
         gui.open(mod);
 
@@ -41,7 +43,7 @@ class PlayerActionsGuiTest {
         gui.onClick(event);
 
         assertTrue(event.isCancelled());
-        assertNull(plugin.punishments().activeBan(target.getUniqueId(), System.currentTimeMillis()),
+        assertNull(plugin.punishments().activeBan(target.getUniqueId(), System.currentTimeMillis()).get(2, TimeUnit.SECONDS),
             "clicking Unban removes the active ban");
     }
 }

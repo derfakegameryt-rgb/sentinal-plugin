@@ -16,7 +16,7 @@ public final class AppealCommand implements CommandExecutor {
         if (!(sender instanceof Player p)) { sender.sendMessage(plugin.messages().prefixed("players-only")); return true; }
         if (args.length == 0) { sender.sendMessage(plugin.messages().prefixed("appeal-usage")); return true; }
         long now = System.currentTimeMillis();
-        Punishment mute = plugin.punishments().activeMute(p.getUniqueId(), now);
+        Punishment mute = plugin.punishments().activeMute(p.getUniqueId(), now).join();
         if (mute == null) { p.sendMessage(plugin.messages().prefixed("appeal-nothing")); return true; }
         String text = String.join(" ", args);
         if (!plugin.appeals().submit(p.getUniqueId(), p.getName(), mute.id(), PunishmentType.MUTE, text, now)) {

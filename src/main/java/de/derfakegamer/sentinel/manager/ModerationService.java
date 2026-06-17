@@ -18,12 +18,12 @@ public final class ModerationService {
                          String ip, PunishmentType type, long expiresAt, String reason) {
         PunishmentManager pm = plugin.punishments();
         PunishmentManager.Result result = switch (type) {
-            case BAN   -> pm.ban(targetId, targetName, issuerId, issuerName, reason, expiresAt);
-            case IPBAN -> pm.ipBan(targetId, targetName, ip, issuerId, issuerName, reason, expiresAt);
-            case MUTE  -> pm.mute(targetId, targetName, issuerId, issuerName, reason, expiresAt);
-            case WARN  -> pm.warn(targetId, targetName, issuerId, issuerName, reason);
-            case KICK  -> pm.kick(targetId, targetName, issuerId, issuerName, reason);
-            case SHADOWMUTE -> pm.shadowMute(targetId, targetName, issuerId, issuerName, reason, expiresAt);
+            case BAN   -> pm.ban(targetId, targetName, issuerId, issuerName, reason, expiresAt).join();
+            case IPBAN -> pm.ipBan(targetId, targetName, ip, issuerId, issuerName, reason, expiresAt).join();
+            case MUTE  -> pm.mute(targetId, targetName, issuerId, issuerName, reason, expiresAt).join();
+            case WARN  -> pm.warn(targetId, targetName, issuerId, issuerName, reason).join();
+            case KICK  -> pm.kick(targetId, targetName, issuerId, issuerName, reason).join();
+            case SHADOWMUTE -> pm.shadowMute(targetId, targetName, issuerId, issuerName, reason, expiresAt).join();
         };
         if (!result.isSuccess()) return false;
 
@@ -60,7 +60,7 @@ public final class ModerationService {
             }
         }
         if (type == PunishmentType.WARN) {
-            int count = plugin.punishments().warnCount(targetId);
+            int count = plugin.punishments().warnCount(targetId).join();
             de.derfakegamer.sentinel.model.EscalationAction esc = plugin.escalation().actionFor(count);
             if (esc != null) {
                 long escExpiresAt = esc.durationMs() == 0 ? 0 : System.currentTimeMillis() + esc.durationMs();
@@ -71,13 +71,13 @@ public final class ModerationService {
     }
 
     public boolean removeBan(UUID issuerId, String issuerName, UUID targetId, String targetName) {
-        boolean ok = plugin.punishments().unban(targetId, issuerName, System.currentTimeMillis());
+        boolean ok = plugin.punishments().unban(targetId, issuerName, System.currentTimeMillis()).join();
         if (ok) Bukkit.broadcast(plugin.messages().prefixed("unbanned", "player", targetName, "reason", ""));
         return ok;
     }
 
     public boolean removeMute(UUID issuerId, String issuerName, UUID targetId, String targetName) {
-        boolean ok = plugin.punishments().unmute(targetId, issuerName, System.currentTimeMillis());
+        boolean ok = plugin.punishments().unmute(targetId, issuerName, System.currentTimeMillis()).join();
         if (ok) Bukkit.broadcast(plugin.messages().prefixed("unmuted", "player", targetName, "reason", ""));
         return ok;
     }
@@ -88,7 +88,7 @@ public final class ModerationService {
     }
 
     public boolean removeShadowMute(java.util.UUID issuerId, String issuerName, java.util.UUID targetId, String targetName) {
-        boolean ok = plugin.punishments().unShadowMute(targetId, issuerName, System.currentTimeMillis());
+        boolean ok = plugin.punishments().unShadowMute(targetId, issuerName, System.currentTimeMillis()).join();
         if (ok) notifyStaff(plugin.messages().plain("unshadowmuted", "player", targetName));
         return ok;
     }

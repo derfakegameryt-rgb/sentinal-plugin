@@ -33,10 +33,10 @@ public final class PlayersGui extends Gui {
         for (int i = 0; i < PAGE_SIZE && from + i < players.size(); i++) {
             Player p = players.get(from + i);
             long now = System.currentTimeMillis();
-            boolean muted = plugin.punishments().activeMute(p.getUniqueId(), now) != null;
+            boolean muted = plugin.punishments().activeMute(p.getUniqueId(), now).join() != null;
             inventory.setItem(i, Items.head(p, Component.text(p.getName(), NamedTextColor.AQUA), List.of(
                 line(muted ? "Muted" : "Not muted", muted ? NamedTextColor.RED : NamedTextColor.GREEN),
-                line("Warns: " + plugin.punishments().warnCount(p.getUniqueId()), NamedTextColor.GRAY))));
+                line("Warns: " + plugin.punishments().warnCount(p.getUniqueId()).join(), NamedTextColor.GRAY))));
         }
         if (page > 0) inventory.setItem(PREV, Items.button(Material.ARROW, Component.text("Previous", NamedTextColor.GRAY),
             List.of(hint("Go to the previous page"))));
