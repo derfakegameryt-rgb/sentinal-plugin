@@ -35,7 +35,8 @@ class GuiLayoutTest {
             muted[i] = plugin.punishments().activeMute(p.getUniqueId(), now).get(2, TimeUnit.SECONDS) != null;
             warns[i] = plugin.punishments().warnCount(p.getUniqueId()).get(2, TimeUnit.SECONDS);
         }
-        return new PlayersGui(plugin, page, players, muted, warns);
+        int reportCount = plugin.reports().open().get(2, TimeUnit.SECONDS).size();
+        return new PlayersGui(plugin, page, players, muted, warns, reportCount);
     }
 
     @Test void menuGuiHasGrayBorder() {

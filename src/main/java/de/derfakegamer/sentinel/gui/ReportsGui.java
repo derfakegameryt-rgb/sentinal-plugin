@@ -26,10 +26,16 @@ public final class ReportsGui extends Gui {
     private final int page;
     private final List<Report> reports;
 
-    public ReportsGui(Sentinel plugin, int page) {
+    /** Async opener: fetches open reports then constructs and opens the GUI on the main thread. */
+    public static void open(Sentinel plugin, int page, Player viewer) {
+        plugin.db().callback(plugin.reports().open(),
+            reports -> new ReportsGui(plugin, page, reports != null ? reports : List.of()).open(viewer));
+    }
+
+    public ReportsGui(Sentinel plugin, int page, List<Report> reports) {
         super(plugin);
         this.page = page;
-        this.reports = plugin.reports().open();
+        this.reports = reports;
         this.inventory = Bukkit.createInventory(this, 54, plugin.messages().plain("gui-reports-title"));
 
         int from = page * PAGE_SIZE;
@@ -59,8 +65,8 @@ public final class ReportsGui extends Gui {
         event.setCancelled(true);
         Player mod = (Player) event.getWhoClicked();
         int slot = event.getRawSlot();
-        if (slot == PREV) { new ReportsGui(plugin, page - 1).open(mod); return; }
-        if (slot == NEXT) { new ReportsGui(plugin, page + 1).open(mod); return; }
+        if (slot == PREV) { ReportsGui.open(plugin, page - 1, mod); return; }
+        if (slot == NEXT) { ReportsGui.open(plugin, page + 1, mod); return; }
         if (slot == CLOSE) { mod.closeInventory(); return; }
 
         int index = page * PAGE_SIZE + slot;
@@ -70,7 +76,7 @@ public final class ReportsGui extends Gui {
         if (event.isShiftClick()) {
             plugin.reports().handle(r.id(), mod.getName());
             mod.sendMessage(plugin.messages().prefixed("report-handled"));
-            new ReportsGui(plugin, page).open(mod);
+            ReportsGui.open(plugin, page, mod);
         } else if (event.isRightClick()) {
             OfflinePlayer target = Bukkit.getOfflinePlayer(r.targetUuid());
             PlayerActionsGui.open(plugin, target, mod);

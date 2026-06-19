@@ -20,7 +20,7 @@ class PlayersGuiButtonsTest {
     @AfterEach void teardown() { MockBukkit.unmock(); }
 
     private PlayersGui emptyGui() {
-        return new PlayersGui(plugin, 0, new ArrayList<>(), new boolean[0], new int[0]);
+        return new PlayersGui(plugin, 0, new ArrayList<>(), new boolean[0], new int[0], 0);
     }
 
     @Test void vanishButtonTogglesVanish() {
@@ -35,13 +35,17 @@ class PlayersGuiButtonsTest {
         assertTrue(plugin.vanish().isVanished(mod.getUniqueId()));
     }
 
-    @Test void reportsButtonOpensReportsGui() {
+    @Test void reportsButtonOpensReportsGui() throws Exception {
         PlayerMock mod = server.addPlayer("Mod");
         PlayersGui gui = emptyGui();
         gui.open(mod);
 
         InventoryClickEvent event = ConfirmGuiTest.clickSlot(mod, gui, 47); // Reports
         gui.onClick(event);
+
+        // ReportsGui.open is async; drain DB executor then tick Bukkit scheduler
+        plugin.db().submit(() -> null).get(2, java.util.concurrent.TimeUnit.SECONDS);
+        server.getScheduler().performTicks(1);
 
         assertTrue(event.isCancelled());
         assertInstanceOf(ReportsGui.class, mod.getOpenInventory().getTopInventory().getHolder());

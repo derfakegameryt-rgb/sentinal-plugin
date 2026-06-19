@@ -34,10 +34,14 @@ public final class PlayersGui extends Gui {
         int from = page * PAGE_SIZE;
         int count = Math.min(PAGE_SIZE, players.size() - from);
 
+        CompletableFuture<java.util.List<de.derfakegamer.sentinel.model.Report>> reportsFuture =
+            plugin.reports().open();
+
         if (count <= 0) {
-            // No players on this page — open immediately
-            plugin.getServer().getScheduler().runTask(plugin, () ->
-                new PlayersGui(plugin, page, players, new boolean[0], new int[0]).open(viewer));
+            // No players on this page — only wait for report count
+            plugin.db().callback(reportsFuture, reports ->
+                new PlayersGui(plugin, page, players, new boolean[0], new int[0],
+                    reports != null ? reports.size() : 0).open(viewer));
             return;
         }
 
@@ -57,7 +61,8 @@ public final class PlayersGui extends Gui {
 
         CompletableFuture<Void> all = CompletableFuture.allOf(
             CompletableFuture.allOf(muteFutures),
-            CompletableFuture.allOf(warnFutures));
+            CompletableFuture.allOf(warnFutures),
+            reportsFuture);
 
         plugin.db().callback(all, ignored -> {
             boolean[] muted = new boolean[count];
@@ -66,19 +71,23 @@ public final class PlayersGui extends Gui {
                 muted[i] = typedMute[i].join() != null;
                 warns[i] = typedWarn[i].join();
             }
-            new PlayersGui(plugin, page, players, muted, warns).open(viewer);
+            java.util.List<de.derfakegamer.sentinel.model.Report> reports = reportsFuture.join();
+            int reportCount = reports != null ? reports.size() : 0;
+            new PlayersGui(plugin, page, players, muted, warns, reportCount).open(viewer);
         });
     }
 
     private final boolean[] muted;
     private final int[] warns;
+    private final int reportCount;
 
-    PlayersGui(Sentinel plugin, int page, List<Player> players, boolean[] muted, int[] warns) {
+    PlayersGui(Sentinel plugin, int page, List<Player> players, boolean[] muted, int[] warns, int reportCount) {
         super(plugin);
         this.page = page;
         this.players = players;
         this.muted = muted;
         this.warns = warns;
+        this.reportCount = reportCount;
         this.inventory = Bukkit.createInventory(this, 54, plugin.messages().plain("gui-players-title"));
 
         int from = page * PAGE_SIZE;
@@ -94,7 +103,7 @@ public final class PlayersGui extends Gui {
             List.of(hint("Find a player by name"))));
         inventory.setItem(REPORTS, Items.button(Material.BOOK, Component.text("Reports", NamedTextColor.AQUA),
             List.of(hint("View open player reports"),
-                    line("Open: " + plugin.reports().open().size(), NamedTextColor.GRAY))));
+                    line("Open: " + reportCount, NamedTextColor.GRAY))));
         inventory.setItem(STAFF, Items.button(Material.NETHER_STAR, Component.text("Toggle staff chat", NamedTextColor.LIGHT_PURPLE),
             List.of(hint("Toggle your staff-only chat"))));
         inventory.setItem(VANISH, Items.button(Material.ENDER_EYE, Component.text("Toggle vanish", NamedTextColor.AQUA),
@@ -132,7 +141,7 @@ public final class PlayersGui extends Gui {
             plugin.chatInput().await(mod.getUniqueId(), q -> SearchResultsGui.open(plugin, q, mod));
             return;
         }
-        if (slot == REPORTS) { new ReportsGui(plugin, 0).open(mod); return; }
+        if (slot == REPORTS) { ReportsGui.open(plugin, 0, mod); return; }
         if (slot == PANEL) { new AdminPanelGui(plugin).open(mod); return; }
         if (slot == STAFF) {
             boolean on = plugin.staffChat().toggle(mod.getUniqueId());

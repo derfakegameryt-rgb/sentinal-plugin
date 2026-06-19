@@ -6,7 +6,6 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 public final class ReportCommand implements CommandExecutor {
@@ -17,13 +16,14 @@ public final class ReportCommand implements CommandExecutor {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
                              @NotNull String label, @NotNull String[] args) {
-        if (!(sender instanceof Player)) { sender.sendMessage(plugin.messages().prefixed("report-usage")); return true; }
+        if (!(sender instanceof org.bukkit.entity.Player)) { sender.sendMessage(plugin.messages().prefixed("report-usage")); return true; }
         if (args.length < 2) { sender.sendMessage(plugin.messages().prefixed("report-usage")); return true; }
         OfflinePlayer target = Bukkit.getOfflinePlayer(args[0]);
         String reason = String.join(" ", java.util.Arrays.copyOfRange(args, 1, args.length));
-        boolean ok = plugin.reports().file(sender, target.getUniqueId(), args[0], reason);
-        sender.sendMessage(ok ? plugin.messages().prefixed("report-filed")
-                              : plugin.messages().prefixed("report-self"));
+        plugin.db().callback(plugin.reports().file(sender, target.getUniqueId(), args[0], reason),
+            ok -> sender.sendMessage(Boolean.TRUE.equals(ok)
+                ? plugin.messages().prefixed("report-filed")
+                : plugin.messages().prefixed("report-self")));
         return true;
     }
 }
