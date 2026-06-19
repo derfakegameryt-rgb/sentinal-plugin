@@ -38,7 +38,7 @@ public final class OrbitalModeGui extends Gui {
         switch (event.getRawSlot()) {
             case ROD -> new OrbitalPayloadGui(plugin, null, 0, 0).open(p);
             case COORDS -> new OrbitalDimensionGui(plugin).open(p);
-            case SCHEDULED -> new ScheduledStrikesGui(plugin).open(p);
+            case SCHEDULED -> ScheduledStrikesGui.open(plugin, p);
             case CLOSE -> p.closeInventory();
         }
     }

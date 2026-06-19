@@ -9,6 +9,9 @@ import org.junit.jupiter.api.*;
 import org.mockbukkit.mockbukkit.MockBukkit;
 import org.mockbukkit.mockbukkit.ServerMock;
 import org.mockbukkit.mockbukkit.entity.PlayerMock;
+
+import java.util.concurrent.TimeUnit;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class OrbitalFlowTest {
@@ -45,12 +48,15 @@ class OrbitalFlowTest {
         assertInstanceOf(OrbitalDimensionGui.class, p.getOpenInventory().getTopInventory().getHolder());
     }
 
-    @Test void scheduledStrikesOpenFromOrbitalMenu() {
+    @Test void scheduledStrikesOpenFromOrbitalMenu() throws Exception {
         PlayerMock p = server.addPlayer("Admin"); p.setOp(true);
         OrbitalModeGui gui = new OrbitalModeGui(plugin);
         gui.open(p);
         InventoryClickEvent ev = ConfirmGuiTest.clickSlot(p, gui, 14); // Scheduled strikes
         gui.onClick(ev);
+        // Static opener: DB thread fetches pending() then callback schedules GUI open on Bukkit main thread
+        plugin.db().submit(() -> null).get(2, TimeUnit.SECONDS);
+        server.getScheduler().performTicks(1);
         assertInstanceOf(ScheduledStrikesGui.class, p.getOpenInventory().getTopInventory().getHolder());
     }
 }

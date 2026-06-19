@@ -65,8 +65,9 @@ public final class OrbitalWhenGui extends Gui {
                     catch (IllegalArgumentException ex) { p.sendMessage(plugin.secret().prefixed("orbital-bad-coord")); return; }
                     World w = Bukkit.getWorld(worldName);
                     if (w == null) { p.sendMessage(plugin.secret().prefixed("orbital-world-gone")); return; }
-                    plugin.scheduledStrikes().schedule(w, x, z, payload, System.currentTimeMillis() + ms);
-                    p.sendMessage(plugin.secret().prefixed("orbital-scheduled", "time", input));
+                    String inputCopy = input;
+                    plugin.db().callback(plugin.scheduledStrikes().schedule(w, x, z, payload, System.currentTimeMillis() + ms),
+                        id -> p.sendMessage(plugin.secret().prefixed("orbital-scheduled", "time", inputCopy)));
                 });
             }
             case CLOSE -> p.closeInventory();
