@@ -43,7 +43,8 @@ public final class AppealManager {
         CompletableFuture<Boolean> liftFuture = a.type() == PunishmentType.MUTE
             ? plugin.punishments().unmute(a.targetUuid(), staff, now)
             : plugin.punishments().unban(a.targetUuid(), staff, now);
-        return liftFuture.thenRun(() -> dao.setStatus(a.id(), "ACCEPTED", staff, now));
+        return liftFuture.thenCompose(ok ->
+            plugin.db().<Void>submit(() -> { dao.setStatus(a.id(), "ACCEPTED", staff, now); return null; }));
     }
 
     /** Denies an appeal (fire-and-forget). */
