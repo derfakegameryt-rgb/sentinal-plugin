@@ -230,7 +230,7 @@ public final class PlayerActionsGui extends Gui {
                 Player online = target.getPlayer();
                 if (online != null) mod.openInventory(online.getEnderChest());
             }
-            case LOGS -> new ChatLogGui(plugin, target).open(mod);
+            case LOGS -> ChatLogGui.open(plugin, target, mod);
             case TEMPLATES -> new TemplatesGui(plugin, target).open(mod);
             case HISTORY -> HistoryGui.open(plugin, target, mod, 0);
             case NOTES -> NotesGui.open(plugin, target, mod);

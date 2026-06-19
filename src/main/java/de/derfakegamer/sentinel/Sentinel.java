@@ -97,8 +97,8 @@ public class Sentinel extends JavaPlugin {
             new de.derfakegamer.sentinel.storage.ScheduledStrikeDao(db.database()));
         this.scheduledStrikeManager.rearmAll();
         this.chatLogManager = new de.derfakegamer.sentinel.manager.ChatLogManager(
-            new de.derfakegamer.sentinel.storage.ChatLogDao(db.database()));
-        try { this.chatLogManager.prune(getConfig().getInt("logging.retention-days", 30)); } catch (Exception ignored) {}
+            this, new de.derfakegamer.sentinel.storage.ChatLogDao(db.database()));
+        this.chatLogManager.prune(getConfig().getInt("logging.retention-days", 30));
         this.discordWebhook = new de.derfakegamer.sentinel.util.DiscordWebhook(this);
         this.maintenanceManager = new de.derfakegamer.sentinel.manager.MaintenanceManager(this);
         this.autoAnnouncer = new de.derfakegamer.sentinel.manager.AutoAnnouncer(this);
