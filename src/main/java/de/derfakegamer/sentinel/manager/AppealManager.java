@@ -15,14 +15,24 @@ public final class AppealManager {
     private final AppealDao dao;
     public AppealManager(Sentinel plugin, AppealDao dao) { this.plugin = plugin; this.dao = dao; }
 
-    public boolean hasOpen(UUID uuid) { return dao.hasOpenForTarget(uuid); }
-    public List<Appeal> open() { return dao.findOpen(); }
+    public CompletableFuture<Boolean> hasOpen(UUID uuid) {
+        return plugin.db().submit(() -> dao.hasOpenForTarget(uuid));
+    }
 
-    /** Files an appeal. Returns false if the player already has an open appeal. */
-    public boolean submit(UUID uuid, String name, long punishmentId, PunishmentType type, String text, long now) {
-        if (dao.hasOpenForTarget(uuid)) return false;
-        dao.insert(new Appeal(0, punishmentId, uuid, name, type, text, "OPEN", now, null, 0));
-        return true;
+    public CompletableFuture<List<Appeal>> open() {
+        return plugin.db().submit(() -> dao.findOpen());
+    }
+
+    /**
+     * Files an appeal. Returns false if the player already has an open appeal.
+     * The hasOpen check and insert run atomically on the DB thread.
+     */
+    public CompletableFuture<Boolean> submit(UUID uuid, String name, long punishmentId, PunishmentType type, String text, long now) {
+        return plugin.db().submit(() -> {
+            if (dao.hasOpenForTarget(uuid)) return false;
+            dao.insert(new Appeal(0, punishmentId, uuid, name, type, text, "OPEN", now, null, 0));
+            return true;
+        });
     }
 
     /**
@@ -36,5 +46,8 @@ public final class AppealManager {
         return liftFuture.thenRun(() -> dao.setStatus(a.id(), "ACCEPTED", staff, now));
     }
 
-    public void deny(Appeal a, String staff, long now) { dao.setStatus(a.id(), "DENIED", staff, now); }
+    /** Denies an appeal (fire-and-forget). */
+    public void deny(Appeal a, String staff, long now) {
+        plugin.db().execute(() -> dao.setStatus(a.id(), "DENIED", staff, now));
+    }
 }

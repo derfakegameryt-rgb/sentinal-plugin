@@ -18,14 +18,15 @@ public final class AppealCommand implements CommandExecutor {
         String text = String.join(" ", args);
         plugin.db().callback(plugin.punishments().activeMute(p.getUniqueId(), now), mute -> {
             if (mute == null) { p.sendMessage(plugin.messages().prefixed("appeal-nothing")); return; }
-            if (!plugin.appeals().submit(p.getUniqueId(), p.getName(), mute.id(), PunishmentType.MUTE, text, now)) {
-                p.sendMessage(plugin.messages().prefixed("appeal-exists")); return;
-            }
-            p.sendMessage(plugin.messages().prefixed("appeal-submitted"));
-            // notify online staff
-            plugin.getServer().getOnlinePlayers().stream()
-                .filter(s -> s.hasPermission("sentinel.use"))
-                .forEach(s -> s.sendMessage(plugin.messages().prefixed("appeal-alert", "player", p.getName())));
+            // submit() atomically re-checks hasOpen + inserts on the DB thread
+            plugin.db().callback(plugin.appeals().submit(p.getUniqueId(), p.getName(), mute.id(), PunishmentType.MUTE, text, now), submitted -> {
+                if (!submitted) { p.sendMessage(plugin.messages().prefixed("appeal-exists")); return; }
+                p.sendMessage(plugin.messages().prefixed("appeal-submitted"));
+                // notify online staff
+                plugin.getServer().getOnlinePlayers().stream()
+                    .filter(s -> s.hasPermission("sentinel.use"))
+                    .forEach(s -> s.sendMessage(plugin.messages().prefixed("appeal-alert", "player", p.getName())));
+            });
         });
         return true;
     }

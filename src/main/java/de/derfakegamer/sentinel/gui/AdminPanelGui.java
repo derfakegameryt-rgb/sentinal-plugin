@@ -51,7 +51,7 @@ public final class AdminPanelGui extends Gui {
             case REPORTS -> ReportsGui.open(plugin, 0, p);
             case WHITELIST -> new WhitelistGui(plugin, 0).open(p);
             case STATS -> StatsGui.open(plugin, p);
-            case APPEALS -> new AppealsGui(plugin, 0).open(p);
+            case APPEALS -> AppealsGui.open(plugin, p, 0);
             case BACK -> PlayersGui.open(plugin, 0, p);
             case CLOSE -> p.closeInventory();
         }
