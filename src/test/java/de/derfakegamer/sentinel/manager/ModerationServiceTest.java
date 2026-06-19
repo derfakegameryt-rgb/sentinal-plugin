@@ -20,7 +20,8 @@ class ModerationServiceTest {
     @Test void applyBanRecordsActiveBan() throws Exception {
         UUID target = UUID.randomUUID();
         boolean ok = plugin.moderation().apply(
-            new UUID(0,0), "Admin", target, "Griefer", null, PunishmentType.BAN, 0, "hax");
+            new UUID(0,0), "Admin", target, "Griefer", null, PunishmentType.BAN, 0, "hax")
+            .get(2, TimeUnit.SECONDS);
         assertTrue(ok);
         assertNotNull(plugin.punishments().activeBan(target, System.currentTimeMillis()).get(2, TimeUnit.SECONDS));
     }
@@ -31,22 +32,27 @@ class ModerationServiceTest {
         plugin.saveConfig();
         plugin.reloadAll();
         boolean ok = plugin.moderation().apply(
-            new UUID(0,0), "Admin", exempt, "Owner", null, PunishmentType.BAN, 0, "x");
+            new UUID(0,0), "Admin", exempt, "Owner", null, PunishmentType.BAN, 0, "x")
+            .get(2, TimeUnit.SECONDS);
         assertFalse(ok);
         assertNull(plugin.punishments().activeBan(exempt, System.currentTimeMillis()).get(2, TimeUnit.SECONDS));
     }
 
-    @Test void removeBanReturnsFalseWhenNotBanned() {
-        assertFalse(plugin.moderation().removeBan(new UUID(0,0), "Admin", UUID.randomUUID(), "Nobody"));
+    @Test void removeBanReturnsFalseWhenNotBanned() throws Exception {
+        boolean ok = plugin.moderation().removeBan(new UUID(0,0), "Admin", UUID.randomUUID(), "Nobody")
+            .get(2, TimeUnit.SECONDS);
+        assertFalse(ok);
     }
 
     @Test void warnEscalationAutoBansAtThreshold() throws Exception {
         plugin.getConfig().set("warn-actions.2", "ban escalated for repeated warnings");
         UUID target = UUID.randomUUID();
         long now = System.currentTimeMillis();
-        plugin.moderation().apply(new UUID(0,0), "Admin", target, "Repeat", null, PunishmentType.WARN, 0, "w1");
+        plugin.moderation().apply(new UUID(0,0), "Admin", target, "Repeat", null, PunishmentType.WARN, 0, "w1")
+            .get(2, TimeUnit.SECONDS);
         assertNull(plugin.punishments().activeBan(target, now).get(2, TimeUnit.SECONDS), "not banned after the first warning");
-        plugin.moderation().apply(new UUID(0,0), "Admin", target, "Repeat", null, PunishmentType.WARN, 0, "w2");
+        plugin.moderation().apply(new UUID(0,0), "Admin", target, "Repeat", null, PunishmentType.WARN, 0, "w2")
+            .get(2, TimeUnit.SECONDS);
         assertNotNull(plugin.punishments().activeBan(target, now).get(2, TimeUnit.SECONDS), "auto-banned when warnings reach the threshold");
     }
 }

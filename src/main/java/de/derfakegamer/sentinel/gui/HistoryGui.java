@@ -84,7 +84,7 @@ public final class HistoryGui extends Gui {
         switch (event.getRawSlot()) {
             case PREV -> open(plugin, target, mod, page - 1);
             case NEXT -> open(plugin, target, mod, page + 1);
-            case BACK -> new PlayerActionsGui(plugin, target).open(mod);
+            case BACK -> PlayerActionsGui.open(plugin, target, mod);
             default -> {}
         }
     }

@@ -1,16 +1,42 @@
 package de.derfakegamer.sentinel.gui;
 
 import de.derfakegamer.sentinel.Sentinel;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.entity.Player;
 import org.junit.jupiter.api.*;
 import org.mockbukkit.mockbukkit.MockBukkit;
 import org.mockbukkit.mockbukkit.ServerMock;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class GuiLayoutTest {
     ServerMock server; Sentinel plugin;
     @BeforeEach void setup() { server = MockBukkit.mock(); plugin = MockBukkit.load(Sentinel.class); }
     @AfterEach void teardown() { MockBukkit.unmock(); }
+
+    /** Build a PlayersGui synchronously (for tests only). */
+    private PlayersGui buildPlayersGui(int page) throws Exception {
+        List<Player> players = new ArrayList<>(Bukkit.getOnlinePlayers());
+        players.sort(java.util.Comparator.comparing(
+            p -> p.getName() != null ? p.getName() : p.getUniqueId().toString(),
+            String.CASE_INSENSITIVE_ORDER));
+        int from = page * 45;
+        int count = Math.min(45, players.size() - from);
+        boolean[] muted = new boolean[count];
+        int[] warns = new int[count];
+        long now = System.currentTimeMillis();
+        for (int i = 0; i < count; i++) {
+            Player p = players.get(from + i);
+            muted[i] = plugin.punishments().activeMute(p.getUniqueId(), now).get(2, TimeUnit.SECONDS) != null;
+            warns[i] = plugin.punishments().warnCount(p.getUniqueId()).get(2, TimeUnit.SECONDS);
+        }
+        return new PlayersGui(plugin, page, players, muted, warns);
+    }
 
     @Test void menuGuiHasGrayBorder() {
         AdminPanelGui gui = new AdminPanelGui(plugin);
@@ -19,10 +45,10 @@ class GuiLayoutTest {
             assertEquals(Material.GRAY_STAINED_GLASS_PANE, gui.getInventory().getItem(slot).getType());
     }
 
-    @Test void playersListIsSorted() {
+    @Test void playersListIsSorted() throws Exception {
         server.addPlayer("Zebra");
         server.addPlayer("alpha");
-        PlayersGui gui = new PlayersGui(plugin, 0);
+        PlayersGui gui = buildPlayersGui(0);
         // first head should be "alpha" (case-insensitive sort)
         var first = gui.getInventory().getItem(0);
         assertNotNull(first);

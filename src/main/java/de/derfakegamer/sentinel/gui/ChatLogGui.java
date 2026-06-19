@@ -48,7 +48,7 @@ public final class ChatLogGui extends Gui {
     public void onClick(InventoryClickEvent event) {
         event.setCancelled(true);
         Player p = (Player) event.getWhoClicked();
-        if (event.getRawSlot() == BACK) new PlayerActionsGui(plugin, target).open(p);
+        if (event.getRawSlot() == BACK) PlayerActionsGui.open(plugin, target, p);
         else if (event.getRawSlot() == CLOSE) p.closeInventory();
     }
 }

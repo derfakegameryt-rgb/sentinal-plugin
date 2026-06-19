@@ -56,9 +56,9 @@ public final class SearchResultsGui extends Gui {
         event.setCancelled(true);
         Player mod = (Player) event.getWhoClicked();
         int slot = event.getRawSlot();
-        if (slot == BACK) { new PlayersGui(plugin, 0).open(mod); return; }
+        if (slot == BACK) { PlayersGui.open(plugin, 0, mod); return; }
         if (slot == CLOSE) { mod.closeInventory(); return; }
         if (slot >= 0 && slot < PAGE_SIZE && slot < results.size())
-            new PlayerActionsGui(plugin, results.get(slot)).open(mod);
+            PlayerActionsGui.open(plugin, results.get(slot), mod);
     }
 }
