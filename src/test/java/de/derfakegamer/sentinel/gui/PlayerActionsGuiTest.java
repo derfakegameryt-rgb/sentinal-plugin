@@ -45,9 +45,11 @@ class PlayerActionsGuiTest {
         gui.onClick(event);
 
         assertTrue(event.isCancelled());
-        // Wait for the async removeBan future to complete on the DB thread
-        Thread.sleep(200);
-        server.getScheduler().performTicks(2);
+        // removeBan now schedules a main-thread task via onMain(); pump ticks so it completes.
+        for (int i = 0; i < 200; i++) {
+            server.getScheduler().performTicks(1);
+            Thread.sleep(5);
+        }
         assertNull(plugin.punishments().activeBan(target.getUniqueId(), System.currentTimeMillis()).get(2, TimeUnit.SECONDS),
             "clicking Unban removes the active ban");
     }

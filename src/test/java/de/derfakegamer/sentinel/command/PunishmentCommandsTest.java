@@ -32,13 +32,14 @@ class PunishmentCommandsTest {
     }
 
     /**
-     * Ticks the scheduler a few times to flush callback tasks, then waits briefly for DB futures.
-     * Two levels of callback (resolve → moderation.apply) require at least 2 ticks.
+     * Pumps the scheduler enough to flush all async hops: DB executor callback → onMain task →
+     * optional warnCount DB hop → optional escalation onMain task. 200 iterations × 5 ms gives
+     * up to 1 second of wall time which is ample for the in-memory SQLite executor.
      */
     private void drain() throws InterruptedException {
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 200; i++) {
             server.getScheduler().performTicks(1);
-            Thread.sleep(50);
+            Thread.sleep(5);
         }
     }
 

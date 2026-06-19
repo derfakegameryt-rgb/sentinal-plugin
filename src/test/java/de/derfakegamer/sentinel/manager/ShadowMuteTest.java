@@ -7,6 +7,7 @@ import org.mockbukkit.mockbukkit.MockBukkit;
 import org.mockbukkit.mockbukkit.ServerMock;
 
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -17,10 +18,19 @@ class ShadowMuteTest {
     @BeforeEach void setup() { server = MockBukkit.mock(); plugin = MockBukkit.load(Sentinel.class); }
     @AfterEach void teardown() { MockBukkit.unmock(); }
 
+    /** Pumps scheduler ticks while waiting for futures that schedule main-thread side-effects. */
+    static <T> T await(ServerMock server, CompletableFuture<T> f) throws Exception {
+        for (int i = 0; i < 200 && !f.isDone(); i++) {
+            server.getScheduler().performTicks(1);
+            Thread.sleep(5);
+        }
+        return f.get(2, TimeUnit.SECONDS);
+    }
+
     @Test void applyShadowMuteRecordsActiveShadowMute() throws Exception {
         UUID t = UUID.randomUUID();
-        boolean ok = plugin.moderation().apply(new UUID(0,0), "Admin", t, "Sneaky", null,
-            PunishmentType.SHADOWMUTE, 0, "test").get(2, TimeUnit.SECONDS);
+        boolean ok = await(server, plugin.moderation().apply(new UUID(0,0), "Admin", t, "Sneaky", null,
+            PunishmentType.SHADOWMUTE, 0, "test"));
         assertTrue(ok);
         assertNotNull(plugin.punishments().activeShadowMute(t, System.currentTimeMillis()).get(2, TimeUnit.SECONDS));
         // a shadow-mute must NOT register as a normal mute
@@ -29,10 +39,8 @@ class ShadowMuteTest {
 
     @Test void removeShadowMuteClearsIt() throws Exception {
         UUID t = UUID.randomUUID();
-        plugin.moderation().apply(new UUID(0,0), "Admin", t, "Sneaky", null, PunishmentType.SHADOWMUTE, 0, "x")
-            .get(2, TimeUnit.SECONDS);
-        boolean removed = plugin.moderation().removeShadowMute(new UUID(0,0), "Admin", t, "Sneaky")
-            .get(2, TimeUnit.SECONDS);
+        await(server, plugin.moderation().apply(new UUID(0,0), "Admin", t, "Sneaky", null, PunishmentType.SHADOWMUTE, 0, "x"));
+        boolean removed = await(server, plugin.moderation().removeShadowMute(new UUID(0,0), "Admin", t, "Sneaky"));
         assertTrue(removed);
         assertNull(plugin.punishments().activeShadowMute(t, System.currentTimeMillis()).get(2, TimeUnit.SECONDS));
     }
