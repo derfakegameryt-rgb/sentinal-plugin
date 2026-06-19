@@ -16,11 +16,19 @@ class SubcommandTest {
     @BeforeEach void setup() { server = MockBukkit.mock(); plugin = MockBukkit.load(Sentinel.class); }
     @AfterEach void teardown() { MockBukkit.unmock(); }
 
+    private void drain() throws InterruptedException {
+        for (int i = 0; i < 5; i++) {
+            server.getScheduler().performTicks(1);
+            Thread.sleep(50);
+        }
+    }
+
     @Test void snBanDelegatesToBan() throws Exception {
         PlayerMock op = server.addPlayer("Admin"); op.setOp(true);
         PlayerMock target = server.addPlayer("Griefer");
         new SentinelCommand(plugin).onCommand(op, server.getCommandMap().getCommand("sentinel"),
             "sentinel", new String[]{"ban", "Griefer", "cheating"});
+        drain();
         assertNotNull(plugin.punishments().activeBan(target.getUniqueId(), System.currentTimeMillis()).get(2, TimeUnit.SECONDS));
     }
 

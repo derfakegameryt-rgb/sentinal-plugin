@@ -77,7 +77,7 @@ public class Sentinel extends JavaPlugin {
             new de.derfakegamer.sentinel.storage.SettingsDao(db.database()),
             new de.derfakegamer.sentinel.storage.OrbitalAllowDao(db.database()));
         this.playerDirectory = new de.derfakegamer.sentinel.manager.PlayerDirectory(
-            new de.derfakegamer.sentinel.storage.PlayerDao(db.database()));
+            this, new de.derfakegamer.sentinel.storage.PlayerDao(db.database()));
         this.noteManager = new de.derfakegamer.sentinel.manager.NoteManager(
             new de.derfakegamer.sentinel.storage.NoteDao(db.database()));
         this.punishmentManager = new PunishmentManager(this, new PunishmentDao(db.database()), loadExempt());

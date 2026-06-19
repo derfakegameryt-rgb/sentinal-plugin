@@ -26,10 +26,23 @@ public final class AltsGui extends Gui {
     private final OfflinePlayer target;
     private final List<PlayerRecord> alts;
 
-    public AltsGui(Sentinel plugin, OfflinePlayer target) {
+    /**
+     * Asynchronously fetches alt accounts for {@code target} then constructs and opens the GUI on
+     * the main thread. Use this instead of {@code new AltsGui(...).open(viewer)}.
+     */
+    public static void open(Sentinel plugin, OfflinePlayer target, Player viewer) {
+        plugin.db().callback(plugin.players().alts(target.getUniqueId()),
+            alts -> new AltsGui(plugin, target, alts).open(viewer));
+    }
+
+    /**
+     * Constructs the GUI with pre-fetched alt list. Call {@link #open(Sentinel, OfflinePlayer, Player)}
+     * from the main thread instead of this constructor.
+     */
+    public AltsGui(Sentinel plugin, OfflinePlayer target, List<PlayerRecord> alts) {
         super(plugin);
         this.target = target;
-        this.alts = plugin.players().alts(target.getUniqueId());
+        this.alts = alts;
         this.inventory = Bukkit.createInventory(this, 54,
             plugin.messages().plain("gui-alts-title", "player", name()));
         for (int i = 0; i < PAGE_SIZE && i < alts.size(); i++) {

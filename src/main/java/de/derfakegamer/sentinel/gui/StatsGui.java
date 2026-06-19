@@ -16,10 +16,25 @@ import java.util.List;
 public final class StatsGui extends Gui {
     private static final int BACK = 45, CLOSE = 53;
 
-    public StatsGui(Sentinel plugin) {
+    private final List<PlayerRecord> top;
+
+    /**
+     * Asynchronously fetches playtime leaderboard then constructs and opens the GUI on the main thread.
+     * Use this instead of {@code new StatsGui(...).open(viewer)}.
+     */
+    public static void open(Sentinel plugin, Player viewer) {
+        plugin.db().callback(plugin.players().topByPlaytime(45),
+            top -> new StatsGui(plugin, top).open(viewer));
+    }
+
+    /**
+     * Constructs the GUI with pre-fetched leaderboard data. Call {@link #open(Sentinel, Player)}
+     * from the main thread instead of this constructor.
+     */
+    public StatsGui(Sentinel plugin, List<PlayerRecord> top) {
         super(plugin);
+        this.top = top;
         this.inventory = Bukkit.createInventory(this, 54, plugin.messages().plain("gui-stats-title"));
-        List<PlayerRecord> top = plugin.players().topByPlaytime(45);
         for (int i = 0; i < top.size() && i < 45; i++) {
             PlayerRecord r = top.get(i);
             long ms = r.playtime();

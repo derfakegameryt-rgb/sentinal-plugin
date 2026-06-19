@@ -129,7 +129,7 @@ public final class PlayersGui extends Gui {
         if (slot == SEARCH) {
             mod.closeInventory();
             mod.sendMessage(plugin.messages().prefixed("enter-search"));
-            plugin.chatInput().await(mod.getUniqueId(), q -> new SearchResultsGui(plugin, q).open(mod));
+            plugin.chatInput().await(mod.getUniqueId(), q -> SearchResultsGui.open(plugin, q, mod));
             return;
         }
         if (slot == REPORTS) { new ReportsGui(plugin, 0).open(mod); return; }

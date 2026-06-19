@@ -31,6 +31,17 @@ class PunishmentCommandsTest {
         MockBukkit.unmock();
     }
 
+    /**
+     * Ticks the scheduler a few times to flush callback tasks, then waits briefly for DB futures.
+     * Two levels of callback (resolve → moderation.apply) require at least 2 ticks.
+     */
+    private void drain() throws InterruptedException {
+        for (int i = 0; i < 5; i++) {
+            server.getScheduler().performTicks(1);
+            Thread.sleep(50);
+        }
+    }
+
     @Test
     void opCanBanTarget() throws Exception {
         Player target = server.addPlayer("Griefer");
@@ -42,6 +53,8 @@ class PunishmentCommandsTest {
 
         new PunishmentCommands(plugin).onCommand(admin, banCmd, "ban",
                 new String[]{"Griefer", "cheating"});
+
+        drain();
 
         assertNotNull(plugin.punishments().activeBan(target.getUniqueId(), System.currentTimeMillis()).get(2, TimeUnit.SECONDS),
                 "an active ban should exist after an op runs /ban");
@@ -58,6 +71,8 @@ class PunishmentCommandsTest {
 
         new PunishmentCommands(plugin).onCommand(notOp, banCmd, "ban",
                 new String[]{"Victim", "cheating"});
+
+        drain();
 
         assertNull(plugin.punishments().activeBan(target.getUniqueId(), System.currentTimeMillis()).get(2, TimeUnit.SECONDS),
                 "a non-op must not be able to record a ban");
@@ -78,6 +93,8 @@ class PunishmentCommandsTest {
                 new String[]{offlineName, "evading"});
         assertTrue(result, "command should return true");
 
+        drain();
+
         List<Punishment> hist = plugin.punishments().history(offlineId).get(2, TimeUnit.SECONDS);
         for (Punishment p : hist) {
             assertNotEquals(PunishmentType.IPBAN, p.type(),
@@ -88,7 +105,7 @@ class PunishmentCommandsTest {
     }
 
     @Test
-    void historyEmptyForNeverPunishedPlayer() {
+    void historyEmptyForNeverPunishedPlayer() throws Exception {
         Player admin = server.addPlayer("Admin");
         admin.setOp(true);
         server.addPlayer("Clean");
@@ -112,6 +129,9 @@ class PunishmentCommandsTest {
         boolean handled = new PunishmentCommands(plugin).onCommand(admin, banCmd, "ban",
                 new String[]{"NeverSeenXYZ", "spam"});
         assertTrue(handled);
+
+        drain();
+
         List<Punishment> bans = plugin.punishments().activeList(
                 PunishmentType.BAN, System.currentTimeMillis()).get(2, TimeUnit.SECONDS);
         assertTrue(bans.isEmpty(),
@@ -127,6 +147,8 @@ class PunishmentCommandsTest {
         Command banCmd = server.getCommandMap().getCommand("ban");
         new PunishmentCommands(plugin).onCommand(admin, banCmd, "ban",
                 new String[]{"Offender", "griefing"});
+
+        drain();
 
         List<Punishment> hist = plugin.punishments().history(target.getUniqueId()).get(2, TimeUnit.SECONDS);
         assertFalse(hist.isEmpty(),

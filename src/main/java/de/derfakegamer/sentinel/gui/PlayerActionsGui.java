@@ -29,10 +29,11 @@ public final class PlayerActionsGui extends Gui {
     private final boolean muted;
     private final boolean shadowMuted;
     private final int warnCount;
+    private final String lastIp;
 
     /**
-     * Asynchronously fetches punishment state for {@code target} then constructs and opens the GUI
-     * on the main thread. Use this instead of {@code new PlayerActionsGui(...).open(viewer)}.
+     * Asynchronously fetches punishment state and last known IP for {@code target} then constructs
+     * and opens the GUI on the main thread. Use this instead of {@code new PlayerActionsGui(...).open(viewer)}.
      */
     public static void open(Sentinel plugin, OfflinePlayer target, Player viewer) {
         long now = System.currentTimeMillis();
@@ -45,29 +46,40 @@ public final class PlayerActionsGui extends Gui {
         CompletableFuture<Integer> warnFut =
             plugin.punishments().warnCount(target.getUniqueId());
 
-        CompletableFuture<Void> all = CompletableFuture.allOf(banFut, muteFut, shadowFut, warnFut);
+        // Resolve last IP: prefer live address (no DB), fall back to stored record
+        Player onlineNow = target.getPlayer();
+        final String liveIp = (onlineNow != null && onlineNow.getAddress() != null)
+            ? onlineNow.getAddress().getAddress().getHostAddress() : null;
+        CompletableFuture<String> ipFut = (liveIp != null)
+            ? CompletableFuture.completedFuture(liveIp)
+            : plugin.players().byUuid(target.getUniqueId())
+                .thenApply(rec -> rec != null ? rec.lastIp() : null);
+
+        CompletableFuture<Void> all = CompletableFuture.allOf(banFut, muteFut, shadowFut, warnFut, ipFut);
         // thenAccept runs on the DB executor thread (futures are already done, so join() is safe)
         plugin.db().callback(all, ignored -> {
             boolean banned      = banFut.join() != null;
             boolean muted       = muteFut.join() != null;
             boolean shadowMuted = shadowFut.join() != null;
             int warns           = warnFut.join();
-            new PlayerActionsGui(plugin, target, banned, muted, shadowMuted, warns).open(viewer);
+            String ip           = ipFut.join();
+            new PlayerActionsGui(plugin, target, banned, muted, shadowMuted, warns, ip).open(viewer);
         });
     }
 
     /**
-     * Constructs the GUI with pre-fetched punishment state. Call {@link #open(Sentinel, OfflinePlayer, Player)}
+     * Constructs the GUI with pre-fetched punishment state and IP. Call {@link #open(Sentinel, OfflinePlayer, Player)}
      * from the main thread instead of this constructor.
      */
     public PlayerActionsGui(Sentinel plugin, OfflinePlayer target,
-                            boolean banned, boolean muted, boolean shadowMuted, int warnCount) {
+                            boolean banned, boolean muted, boolean shadowMuted, int warnCount, String lastIp) {
         super(plugin);
         this.target = target;
         this.banned = banned;
         this.muted = muted;
         this.shadowMuted = shadowMuted;
         this.warnCount = warnCount;
+        this.lastIp = lastIp;
         this.inventory = Bukkit.createInventory(this, 45,
             plugin.messages().plain("gui-actions-title", "player", name()));
 
@@ -101,7 +113,7 @@ public final class PlayerActionsGui extends Gui {
             List.of(hint("View recent chat & commands"))));
         inventory.setItem(TEMPLATES, Items.button(Material.WRITABLE_BOOK, Component.text("Templates", NamedTextColor.AQUA),
             List.of(hint("Quick preset punishments"))));
-        if (ip() != null) {
+        if (lastIp != null) {
             inventory.setItem(IPBAN, Items.button(Material.IRON_BARS, Component.text("IP-Ban", NamedTextColor.DARK_RED),
                 List.of(hint("Ban the last known IP"))));
         }
@@ -147,14 +159,6 @@ public final class PlayerActionsGui extends Gui {
     }
 
     private String name() { return target.getName() == null ? "?" : target.getName(); }
-
-    private String ip() {
-        Player online = target.getPlayer();
-        if (online != null && online.getAddress() != null)
-            return online.getAddress().getAddress().getHostAddress();
-        var rec = plugin.players().byUuid(target.getUniqueId());
-        return rec != null ? rec.lastIp() : null;
-    }
 
     @Override
     public void onClick(InventoryClickEvent event) {
@@ -206,8 +210,7 @@ public final class PlayerActionsGui extends Gui {
             }
             case IPBAN -> {
                 if (!plugin.staffPerms().canPerform(mod, PunishmentType.IPBAN)) { mod.sendMessage(plugin.messages().prefixed("no-permission")); return; }
-                String ip = ip();
-                if (ip != null) new ReasonGui(plugin, target, ip, PunishmentType.IPBAN, 0).open(mod);
+                if (lastIp != null) new ReasonGui(plugin, target, lastIp, PunishmentType.IPBAN, 0).open(mod);
                 else mod.sendMessage(plugin.messages().prefixed("ipban-requires-online"));
             }
             case FREEZE -> {
@@ -231,7 +234,7 @@ public final class PlayerActionsGui extends Gui {
             case TEMPLATES -> new TemplatesGui(plugin, target).open(mod);
             case HISTORY -> HistoryGui.open(plugin, target, mod, 0);
             case NOTES -> new NotesGui(plugin, target).open(mod);
-            case ALTS -> new AltsGui(plugin, target).open(mod);
+            case ALTS -> AltsGui.open(plugin, target, mod);
             case OPTOGGLE -> {
                 // Protected players (config `exempt`, e.g. the owner) cannot be de-opped via the panel.
                 if (target.isOp() && plugin.punishments().isExempt(target.getUniqueId())) {

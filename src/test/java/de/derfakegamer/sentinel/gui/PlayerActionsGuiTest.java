@@ -23,7 +23,7 @@ class PlayerActionsGuiTest {
         PlayerMock mod = server.addPlayer("Mod"); mod.setOp(true);
         OfflinePlayer target = server.addPlayer("Griefer");
         // target is not banned — construct with banned=false
-        PlayerActionsGui gui = new PlayerActionsGui(plugin, target, false, false, false, 0);
+        PlayerActionsGui gui = new PlayerActionsGui(plugin, target, false, false, false, 0, null);
         gui.open(mod);
 
         InventoryClickEvent event = ConfirmGuiTest.clickSlot(mod, gui, 10); // Ban
@@ -38,7 +38,7 @@ class PlayerActionsGuiTest {
         OfflinePlayer target = server.addPlayer("Griefer");
         plugin.punishments().ban(target.getUniqueId(), "Griefer", mod.getUniqueId(), "Mod", "x", 0).get(2, TimeUnit.SECONDS);
         // construct with banned=true (pre-fetched)
-        PlayerActionsGui gui = new PlayerActionsGui(plugin, target, true, false, false, 0);
+        PlayerActionsGui gui = new PlayerActionsGui(plugin, target, true, false, false, 0, null);
         gui.open(mod);
 
         InventoryClickEvent event = ConfirmGuiTest.clickSlot(mod, gui, 10); // now "Unban"

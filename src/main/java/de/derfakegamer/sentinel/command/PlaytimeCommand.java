@@ -20,9 +20,10 @@ public final class PlaytimeCommand implements CommandExecutor {
         OfflinePlayer target = args.length >= 1 ? Bukkit.getOfflinePlayer(args[0])
             : (sender instanceof Player p ? p : null);
         if (target == null) { sender.sendMessage(plugin.messages().prefixed("usage", "usage", "/playtime <player>")); return true; }
-        long ms = plugin.players().playtime(target.getUniqueId());
-        sender.sendMessage(plugin.messages().prefixed("playtime", "player",
-            args.length >= 1 ? args[0] : sender.getName(), "time", format(ms)));
+        final String displayName = args.length >= 1 ? args[0] : sender.getName();
+        plugin.db().callback(plugin.players().playtime(target.getUniqueId()),
+            ms -> sender.sendMessage(plugin.messages().prefixed("playtime", "player",
+                displayName, "time", format(ms))));
         return true;
     }
 
