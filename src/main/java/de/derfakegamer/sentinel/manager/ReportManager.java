@@ -22,19 +22,21 @@ public final class ReportManager {
         UUID reporterId = (reporter instanceof Player p) ? p.getUniqueId() : new UUID(0, 0);
         if (reporterId.equals(targetId)) return CompletableFuture.completedFuture(false);
         long now = System.currentTimeMillis();
-        return plugin.db().submit(() -> {
+        CompletableFuture<Boolean> future = plugin.db().submit(() -> {
             dao.insert(new Report(0, reporterId, reporter.getName(), targetId, targetName,
                 reason, now, false, null));
             return true;
-        }).whenComplete((ok, err) -> {
+        });
+        plugin.db().callback(future, ok -> {
             if (Boolean.TRUE.equals(ok)) {
                 plugin.discord().post(":triangular_flag_on_post: **" + reporter.getName() + "** reported **" + targetName + "**: " + reason);
-                for (Player staff : Bukkit.getOnlinePlayers()) {
+                for (org.bukkit.entity.Player staff : Bukkit.getOnlinePlayers()) {
                     if (staff.isOp()) staff.sendMessage(plugin.messages().plain("report-alert",
                         "reporter", reporter.getName(), "player", targetName, "reason", reason));
                 }
             }
         });
+        return future;
     }
 
     public CompletableFuture<List<Report>> open() { return plugin.db().submit(() -> dao.findOpen()); }
