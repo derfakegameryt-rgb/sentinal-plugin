@@ -1,0 +1,88 @@
+# Sentinel configuration
+exempt: []          # list of UUIDs that can never be punished
+reasons:            # the 5 presets shown in the Reason GUI
+  - Hacking
+  - Spam
+  - Toxicity
+  - Advertising
+  - Griefing
+update:
+  # Auto-update is always on and checks every 5 minutes; this cannot be disabled.
+  github-token: ''   # optional, raises the GitHub API rate limit
+maintenance:
+  enabled: false
+  kick-message: "The server is under maintenance. Please come back later."
+  motd: "<red>Under maintenance"   # MiniMessage format (e.g. <red>, <#3B82F6>)
+announcements:
+  enabled: true
+  interval-seconds: 300
+  prefix: "<#3B82F6>Info <dark_gray>»</dark_gray> "
+  messages:
+    - "<gray>Read the rules with <white>/rules</white>."
+    - "<gray>Need help? Use <white>/report</white> for staff."
+chat:
+  slowmode-seconds: 0          # 0 = off; minimum gap between a player's messages
+  anti-spam:
+    enabled: true
+    max-repeats: 3             # blocked after the same message this many times in a row
+  anti-advertising:
+    enabled: true
+    whitelist: []              # domains/IPs that are allowed (substring match)
+  word-filter:
+    enabled: true
+    mode: block                # block | censor
+    words: []                  # words to block/censor (case-insensitive)
+  caps-filter:
+    enabled: true
+    min-length: 8              # ignore short messages
+    max-uppercase-ratio: 0.7   # block/censor if more than this fraction of letters are uppercase
+    mode: censor               # "block" or "censor" (censor = lowercase the message)
+  flood-filter:
+    enabled: true
+    max-run: 5                 # block if the same character repeats more than this many times in a row
+warn-actions:            # warns count -> action: "<kick|ban|tempban|mute|tempmute> [duration] <reason>"
+  3: "tempban 1d Reached 3 warnings"
+  5: "ban Reached 5 warnings"
+gui:
+  sound: true
+  sound-name: UI_BUTTON_CLICK
+discord:
+  webhook-url: ''   # paste a Discord webhook URL to mirror punishments & reports; empty = off
+logging:
+  retention-days: 30          # delete chat/command log entries older than this (0 = keep forever)
+  ignore-commands:            # never log these commands (they carry passwords)
+    - login
+    - l
+    - register
+    - reg
+    - changepassword
+    - changepass
+    - 2fa
+    - authme
+    - msg
+    - w
+    - tell
+    - whisper
+templates:        # quick punishments: "<type> [duration] <reason>"
+  - "ban Cheating / hacked client"
+  - "tempban 7d Severe griefing"
+  - "mute 1d Spam"
+  - "kick Please read the rules"
+  - "warn Inappropriate language"
+
+afk:
+  enabled: true
+  minutes: 5   # flag a player AFK after this many idle minutes (detection only, no kick); 0 disables
+
+backup:
+  keep: 5   # how many backup zips to retain
+
+# Appeals: a public URL shown on the ban screen so banned players know where to appeal
+# (banned players cannot run commands). Leave blank to show no appeal line.
+appeals:
+  url: ""
+
+# Scheduled console commands. Each entry needs a "do" plus either "every" (interval) or "at" (daily HH:mm).
+scheduled-tasks: []
+#  - { every: "2h", do: "say Remember to vote!" }
+#  - { at: "04:00", do: "restart 60s" }

@@ -1,0 +1,64 @@
+name: Sentinel
+version: '1.3.0'
+main: de.derfakegamer.sentinel.Sentinel
+api-version: '1.21'
+author: DerFakeGamer
+commands:
+  sentinel:
+    description: Sentinel admin (reload)
+    permission: sentinel.use
+  sn: { description: Sentinel (shortcut), permission: sentinel.use }
+  ban: { description: Ban a player, permission: sentinel.use }
+  tempban: { description: Temporarily ban a player, permission: sentinel.use }
+  ipban: { description: Ban a player's IP, permission: sentinel.use }
+  unban: { description: Unban a player, permission: sentinel.use }
+  mute: { description: Mute a player, permission: sentinel.use }
+  tempmute: { description: Temporarily mute a player, permission: sentinel.use }
+  unmute: { description: Unmute a player, permission: sentinel.use }
+  kick: { description: Kick a player, permission: sentinel.use }
+  warn: { description: Warn a player, permission: sentinel.use }
+  shadowmute: { description: Shadow-mute a player, permission: sentinel.use }
+  unshadowmute: { description: Remove a shadow-mute, permission: sentinel.use }
+  history: { description: View a player's punishment history, permission: sentinel.use }
+  report: { description: Report a player }
+  appeal:
+    description: Appeal an active mute.
+    usage: /appeal <reason>
+  rules: { description: Show the server rules }
+  sc: { description: Staff chat, permission: sentinel.use }
+  clearchat: { description: Clear the chat, aliases: [cc], permission: sentinel.use }
+  maintenance: { description: Toggle maintenance mode, permission: sentinel.use }
+  broadcast: { description: Broadcast a message, aliases: [bc], permission: sentinel.use }
+  restart: { description: Schedule a server restart, permission: sentinel.use }
+  playtime: { description: Show playtime, permission: sentinel.use }
+  backup:
+    description: Back up all worlds to a zip.
+    permission: sentinel.use
+permissions:
+  sentinel.use:
+    description: Access Sentinel's operator commands
+    default: op
+  sentinel.ban:
+    description: Ban and tempban players
+    default: op
+  sentinel.ipban:
+    description: IP-ban players
+    default: op
+  sentinel.mute:
+    description: Mute and tempmute players
+    default: op
+  sentinel.kick:
+    description: Kick players
+    default: op
+  sentinel.warn:
+    description: Warn players
+    default: op
+  sentinel.shadowmute:
+    description: Shadow-mute players
+    default: op
+  sentinel.unban:
+    description: Remove bans
+    default: op
+  sentinel.unmute:
+    description: Remove mutes
+    default: op
