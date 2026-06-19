@@ -68,7 +68,7 @@ public final class NotesGui extends Gui {
                     new NotesGui(plugin, target).open(mod);
                 });
             }
-            case BACK -> new PlayerActionsGui(plugin, target).open(mod);
+            case BACK -> PlayerActionsGui.open(plugin, target, mod);
             case CLOSE -> mod.closeInventory();
         }
     }

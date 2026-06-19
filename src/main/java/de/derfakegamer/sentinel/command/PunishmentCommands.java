@@ -44,8 +44,8 @@ public final class PunishmentCommands implements CommandExecutor, TabCompleter {
                     default -> de.derfakegamer.sentinel.model.PunishmentType.MUTE;
                 };
                 if (!plugin.staffPerms().canPerform(sender, type)) { sender.sendMessage(plugin.messages().prefixed("no-permission")); return true; }
-                boolean applied = plugin.moderation().apply(issuerId, issuerName, t.id, t.name, t.ip, type, 0, reason);
-                if (!applied) { sender.sendMessage(plugin.messages().prefixed("exempt")); return true; }
+                plugin.db().callback(plugin.moderation().apply(issuerId, issuerName, t.id, t.name, t.ip, type, 0, reason),
+                    applied -> { if (applied == null || !applied) sender.sendMessage(plugin.messages().prefixed("exempt")); });
             }
             case "tempban", "tempmute" -> {
                 if (args.length < 3) return usage(sender, "/" + cmd + " <player> <duration> <reason>");
@@ -58,8 +58,8 @@ public final class PunishmentCommands implements CommandExecutor, TabCompleter {
                     ? de.derfakegamer.sentinel.model.PunishmentType.BAN
                     : de.derfakegamer.sentinel.model.PunishmentType.MUTE;
                 if (!plugin.staffPerms().canPerform(sender, type)) { sender.sendMessage(plugin.messages().prefixed("no-permission")); return true; }
-                boolean applied = plugin.moderation().apply(issuerId, issuerName, t.id, t.name, t.ip, type, expiresAt, reason);
-                if (!applied) { sender.sendMessage(plugin.messages().prefixed("exempt")); return true; }
+                plugin.db().callback(plugin.moderation().apply(issuerId, issuerName, t.id, t.name, t.ip, type, expiresAt, reason),
+                    applied -> { if (applied == null || !applied) sender.sendMessage(plugin.messages().prefixed("exempt")); });
             }
             case "kick", "warn" -> {
                 if (args.length < 2) return usage(sender, "/" + cmd + " <player> <reason>");
@@ -69,33 +69,34 @@ public final class PunishmentCommands implements CommandExecutor, TabCompleter {
                     ? de.derfakegamer.sentinel.model.PunishmentType.KICK
                     : de.derfakegamer.sentinel.model.PunishmentType.WARN;
                 if (!plugin.staffPerms().canPerform(sender, type)) { sender.sendMessage(plugin.messages().prefixed("no-permission")); return true; }
-                boolean applied = plugin.moderation().apply(issuerId, issuerName, t.id, t.name, t.ip, type, 0, reason);
-                if (!applied) { sender.sendMessage(plugin.messages().prefixed("exempt")); return true; }
+                plugin.db().callback(plugin.moderation().apply(issuerId, issuerName, t.id, t.name, t.ip, type, 0, reason),
+                    applied -> { if (applied == null || !applied) sender.sendMessage(plugin.messages().prefixed("exempt")); });
             }
             case "shadowmute" -> {
                 if (args.length < 2) return usage(sender, "/shadowmute <player> <reason>");
                 Target t = resolve(sender, args[0]); if (t == null) return true;
                 if (!plugin.staffPerms().canPerform(sender, de.derfakegamer.sentinel.model.PunishmentType.SHADOWMUTE)) { sender.sendMessage(plugin.messages().prefixed("no-permission")); return true; }
-                boolean ok = plugin.moderation().apply(issuerId, issuerName, t.id, t.name, t.ip,
-                    de.derfakegamer.sentinel.model.PunishmentType.SHADOWMUTE, 0, join(args, 1));
-                if (!ok) sender.sendMessage(plugin.messages().prefixed("exempt"));
+                plugin.db().callback(plugin.moderation().apply(issuerId, issuerName, t.id, t.name, t.ip,
+                    de.derfakegamer.sentinel.model.PunishmentType.SHADOWMUTE, 0, join(args, 1)),
+                    ok -> { if (ok == null || !ok) sender.sendMessage(plugin.messages().prefixed("exempt")); });
             }
             case "unshadowmute" -> {
                 if (args.length < 1) return usage(sender, "/unshadowmute <player>");
                 Target t = resolve(sender, args[0]); if (t == null) return true;
                 if (!plugin.staffPerms().canUse(sender, "sentinel.shadowmute")) { sender.sendMessage(plugin.messages().prefixed("no-permission")); return true; }
-                if (!plugin.moderation().removeShadowMute(issuerId, issuerName, t.id, t.name))
-                    sender.sendMessage(plugin.messages().prefixed("not-muted"));
+                plugin.db().callback(plugin.moderation().removeShadowMute(issuerId, issuerName, t.id, t.name),
+                    ok -> { if (ok == null || !ok) sender.sendMessage(plugin.messages().prefixed("not-muted")); });
             }
             case "unban", "unmute" -> {
                 if (args.length < 1) return usage(sender, "/" + cmd + " <player>");
                 Target t = resolve(sender, args[0]); if (t == null) return true;
                 String unNode = cmd.equals("unban") ? "sentinel.unban" : "sentinel.unmute";
                 if (!plugin.staffPerms().canUse(sender, unNode)) { sender.sendMessage(plugin.messages().prefixed("no-permission")); return true; }
-                boolean ok = cmd.equals("unban")
+                String notKey = cmd.equals("unban") ? "not-banned" : "not-muted";
+                java.util.concurrent.CompletableFuture<Boolean> fut = cmd.equals("unban")
                     ? plugin.moderation().removeBan(issuerId, issuerName, t.id, t.name)
                     : plugin.moderation().removeMute(issuerId, issuerName, t.id, t.name);
-                if (!ok) sender.sendMessage(plugin.messages().prefixed(cmd.equals("unban") ? "not-banned" : "not-muted"));
+                plugin.db().callback(fut, ok -> { if (ok == null || !ok) sender.sendMessage(plugin.messages().prefixed(notKey)); });
                 return true;
             }
             case "history" -> {

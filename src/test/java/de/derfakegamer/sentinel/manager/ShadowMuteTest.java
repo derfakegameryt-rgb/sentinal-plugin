@@ -19,8 +19,9 @@ class ShadowMuteTest {
 
     @Test void applyShadowMuteRecordsActiveShadowMute() throws Exception {
         UUID t = UUID.randomUUID();
-        assertTrue(plugin.moderation().apply(new UUID(0,0), "Admin", t, "Sneaky", null,
-            PunishmentType.SHADOWMUTE, 0, "test"));
+        boolean ok = plugin.moderation().apply(new UUID(0,0), "Admin", t, "Sneaky", null,
+            PunishmentType.SHADOWMUTE, 0, "test").get(2, TimeUnit.SECONDS);
+        assertTrue(ok);
         assertNotNull(plugin.punishments().activeShadowMute(t, System.currentTimeMillis()).get(2, TimeUnit.SECONDS));
         // a shadow-mute must NOT register as a normal mute
         assertNull(plugin.punishments().activeMute(t, System.currentTimeMillis()).get(2, TimeUnit.SECONDS));
@@ -28,8 +29,11 @@ class ShadowMuteTest {
 
     @Test void removeShadowMuteClearsIt() throws Exception {
         UUID t = UUID.randomUUID();
-        plugin.moderation().apply(new UUID(0,0), "Admin", t, "Sneaky", null, PunishmentType.SHADOWMUTE, 0, "x");
-        assertTrue(plugin.moderation().removeShadowMute(new UUID(0,0), "Admin", t, "Sneaky"));
+        plugin.moderation().apply(new UUID(0,0), "Admin", t, "Sneaky", null, PunishmentType.SHADOWMUTE, 0, "x")
+            .get(2, TimeUnit.SECONDS);
+        boolean removed = plugin.moderation().removeShadowMute(new UUID(0,0), "Admin", t, "Sneaky")
+            .get(2, TimeUnit.SECONDS);
+        assertTrue(removed);
         assertNull(plugin.punishments().activeShadowMute(t, System.currentTimeMillis()).get(2, TimeUnit.SECONDS));
     }
 }

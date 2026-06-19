@@ -7,6 +7,7 @@ import de.derfakegamer.sentinel.storage.AppealDao;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 /** Stores and resolves ban/mute appeals. Accepting an appeal lifts the linked punishment. */
 public final class AppealManager {
@@ -24,11 +25,15 @@ public final class AppealManager {
         return true;
     }
 
-    /** Accepts an appeal: lifts the linked punishment (unban/unmute) and marks it accepted. */
-    public void accept(Appeal a, String staff, long now) {
-        if (a.type() == PunishmentType.MUTE) plugin.punishments().unmute(a.targetUuid(), staff, now).join();
-        else plugin.punishments().unban(a.targetUuid(), staff, now).join();
-        dao.setStatus(a.id(), "ACCEPTED", staff, now);
+    /**
+     * Accepts an appeal: lifts the linked punishment (unban/unmute) and marks it accepted.
+     * Returns a future that completes once the status has been written to the DB.
+     */
+    public CompletableFuture<Void> accept(Appeal a, String staff, long now) {
+        CompletableFuture<Boolean> liftFuture = a.type() == PunishmentType.MUTE
+            ? plugin.punishments().unmute(a.targetUuid(), staff, now)
+            : plugin.punishments().unban(a.targetUuid(), staff, now);
+        return liftFuture.thenRun(() -> dao.setStatus(a.id(), "ACCEPTED", staff, now));
     }
 
     public void deny(Appeal a, String staff, long now) { dao.setStatus(a.id(), "DENIED", staff, now); }

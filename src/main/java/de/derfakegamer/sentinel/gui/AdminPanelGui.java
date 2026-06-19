@@ -52,7 +52,7 @@ public final class AdminPanelGui extends Gui {
             case WHITELIST -> new WhitelistGui(plugin, 0).open(p);
             case STATS -> new StatsGui(plugin).open(p);
             case APPEALS -> new AppealsGui(plugin, 0).open(p);
-            case BACK -> new PlayersGui(plugin, 0).open(p);
+            case BACK -> PlayersGui.open(plugin, 0, p);
             case CLOSE -> p.closeInventory();
         }
     }

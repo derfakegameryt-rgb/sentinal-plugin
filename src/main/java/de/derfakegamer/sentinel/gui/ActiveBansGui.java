@@ -60,6 +60,6 @@ public final class ActiveBansGui extends Gui {
         if (slot == BACK) { new AdminPanelGui(plugin).open(p); return; }
         int index = page * PAGE_SIZE + slot;
         if (slot >= 0 && slot < PAGE_SIZE && index < bans.size())
-            new PlayerActionsGui(plugin, Bukkit.getOfflinePlayer(bans.get(index).targetUuid())).open(p);
+            PlayerActionsGui.open(plugin, Bukkit.getOfflinePlayer(bans.get(index).targetUuid()), p);
     }
 }

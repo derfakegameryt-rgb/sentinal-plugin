@@ -14,6 +14,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public final class PlayerActionsGui extends Gui {
     private static final int HEAD = 4;
@@ -27,21 +28,53 @@ public final class PlayerActionsGui extends Gui {
     private final boolean banned;
     private final boolean muted;
     private final boolean shadowMuted;
+    private final int warnCount;
 
-    public PlayerActionsGui(Sentinel plugin, OfflinePlayer target) {
+    /**
+     * Asynchronously fetches punishment state for {@code target} then constructs and opens the GUI
+     * on the main thread. Use this instead of {@code new PlayerActionsGui(...).open(viewer)}.
+     */
+    public static void open(Sentinel plugin, OfflinePlayer target, Player viewer) {
+        long now = System.currentTimeMillis();
+        CompletableFuture<de.derfakegamer.sentinel.model.Punishment> banFut =
+            plugin.punishments().activeBan(target.getUniqueId(), now);
+        CompletableFuture<de.derfakegamer.sentinel.model.Punishment> muteFut =
+            plugin.punishments().activeMute(target.getUniqueId(), now);
+        CompletableFuture<de.derfakegamer.sentinel.model.Punishment> shadowFut =
+            plugin.punishments().activeShadowMute(target.getUniqueId(), now);
+        CompletableFuture<Integer> warnFut =
+            plugin.punishments().warnCount(target.getUniqueId());
+
+        CompletableFuture<Void> all = CompletableFuture.allOf(banFut, muteFut, shadowFut, warnFut);
+        // thenAccept runs on the DB executor thread (futures are already done, so join() is safe)
+        plugin.db().callback(all, ignored -> {
+            boolean banned      = banFut.join() != null;
+            boolean muted       = muteFut.join() != null;
+            boolean shadowMuted = shadowFut.join() != null;
+            int warns           = warnFut.join();
+            new PlayerActionsGui(plugin, target, banned, muted, shadowMuted, warns).open(viewer);
+        });
+    }
+
+    /**
+     * Constructs the GUI with pre-fetched punishment state. Call {@link #open(Sentinel, OfflinePlayer, Player)}
+     * from the main thread instead of this constructor.
+     */
+    public PlayerActionsGui(Sentinel plugin, OfflinePlayer target,
+                            boolean banned, boolean muted, boolean shadowMuted, int warnCount) {
         super(plugin);
         this.target = target;
-        long now = System.currentTimeMillis();
-        this.banned = plugin.punishments().activeBan(target.getUniqueId(), now).join() != null;
-        this.muted = plugin.punishments().activeMute(target.getUniqueId(), now).join() != null;
-        this.shadowMuted = plugin.punishments().activeShadowMute(target.getUniqueId(), now).join() != null;
+        this.banned = banned;
+        this.muted = muted;
+        this.shadowMuted = shadowMuted;
+        this.warnCount = warnCount;
         this.inventory = Bukkit.createInventory(this, 45,
             plugin.messages().plain("gui-actions-title", "player", name()));
 
         inventory.setItem(HEAD, Items.head(target, Component.text(name(), NamedTextColor.AQUA),
             List.of(status(banned ? "Banned" : "Not banned", banned),
                     status(muted ? "Muted" : "Not muted", muted),
-                    line("Warns: " + plugin.punishments().warnCount(target.getUniqueId()).join(), NamedTextColor.GRAY))));
+                    line("Warns: " + warnCount, NamedTextColor.GRAY))));
 
         inventory.setItem(BAN, Items.button(Material.BARRIER,
             Component.text(banned ? "Unban" : "Ban", banned ? NamedTextColor.GREEN : NamedTextColor.RED),
@@ -131,7 +164,8 @@ public final class PlayerActionsGui extends Gui {
             case BAN -> {
                 if (banned) {
                     if (!plugin.staffPerms().canUse(mod, "sentinel.unban")) { mod.sendMessage(plugin.messages().prefixed("no-permission")); return; }
-                    plugin.moderation().removeBan(mod.getUniqueId(), mod.getName(), target.getUniqueId(), name()); mod.closeInventory();
+                    plugin.db().callback(plugin.moderation().removeBan(mod.getUniqueId(), mod.getName(), target.getUniqueId(), name()),
+                        ignored -> mod.closeInventory());
                 } else {
                     if (!plugin.staffPerms().canPerform(mod, PunishmentType.BAN)) { mod.sendMessage(plugin.messages().prefixed("no-permission")); return; }
                     new ReasonGui(plugin, target, null, PunishmentType.BAN, 0).open(mod);
@@ -140,7 +174,8 @@ public final class PlayerActionsGui extends Gui {
             case MUTE -> {
                 if (muted) {
                     if (!plugin.staffPerms().canUse(mod, "sentinel.unmute")) { mod.sendMessage(plugin.messages().prefixed("no-permission")); return; }
-                    plugin.moderation().removeMute(mod.getUniqueId(), mod.getName(), target.getUniqueId(), name()); mod.closeInventory();
+                    plugin.db().callback(plugin.moderation().removeMute(mod.getUniqueId(), mod.getName(), target.getUniqueId(), name()),
+                        ignored -> mod.closeInventory());
                 } else {
                     if (!plugin.staffPerms().canPerform(mod, PunishmentType.MUTE)) { mod.sendMessage(plugin.messages().prefixed("no-permission")); return; }
                     new ReasonGui(plugin, target, null, PunishmentType.MUTE, 0).open(mod);
@@ -148,8 +183,10 @@ public final class PlayerActionsGui extends Gui {
             }
             case SHADOWMUTE_SLOT -> {
                 if (!plugin.staffPerms().canPerform(mod, PunishmentType.SHADOWMUTE)) { mod.sendMessage(plugin.messages().prefixed("no-permission")); return; }
-                if (shadowMuted) { plugin.moderation().removeShadowMute(mod.getUniqueId(), mod.getName(), target.getUniqueId(), name()); mod.closeInventory(); }
-                else new ReasonGui(plugin, target, null, PunishmentType.SHADOWMUTE, 0).open(mod);
+                if (shadowMuted) {
+                    plugin.db().callback(plugin.moderation().removeShadowMute(mod.getUniqueId(), mod.getName(), target.getUniqueId(), name()),
+                        ignored -> mod.closeInventory());
+                } else new ReasonGui(plugin, target, null, PunishmentType.SHADOWMUTE, 0).open(mod);
             }
             case TEMPBAN -> {
                 if (!plugin.staffPerms().canPerform(mod, PunishmentType.BAN)) { mod.sendMessage(plugin.messages().prefixed("no-permission")); return; }
@@ -206,7 +243,7 @@ public final class PlayerActionsGui extends Gui {
                 mod.sendMessage(plugin.messages().prefixed(makeOp ? "opped" : "deopped", "player", name()));
                 mod.closeInventory();
             }
-            case BACK -> new PlayersGui(plugin, 0).open(mod);
+            case BACK -> PlayersGui.open(plugin, 0, mod);
             case CLOSE -> mod.closeInventory();
         }
     }

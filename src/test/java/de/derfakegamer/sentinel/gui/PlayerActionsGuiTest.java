@@ -22,7 +22,8 @@ class PlayerActionsGuiTest {
     @Test void banButtonOpensReasonGui() {
         PlayerMock mod = server.addPlayer("Mod"); mod.setOp(true);
         OfflinePlayer target = server.addPlayer("Griefer");
-        PlayerActionsGui gui = new PlayerActionsGui(plugin, target);
+        // target is not banned — construct with banned=false
+        PlayerActionsGui gui = new PlayerActionsGui(plugin, target, false, false, false, 0);
         gui.open(mod);
 
         InventoryClickEvent event = ConfirmGuiTest.clickSlot(mod, gui, 10); // Ban
@@ -36,13 +37,17 @@ class PlayerActionsGuiTest {
         PlayerMock mod = server.addPlayer("Mod"); mod.setOp(true);
         OfflinePlayer target = server.addPlayer("Griefer");
         plugin.punishments().ban(target.getUniqueId(), "Griefer", mod.getUniqueId(), "Mod", "x", 0).get(2, TimeUnit.SECONDS);
-        PlayerActionsGui gui = new PlayerActionsGui(plugin, target);
+        // construct with banned=true (pre-fetched)
+        PlayerActionsGui gui = new PlayerActionsGui(plugin, target, true, false, false, 0);
         gui.open(mod);
 
         InventoryClickEvent event = ConfirmGuiTest.clickSlot(mod, gui, 10); // now "Unban"
         gui.onClick(event);
 
         assertTrue(event.isCancelled());
+        // Wait for the async removeBan future to complete on the DB thread
+        Thread.sleep(200);
+        server.getScheduler().performTicks(2);
         assertNull(plugin.punishments().activeBan(target.getUniqueId(), System.currentTimeMillis()).get(2, TimeUnit.SECONDS),
             "clicking Unban removes the active ban");
     }

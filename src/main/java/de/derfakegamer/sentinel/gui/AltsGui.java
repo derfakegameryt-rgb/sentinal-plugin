@@ -62,7 +62,7 @@ public final class AltsGui extends Gui {
         event.setCancelled(true);
         Player mod = (Player) event.getWhoClicked();
         int slot = event.getRawSlot();
-        if (slot == BACK) { new PlayerActionsGui(plugin, target).open(mod); return; }
+        if (slot == BACK) { PlayerActionsGui.open(plugin, target, mod); return; }
         if (slot == CLOSE) { mod.closeInventory(); return; }
         if (slot == BAN_ALL) {
             if (!plugin.staffPerms().canPerform(mod, de.derfakegamer.sentinel.model.PunishmentType.BAN)) {
@@ -70,6 +70,7 @@ public final class AltsGui extends Gui {
             }
             Player p = mod;
             new ConfirmGui(plugin, Component.text("Ban " + (alts.size() + 1) + " accounts?", NamedTextColor.RED), () -> {
+                // Fire-and-forget: futures complete on the DB thread; results are broadcast by ModerationService
                 plugin.moderation().apply(p.getUniqueId(), p.getName(), target.getUniqueId(),
                     target.getName() == null ? "?" : target.getName(), null,
                     de.derfakegamer.sentinel.model.PunishmentType.BAN, 0, "Alt of a banned account");
@@ -81,7 +82,7 @@ public final class AltsGui extends Gui {
         }
         if (slot >= 0 && slot < PAGE_SIZE && slot < alts.size()) {
             OfflinePlayer alt = Bukkit.getOfflinePlayer(alts.get(slot).uuid());
-            new PlayerActionsGui(plugin, alt).open(mod);
+            PlayerActionsGui.open(plugin, alt, mod);
         }
     }
 }

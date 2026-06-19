@@ -30,13 +30,12 @@ class AppealManagerTest {
         UUID issuer = UUID.randomUUID();
         long now = System.currentTimeMillis();
         plugin.punishments().mute(uuid, "Bob", issuer, "Admin", "spam", 0).get(2, TimeUnit.SECONDS);
-        assertNotNull(plugin.punishments().activeMute(uuid, now).get(2, TimeUnit.SECONDS));
 
         Punishment mute = plugin.punishments().activeMute(uuid, now).get(2, TimeUnit.SECONDS);
         assertNotNull(mute);
         assertTrue(plugin.appeals().submit(uuid, "Bob", mute.id(), PunishmentType.MUTE, "sorry", now));
         var appeal = plugin.appeals().open().get(0);
-        plugin.appeals().accept(appeal, "Admin", now);
+        plugin.appeals().accept(appeal, "Admin", now).get(2, TimeUnit.SECONDS);
 
         assertNull(plugin.punishments().activeMute(uuid, now).get(2, TimeUnit.SECONDS));
         assertTrue(plugin.appeals().open().isEmpty());

@@ -55,9 +55,9 @@ public final class SentinelCommand implements CommandExecutor, TabCompleter {
         }
         if (args.length == 1) {
             org.bukkit.OfflinePlayer target = org.bukkit.Bukkit.getOfflinePlayer(args[0]);
-            new de.derfakegamer.sentinel.gui.PlayerActionsGui(plugin, target).open(mod);
+            de.derfakegamer.sentinel.gui.PlayerActionsGui.open(plugin, target, mod);
         } else {
-            new de.derfakegamer.sentinel.gui.PlayersGui(plugin, 0).open(mod);
+            de.derfakegamer.sentinel.gui.PlayersGui.open(plugin, 0, mod);
         }
         return true;
     }

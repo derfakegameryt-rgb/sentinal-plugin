@@ -73,7 +73,7 @@ public final class ReportsGui extends Gui {
             new ReportsGui(plugin, page).open(mod);
         } else if (event.isRightClick()) {
             OfflinePlayer target = Bukkit.getOfflinePlayer(r.targetUuid());
-            new PlayerActionsGui(plugin, target).open(mod);
+            PlayerActionsGui.open(plugin, target, mod);
         } else {
             Player target = Bukkit.getPlayer(r.targetUuid());
             if (target != null) { mod.teleport(target.getLocation()); mod.closeInventory(); }
