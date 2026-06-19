@@ -233,7 +233,7 @@ public final class PlayerActionsGui extends Gui {
             case LOGS -> new ChatLogGui(plugin, target).open(mod);
             case TEMPLATES -> new TemplatesGui(plugin, target).open(mod);
             case HISTORY -> HistoryGui.open(plugin, target, mod, 0);
-            case NOTES -> new NotesGui(plugin, target).open(mod);
+            case NOTES -> NotesGui.open(plugin, target, mod);
             case ALTS -> AltsGui.open(plugin, target, mod);
             case OPTOGGLE -> {
                 // Protected players (config `exempt`, e.g. the owner) cannot be de-opped via the panel.

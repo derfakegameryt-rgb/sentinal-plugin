@@ -79,7 +79,7 @@ public class Sentinel extends JavaPlugin {
         this.playerDirectory = new de.derfakegamer.sentinel.manager.PlayerDirectory(
             this, new de.derfakegamer.sentinel.storage.PlayerDao(db.database()));
         this.noteManager = new de.derfakegamer.sentinel.manager.NoteManager(
-            new de.derfakegamer.sentinel.storage.NoteDao(db.database()));
+            this, new de.derfakegamer.sentinel.storage.NoteDao(db.database()));
         this.punishmentManager = new PunishmentManager(this, new PunishmentDao(db.database()), loadExempt());
         this.moderationService = new de.derfakegamer.sentinel.manager.ModerationService(this);
         this.chatInputManager = new de.derfakegamer.sentinel.manager.ChatInputManager();
