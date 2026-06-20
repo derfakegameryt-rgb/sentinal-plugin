@@ -29,7 +29,7 @@ public final class ReportManager {
         });
         plugin.db().callback(future, ok -> {
             if (Boolean.TRUE.equals(ok)) {
-                plugin.discord().post(":triangular_flag_on_post: **" + reporter.getName() + "** reported **" + targetName + "**: " + reason);
+                plugin.discord().logReport(reporter.getName(), targetName, reason);
                 for (org.bukkit.entity.Player staff : Bukkit.getOnlinePlayers()) {
                     if (staff.isOp()) staff.sendMessage(plugin.messages().plain("report-alert",
                         "reporter", reporter.getName(), "player", targetName, "reason", reason));
