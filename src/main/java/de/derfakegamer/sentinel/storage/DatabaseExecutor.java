@@ -50,7 +50,7 @@ public final class DatabaseExecutor {
                 database.ensureValid();
                 work.run();
             } catch (Throwable t) {
-                logger.log(Level.SEVERE, "DB write failed", t);
+                logger.log(Level.SEVERE, "DB write failed (operation dropped)", t);
             }
         });
     }

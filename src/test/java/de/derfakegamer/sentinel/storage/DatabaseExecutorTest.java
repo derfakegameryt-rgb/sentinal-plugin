@@ -73,7 +73,7 @@ class DatabaseExecutorTest {
         ex.submit(() -> 1).get(2, java.util.concurrent.TimeUnit.SECONDS);
         ex.execute(() -> {});
         ex.submit(() -> 2).get(2, java.util.concurrent.TimeUnit.SECONDS);
-        assertTrue(validations.get() >= 2, "ensureValid must run before tasks");
+        assertTrue(validations.get() >= 3, "ensureValid must run before tasks");
         ex.shutdown();
     }
 }

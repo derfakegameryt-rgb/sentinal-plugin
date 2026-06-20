@@ -42,9 +42,11 @@ public final class MysqlDatabase implements Database {
                 try {
                     st.executeUpdate(sql);
                 } catch (SQLException e) {
-                    // MySQL CREATE INDEX has no IF NOT EXISTS; ignore "duplicate key name" on re-run.
+                    // MySQL CREATE INDEX has no IF NOT EXISTS; ignore duplicate-index errors on re-run.
                     String m = String.valueOf(e.getMessage()).toLowerCase();
-                    if (!m.contains("duplicate key name") && !m.contains("already exists")) throw e;
+                    boolean duplicateIndex = e.getErrorCode() == 1061   // ER_DUP_KEYNAME (locale-invariant)
+                        || m.contains("duplicate key name") || m.contains("already exists");
+                    if (!duplicateIndex) throw e;
                 }
             }
         }
