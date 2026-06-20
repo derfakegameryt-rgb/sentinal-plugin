@@ -14,15 +14,14 @@ import java.util.stream.Collectors;
 public final class SlashCommandListener extends ListenerAdapter {
     private static final UUID DISCORD_ISSUER = new UUID(0L, 0L);
     private final Sentinel plugin;
-    private final List<String> staffRoleIds;
 
-    public SlashCommandListener(Sentinel plugin, List<String> staffRoleIds) {
+    public SlashCommandListener(Sentinel plugin) {
         this.plugin = plugin;
-        this.staffRoleIds = staffRoleIds;
     }
 
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent e) {
+        List<String> staffRoleIds = plugin.getConfig().getStringList("discord.bot.staff-role-ids");
         Set<String> memberRoles = e.getMember() == null
             ? Set.of()
             : e.getMember().getRoles().stream().map(r -> r.getId()).collect(Collectors.toSet());
@@ -37,9 +36,10 @@ public final class SlashCommandListener extends ListenerAdapter {
         String durationStr = e.getOption("duration") == null ? null : e.getOption("duration").getAsString();
         String issuer = "Discord: " + e.getUser().getName();
 
-        e.deferReply().queue(); // ack within 3s; we reply after the async DB work
+        e.deferReply(true).queue(); // ack within 3s; ephemeral so only invoker sees outcome
         // resolve the target off the JDA thread via the DB executor
-        plugin.db().callback(plugin.players().byName(playerName), rec -> {
+        plugin.players().byName(playerName).whenComplete((rec, err) -> {
+            if (err != null) { e.getHook().sendMessage("Database error, please try again.").queue(); return; }
             if (rec == null) { e.getHook().sendMessage("Player not found: " + playerName).queue(); return; }
             UUID target = rec.uuid();
             long now = System.currentTimeMillis();

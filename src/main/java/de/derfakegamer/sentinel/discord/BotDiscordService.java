@@ -30,8 +30,7 @@ public final class BotDiscordService implements DiscordService {
             this.jda = JDABuilder.createLight(token, EnumSet.noneOf(GatewayIntent.class)).build();
             jda.awaitReady();
             plugin.getLogger().info("Sentinel: Discord bot connected as " + jda.getSelfUser().getAsTag());
-            java.util.List<String> staffRoles = plugin.getConfig().getStringList("discord.bot.staff-role-ids");
-            jda.addEventListener(new SlashCommandListener(plugin, staffRoles));
+            jda.addEventListener(new SlashCommandListener(plugin));
             net.dv8tion.jda.api.entities.Guild guild = jda.getGuildById(guildId);
             if (guild != null) {
                 guild.updateCommands().addCommands(
@@ -62,7 +61,7 @@ public final class BotDiscordService implements DiscordService {
                 ).queue();
             }
         } catch (Throwable t) {
-            plugin.getLogger().warning("Sentinel: Discord bot failed to start: " + t.getMessage());
+            plugin.getLogger().log(java.util.logging.Level.WARNING, "Sentinel: Discord bot failed to start", t);
             this.jda = null;
         }
     }
