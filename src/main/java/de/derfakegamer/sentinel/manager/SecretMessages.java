@@ -22,30 +22,6 @@ public final class SecretMessages {
 
     public SecretMessages(String prefix) {
         this.prefix = prefix == null ? defaultPrefix() : prefix;
-        templates.put("gui-orbital-code-title", "<#3B82F6>Sentinel · Enter Code");
-        templates.put("gui-orbital-mode-title", "<#3B82F6>Sentinel · Orbital Strike");
-        templates.put("gui-orbital-payload-title", "<#3B82F6>Sentinel · Payload");
-        templates.put("gui-orbital-dim-title", "<#3B82F6>Sentinel · Dimension");
-        templates.put("orbital-wrong-code", "<red>Wrong code.");
-        templates.put("orbital-rod-received", "<#60A5FA>Orbital strike rod received — right-click to fire.");
-        templates.put("orbital-no-target", "<red>No target block in sight.");
-        templates.put("orbital-fired", "<#60A5FA>Orbital strike inbound at <white><x>, <z></white>.");
-        templates.put("orbital-world-gone", "<red>That world is no longer loaded.");
-        templates.put("orbital-enter-coord", "<#60A5FA>Type the <white><axis></#60A5FA> coordinate in chat, or type <white>cancel<#60A5FA>.");
-        templates.put("orbital-bad-coord", "<red>That's not a valid number.");
-        templates.put("gui-owner-title", "<#3B82F6>Sentinel · Owner Panel");
-        templates.put("gui-orbital-users-title", "<#3B82F6>Sentinel · Orbital Users");
-        templates.put("owner-enter-user", "<#60A5FA>Type the player's name to allow, or type <white>cancel<#60A5FA>.");
-        templates.put("owner-user-added", "<#60A5FA><player></#60A5FA> <gray>can now use the orbital strike.");
-        templates.put("owner-user-removed", "<#60A5FA><player></#60A5FA> <gray>can no longer use the orbital strike.");
-        templates.put("owner-enter-code", "<#60A5FA>Type the new 4-digit code, or type <white>cancel<#60A5FA>.");
-        templates.put("owner-code-changed", "<#60A5FA>Orbital strike code updated.");
-        templates.put("owner-bad-code", "<red>The code must be 4 digits.");
-        templates.put("gui-orbital-when-title", "<#3B82F6>Sentinel · When");
-        templates.put("orbital-enter-delay", "<#60A5FA>Type a delay (e.g. 10m, 2h), or type <white>cancel<#60A5FA>.");
-        templates.put("orbital-scheduled", "<#60A5FA>Strike scheduled in <white><time></white>.");
-        templates.put("gui-scheduled-title", "<#3B82F6>Sentinel · Scheduled Strikes");
-        templates.put("scheduled-cancelled", "<#60A5FA>Scheduled strike cancelled.");
     }
 
     private static String defaultPrefix() {
