@@ -213,15 +213,12 @@ public final class UpdateChecker {
 
     private void report(CommandSender requester, String key, String... placeholders) {
         if (requester == null) {
-            if (key.equals("update-failed")) {
-                String err = lastValue(placeholders);
-                // GitHub rate-limit / transient network blips are expected and self-heal next interval;
-                // keep them out of the console at WARNING level so they don't look alarming.
-                if (err.contains("rate limited") || err.contains("HTTP 5") || err.toLowerCase().contains("timed out"))
-                    plugin.getLogger().fine("Update check skipped: " + err);
-                else
-                    plugin.getLogger().warning("Update check failed: " + err);
-            }
+            // Scheduled run (every 5 minutes): NEVER log failures to the console — that would
+            // spam the log on any persistent issue (offline, 404, rate limit, parse error).
+            // Failures are kept at FINE so they're available with debug logging but invisible
+            // by default. Run "/sentinel update" to see the real reason on demand.
+            if (key.equals("update-failed"))
+                plugin.getLogger().fine("Update check skipped: " + lastValue(placeholders));
             return;
         }
         plugin.getServer().getScheduler().runTask(plugin,
