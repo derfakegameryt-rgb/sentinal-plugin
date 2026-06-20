@@ -17,7 +17,7 @@ public final class SettingsDao {
 
     public void set(String key, String value) {
         synchronized (db) {
-            String sql = "INSERT INTO settings (key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value";
+            String sql = db.dialect().settingsUpsert();
             try (PreparedStatement ps = db.connection().prepareStatement(sql)) {
                 ps.setString(1, key); ps.setString(2, value); ps.executeUpdate();
             } catch (SQLException e) { throw new RuntimeException(e); }
