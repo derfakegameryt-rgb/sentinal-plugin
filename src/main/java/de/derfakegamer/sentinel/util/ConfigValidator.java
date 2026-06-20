@@ -23,6 +23,7 @@ public final class ConfigValidator {
 
     public static void validate(FileConfiguration cfg, Logger log) {
         checkDiscordWebhook(cfg, log);
+        checkDiscordBot(cfg, log);
         checkAppealsUrl(cfg, log);
         checkGuiSoundName(cfg, log);
         checkNonNegativeInts(cfg, log);
@@ -42,6 +43,18 @@ public final class ConfigValidator {
             log.warning("Sentinel config: discord.webhook-url looks malformed"
                     + " (expected https://discord.com/api/webhooks/... or https://discordapp.com/api/webhooks/...)"
                     + " — Discord mirroring may fail.");
+        }
+    }
+
+    // 1b. discord.bot block
+    private static void checkDiscordBot(FileConfiguration cfg, Logger log) {
+        if (cfg.getBoolean("discord.bot.enabled", false)) {
+            if (cfg.getString("discord.bot.token", "").isBlank()
+                || cfg.getString("discord.bot.guild-id", "").isBlank()
+                || cfg.getString("discord.bot.log-channel-id", "").isBlank())
+                log.warning("Sentinel config: discord.bot is enabled but token, guild-id, or log-channel-id is blank.");
+            if (cfg.getInt("discord.bot.status-seconds", 60) < 1)
+                log.warning("Sentinel config: discord.bot.status-seconds must be at least 1.");
         }
     }
 

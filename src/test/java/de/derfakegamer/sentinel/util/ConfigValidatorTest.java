@@ -316,4 +316,21 @@ class ConfigValidatorTest {
     @Test void sqliteTypeProducesNoDatabaseWarning() {
         assertTrue(warnings("database:\n  type: sqlite\n").stream().noneMatch(w -> w.contains("database")));
     }
+
+    // -----------------------------------------------------------------------
+    // 11. discord.bot validation
+    // -----------------------------------------------------------------------
+    @Test void discordBotEnabledRequiresTokenGuildChannel() {
+        String yaml = "discord:\n  bot:\n    enabled: true\n    token: ''\n    guild-id: ''\n    log-channel-id: ''\n    status-seconds: 60\n";
+        assertTrue(warnings(yaml).stream().anyMatch(w -> w.contains("discord.bot")));
+    }
+
+    @Test void discordBotBadStatusSecondsWarns() {
+        String yaml = "discord:\n  bot:\n    enabled: true\n    token: 't'\n    guild-id: 'g'\n    log-channel-id: 'c'\n    status-seconds: 0\n";
+        assertTrue(warnings(yaml).stream().anyMatch(w -> w.contains("status-seconds")));
+    }
+
+    @Test void discordBotDisabledProducesNoWarning() {
+        assertTrue(warnings("discord:\n  bot:\n    enabled: false\n").stream().noneMatch(w -> w.contains("discord.bot")));
+    }
 }
