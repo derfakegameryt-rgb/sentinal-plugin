@@ -8,7 +8,13 @@ reasons:            # the 5 presets shown in the Reason GUI
   - Griefing
 update:
   # Auto-update is always on and checks every 5 minutes; this cannot be disabled.
-  github-token: ''   # optional, raises the GitHub API rate limit
+  # github-token: a GitHub Personal Access Token (PAT).
+  #   - PUBLIC repo:  optional, only raises the API rate limit (60/h -> 5000/h).
+  #   - PRIVATE repo: REQUIRED. Use a fine-grained PAT with "Contents: read" on the
+  #     plugin repo (classic PATs need the "repo" scope). Without it the updater
+  #     cannot see or download releases (HTTP 404/401).
+  # Keep this secret: put it here on the server only; never commit it to the repo.
+  github-token: ''
 maintenance:
   enabled: false
   kick-message: "The server is under maintenance. Please come back later."

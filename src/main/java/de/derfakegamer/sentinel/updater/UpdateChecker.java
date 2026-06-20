@@ -30,6 +30,13 @@ public final class UpdateChecker {
         .followRedirects(HttpClient.Redirect.NORMAL)
         .connectTimeout(Duration.ofSeconds(10))
         .build();
+    // Used for the asset download's first hop: we must NOT auto-follow, because GitHub redirects
+    // a private asset to a pre-signed CDN URL that rejects the Authorization header. We follow the
+    // redirect manually with the auth header stripped.
+    private final HttpClient noFollow = HttpClient.newBuilder()
+        .followRedirects(HttpClient.Redirect.NEVER)
+        .connectTimeout(Duration.ofSeconds(10))
+        .build();
 
     private volatile String downloadedVersion; // avoid re-downloading the same release each interval
 
@@ -62,15 +69,25 @@ public final class UpdateChecker {
         return firstJarUrl(JsonParser.parseString(json).getAsJsonObject());
     }
 
-    /** The first .jar asset's download URL in a single release object, or null. */
+    /**
+     * The first .jar asset's download URL in a single release object, or null.
+     * Prefers the asset's API {@code url} (e.g. {@code .../releases/assets/123}) over
+     * {@code browser_download_url}: the API URL, fetched with an {@code Accept:
+     * application/octet-stream} header and a token, downloads assets from BOTH public and
+     * private repositories, whereas {@code browser_download_url} does not work for private
+     * repos via a token. Falls back to {@code browser_download_url} when no API URL is present.
+     */
     private static String firstJarUrl(JsonObject release) {
         if (!release.has("assets")) return null;
         JsonArray assets = release.getAsJsonArray("assets");
         for (var element : assets) {
             JsonObject asset = element.getAsJsonObject();
             String name = asset.has("name") ? asset.get("name").getAsString() : "";
-            if (name.toLowerCase().endsWith(".jar"))
-                return asset.get("browser_download_url").getAsString();
+            if (name.toLowerCase().endsWith(".jar")) {
+                if (asset.has("url") && !asset.get("url").isJsonNull())
+                    return asset.get("url").getAsString();
+                return asset.has("browser_download_url") ? asset.get("browser_download_url").getAsString() : null;
+            }
         }
         return null;
     }
@@ -122,15 +139,26 @@ public final class UpdateChecker {
         }
     }
 
+    /** The configured GitHub token (PAT), or empty string if none. */
+    private String githubToken() {
+        String token = plugin.getConfig().getString("update.github-token", "");
+        return token == null ? "" : token.trim();
+    }
+
     private String httpGet(String url) throws Exception {
         HttpRequest.Builder req = HttpRequest.newBuilder(URI.create(url))
             .header("Accept", "application/vnd.github+json")
             .header("User-Agent", "Sentinel-Updater")
             .timeout(Duration.ofSeconds(15)).GET();
-        String token = plugin.getConfig().getString("update.github-token", "");
-        if (token != null && !token.isBlank()) req.header("Authorization", "Bearer " + token);
+        String token = githubToken();
+        if (!token.isBlank()) req.header("Authorization", "Bearer " + token);
         HttpResponse<String> resp = http.send(req.build(), HttpResponse.BodyHandlers.ofString());
         int code = resp.statusCode();
+        if (code == 401)
+            throw new IllegalStateException("GitHub rejected the token (HTTP 401) — check update.github-token");
+        if (code == 404)
+            throw new IllegalStateException("release feed not found (HTTP 404) — for a private repo, set "
+                + "update.github-token to a PAT with 'Contents: read' on this repo");
         if (code == 403 || code == 429)
             throw new IllegalStateException("rate limited by GitHub (HTTP " + code
                 + ") — transient; optionally set update.github-token to raise the limit");
@@ -138,16 +166,36 @@ public final class UpdateChecker {
         return resp.body();
     }
 
+    /**
+     * Downloads an asset. Works for public AND private repos: requests the asset (API URL) with
+     * {@code Accept: application/octet-stream} and the token, then follows the redirect to the
+     * pre-signed CDN URL manually WITH THE AUTHORIZATION HEADER STRIPPED — the CDN rejects requests
+     * that carry both a signature and an Authorization header.
+     */
     private void download(String url, File dest) throws Exception {
         dest.getParentFile().mkdirs();
+        String token = githubToken();
         HttpRequest.Builder req = HttpRequest.newBuilder(URI.create(url))
             .header("User-Agent", "Sentinel-Updater")
+            .header("Accept", "application/octet-stream")
             .timeout(Duration.ofSeconds(60)).GET();
-        String token = plugin.getConfig().getString("update.github-token", "");
-        if (token != null && !token.isBlank()) req.header("Authorization", "Bearer " + token);
+        if (!token.isBlank()) req.header("Authorization", "Bearer " + token);
+
         HttpResponse<java.io.InputStream> resp =
-            http.send(req.build(), HttpResponse.BodyHandlers.ofInputStream());
-        if (resp.statusCode() / 100 != 2) throw new IllegalStateException("HTTP " + resp.statusCode());
+            noFollow.send(req.build(), HttpResponse.BodyHandlers.ofInputStream());
+        int code = resp.statusCode();
+        if (code == 301 || code == 302 || code == 303 || code == 307 || code == 308) {
+            try (var ignored = resp.body()) { /* drain/close the redirect response */ }
+            String location = resp.headers().firstValue("location")
+                .orElseThrow(() -> new IllegalStateException("asset redirect without Location header"));
+            // No Authorization here: the CDN URL is pre-signed and rejects a second auth mechanism.
+            HttpRequest redirect = HttpRequest.newBuilder(URI.create(location))
+                .header("User-Agent", "Sentinel-Updater")
+                .timeout(Duration.ofSeconds(60)).GET().build();
+            resp = http.send(redirect, HttpResponse.BodyHandlers.ofInputStream());
+            code = resp.statusCode();
+        }
+        if (code / 100 != 2) throw new IllegalStateException("HTTP " + code);
         try (var in = resp.body()) {
             Files.copy(in, dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
         }
