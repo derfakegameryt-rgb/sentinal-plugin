@@ -40,6 +40,7 @@ public class Sentinel extends JavaPlugin {
     private de.derfakegamer.sentinel.manager.BackupManager backupManager;
     private de.derfakegamer.sentinel.manager.CronManager cronManager;
     private de.derfakegamer.sentinel.manager.AppealManager appealManager;
+    private de.derfakegamer.sentinel.manager.AuditManager auditManager;
 
     @Override
     public void onEnable() {
@@ -73,6 +74,8 @@ public class Sentinel extends JavaPlugin {
             new de.derfakegamer.sentinel.storage.ReportDao(db.database()));
         this.appealManager = new de.derfakegamer.sentinel.manager.AppealManager(this,
             new de.derfakegamer.sentinel.storage.AppealDao(db.database()));
+        this.auditManager = new de.derfakegamer.sentinel.manager.AuditManager(this,
+            new de.derfakegamer.sentinel.storage.AuditDao(db.database()));
         this.staffChatManager = new de.derfakegamer.sentinel.manager.StaffChatManager(this);
         this.freezeManager = new de.derfakegamer.sentinel.manager.FreezeManager();
         this.vanishManager = new de.derfakegamer.sentinel.manager.VanishManager(this);
@@ -163,6 +166,7 @@ public class Sentinel extends JavaPlugin {
     public de.derfakegamer.sentinel.manager.ChatInputManager chatInput() { return chatInputManager; }
     public de.derfakegamer.sentinel.manager.ReportManager reports() { return reportManager; }
     public de.derfakegamer.sentinel.manager.AppealManager appeals() { return appealManager; }
+    public de.derfakegamer.sentinel.manager.AuditManager audit() { return auditManager; }
     public de.derfakegamer.sentinel.manager.StaffChatManager staffChat() { return staffChatManager; }
     public de.derfakegamer.sentinel.manager.FreezeManager freeze() { return freezeManager; }
     public de.derfakegamer.sentinel.manager.VanishManager vanish() { return vanishManager; }
