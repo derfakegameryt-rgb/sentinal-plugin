@@ -56,10 +56,12 @@ public final class PlayerDirectory {
     public void record(UUID uuid, String name, String ip) {
         long now = System.currentTimeMillis();
         plugin.db().execute(() -> dao.upsert(uuid, name, ip, now));
-        // Populate the online cache with the known join-time fields.
-        // playtime is left as 0 — it is stale in the cache intentionally;
-        // playtime() and topByPlaytime() always bypass the cache and hit the DB.
-        cacheOnline(new PlayerRecord(uuid, name, ip, now, now, 0));
+        // NOTE: cache population is intentionally NOT done here.
+        // record() is called from LoginListener.onPreLogin (AsyncPlayerPreLoginEvent),
+        // which fires before ban/maintenance checks.  A rejected connection never
+        // produces a PlayerQuitEvent, so any cache entry made here would leak until
+        // restart.  Cache population happens in JoinQuitListener.onJoin instead,
+        // which only fires for players who have actually been admitted to the server.
     }
 
     public CompletableFuture<Long> playtime(UUID uuid) {
@@ -70,12 +72,30 @@ public final class PlayerDirectory {
         return plugin.db().submit(() -> dao.topByPlaytime(limit));
     }
 
+    /**
+     * Returns the player record for the given UUID, consulting the online-player
+     * cache before falling back to the database.
+     *
+     * <p><strong>Stale playtime warning:</strong> when served from the cache the
+     * returned record's {@link PlayerRecord#playtime()} field is always {@code 0}
+     * (the live session has not been committed yet).  Callers that need an accurate
+     * playtime value must use {@link #playtime(UUID)} instead.
+     */
     public CompletableFuture<PlayerRecord> byUuid(UUID uuid) {
         PlayerRecord cached = cacheByUuid.get(uuid);
         if (cached != null) return CompletableFuture.completedFuture(cached);
         return plugin.db().submit(() -> dao.byUuid(uuid));
     }
 
+    /**
+     * Returns the player record for the given name (case-insensitive), consulting
+     * the online-player cache before falling back to the database.
+     *
+     * <p><strong>Stale playtime warning:</strong> when served from the cache the
+     * returned record's {@link PlayerRecord#playtime()} field is always {@code 0}
+     * (the live session has not been committed yet).  Callers that need an accurate
+     * playtime value must use {@link #playtime(UUID)} instead.
+     */
     public CompletableFuture<PlayerRecord> byName(String name) {
         if (name != null) {
             PlayerRecord cached = cacheByName.get(name.toLowerCase());
