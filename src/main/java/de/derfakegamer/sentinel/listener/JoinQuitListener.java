@@ -23,5 +23,6 @@ public final class JoinQuitListener implements Listener {
         plugin.staffChat().clear(event.getPlayer().getUniqueId());
         plugin.chatModeration().forget(event.getPlayer().getUniqueId());
         plugin.players().endSession(event.getPlayer().getUniqueId());
+        plugin.players().evict(event.getPlayer().getUniqueId(), event.getPlayer().getName());
     }
 }
