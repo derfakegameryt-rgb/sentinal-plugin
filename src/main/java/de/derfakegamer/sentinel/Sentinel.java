@@ -3,6 +3,7 @@ package de.derfakegamer.sentinel;
 import de.derfakegamer.sentinel.command.SentinelCommand;
 import de.derfakegamer.sentinel.manager.PunishmentManager;
 import de.derfakegamer.sentinel.storage.Database;
+import de.derfakegamer.sentinel.storage.SqliteDatabase;
 import de.derfakegamer.sentinel.storage.PunishmentDao;
 import de.derfakegamer.sentinel.util.Messages;
 
@@ -53,7 +54,7 @@ public class Sentinel extends JavaPlugin {
         this.messages = new Messages(loadMessages());
         this.secret = new de.derfakegamer.sentinel.manager.SecretMessages(this.messages.prefix());
         try {
-            Database raw = new Database(new File(getDataFolder(), "sentinel.db"));
+            Database raw = new SqliteDatabase(new File(getDataFolder(), "sentinel.db"));
             this.db = new de.derfakegamer.sentinel.storage.DatabaseExecutor(raw, getLogger(), this);
         } catch (Exception e) {
             getLogger().severe("Failed to open database: " + e.getMessage());

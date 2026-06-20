@@ -15,7 +15,7 @@ class DatabaseExecutorTest {
     void setUp() throws Exception {
         File f = Files.createTempFile("sentinel-exec", ".db").toFile();
         f.deleteOnExit();
-        db = new Database(f);
+        db = new SqliteDatabase(f);
         // plugin == null is fine for tests that never call callback()
         exec = new DatabaseExecutor(db, Logger.getLogger("test"), null);
     }
