@@ -30,6 +30,37 @@ public final class BotDiscordService implements DiscordService {
             this.jda = JDABuilder.createLight(token, EnumSet.noneOf(GatewayIntent.class)).build();
             jda.awaitReady();
             plugin.getLogger().info("Sentinel: Discord bot connected as " + jda.getSelfUser().getAsTag());
+            java.util.List<String> staffRoles = plugin.getConfig().getStringList("discord.bot.staff-role-ids");
+            jda.addEventListener(new SlashCommandListener(plugin, staffRoles));
+            net.dv8tion.jda.api.entities.Guild guild = jda.getGuildById(guildId);
+            if (guild != null) {
+                guild.updateCommands().addCommands(
+                    net.dv8tion.jda.api.interactions.commands.build.Commands.slash("ban", "Ban a player")
+                        .addOption(net.dv8tion.jda.api.interactions.commands.OptionType.STRING, "player", "player name", true)
+                        .addOption(net.dv8tion.jda.api.interactions.commands.OptionType.STRING, "reason", "reason", true),
+                    net.dv8tion.jda.api.interactions.commands.build.Commands.slash("tempban", "Temp-ban a player")
+                        .addOption(net.dv8tion.jda.api.interactions.commands.OptionType.STRING, "player", "player name", true)
+                        .addOption(net.dv8tion.jda.api.interactions.commands.OptionType.STRING, "duration", "e.g. 1d2h", true)
+                        .addOption(net.dv8tion.jda.api.interactions.commands.OptionType.STRING, "reason", "reason", true),
+                    net.dv8tion.jda.api.interactions.commands.build.Commands.slash("mute", "Mute a player")
+                        .addOption(net.dv8tion.jda.api.interactions.commands.OptionType.STRING, "player", "player name", true)
+                        .addOption(net.dv8tion.jda.api.interactions.commands.OptionType.STRING, "reason", "reason", true),
+                    net.dv8tion.jda.api.interactions.commands.build.Commands.slash("tempmute", "Temp-mute a player")
+                        .addOption(net.dv8tion.jda.api.interactions.commands.OptionType.STRING, "player", "player name", true)
+                        .addOption(net.dv8tion.jda.api.interactions.commands.OptionType.STRING, "duration", "e.g. 1d2h", true)
+                        .addOption(net.dv8tion.jda.api.interactions.commands.OptionType.STRING, "reason", "reason", true),
+                    net.dv8tion.jda.api.interactions.commands.build.Commands.slash("kick", "Kick a player")
+                        .addOption(net.dv8tion.jda.api.interactions.commands.OptionType.STRING, "player", "player name", true)
+                        .addOption(net.dv8tion.jda.api.interactions.commands.OptionType.STRING, "reason", "reason", true),
+                    net.dv8tion.jda.api.interactions.commands.build.Commands.slash("warn", "Warn a player")
+                        .addOption(net.dv8tion.jda.api.interactions.commands.OptionType.STRING, "player", "player name", true)
+                        .addOption(net.dv8tion.jda.api.interactions.commands.OptionType.STRING, "reason", "reason", true),
+                    net.dv8tion.jda.api.interactions.commands.build.Commands.slash("unban", "Unban a player")
+                        .addOption(net.dv8tion.jda.api.interactions.commands.OptionType.STRING, "player", "player name", true),
+                    net.dv8tion.jda.api.interactions.commands.build.Commands.slash("unmute", "Unmute a player")
+                        .addOption(net.dv8tion.jda.api.interactions.commands.OptionType.STRING, "player", "player name", true)
+                ).queue();
+            }
         } catch (Throwable t) {
             plugin.getLogger().warning("Sentinel: Discord bot failed to start: " + t.getMessage());
             this.jda = null;
