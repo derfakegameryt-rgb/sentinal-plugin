@@ -130,6 +130,33 @@ invalid UUIDs). Warnings never stop the server — fix them and `/sentinel reloa
 
 ---
 
+## Database
+
+Sentinel uses **SQLite** by default — no setup required. To share one database across a
+proxy network (so bans apply on every server), switch to **MySQL/MariaDB** in `config.yml`:
+
+```yaml
+database:
+  type: mysql
+  mysql:
+    host: localhost
+    port: 3306
+    database: sentinel
+    user: sentinel
+    password: "secret"
+```
+
+Each server pointing at the same MySQL database shares all punishments, reports, appeals,
+notes, and chat logs. A MySQL connection failure at startup disables the plugin (it never
+silently falls back to SQLite).
+
+**Manual MySQL smoke test:** with `type: mysql`, start the server and confirm the tables are
+created; ban a player from a second account and reconnect to confirm the kick; open the
+History and Reports GUIs; verify rows appear in MySQL; restart and confirm data persists.
+On a network, ban on one server and confirm the ban is enforced when joining another.
+
+---
+
 ## Auto-updater
 
 Sentinel checks this repository's GitHub Releases on startup and every 5 minutes. When a newer
