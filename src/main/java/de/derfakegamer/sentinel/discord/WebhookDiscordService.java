@@ -31,10 +31,14 @@ public class WebhookDiscordService implements DiscordService {
     @Override public void updatePresence(int online, int max) { /* webhook has no presence */ }
     @Override public void shutdown() { /* nothing to close */ }
 
-    /** Posts a plain-text line to the webhook, async; no-op if URL unset. Overridable for tests. */
+    /** Posts a plain-text line to the webhook, async; no-op if URL unset. */
     protected void send(String content) {
         if (url.isBlank()) return;
-        String body = "{\"content\":\"" + escape(content) + "\"}";
+        post("{\"content\":\"" + escape(content) + "\"}");
+    }
+
+    /** Performs the actual HTTP POST; called only after the blank-URL guard in {@link #send}. Overridable for tests. */
+    protected void post(String body) {
         try {
             HttpRequest req = HttpRequest.newBuilder(URI.create(url))
                 .header("Content-Type", "application/json")

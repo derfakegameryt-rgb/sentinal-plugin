@@ -7,38 +7,39 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import static org.junit.jupiter.api.Assertions.*;
 
 class WebhookDiscordServiceTest {
-    // capture the JSON-ish content the webhook would post by overriding the send hook
+    // capture posts by overriding post(), which is called only after the blank-URL guard in send()
     static class Capturing extends WebhookDiscordService {
-        final List<String> sent = new CopyOnWriteArrayList<>();
-        Capturing() { super("https://discord.com/api/webhooks/x/y"); }
-        @Override protected void send(String content) { sent.add(content); }
+        final List<String> posts = new CopyOnWriteArrayList<>();
+        Capturing(String url) { super(url); }
+        @Override protected void post(String body) { posts.add(body); }
     }
 
     @Test void logsPunishmentAsOneLine() {
-        Capturing s = new Capturing();
+        Capturing s = new Capturing("https://discord.com/api/webhooks/x/y");
         s.logPunishment(PunishmentType.BAN, "Bob", "Mod", "spam", 0L);
-        assertEquals(1, s.sent.size());
-        assertTrue(s.sent.get(0).contains("Bob"));
-        assertTrue(s.sent.get(0).contains("Mod"));
-        assertTrue(s.sent.get(0).contains("spam"));
+        assertEquals(1, s.posts.size());
+        assertTrue(s.posts.get(0).contains("Bob"));
+        assertTrue(s.posts.get(0).contains("Mod"));
+        assertTrue(s.posts.get(0).contains("spam"));
     }
 
     @Test void logsReport() {
-        Capturing s = new Capturing();
+        Capturing s = new Capturing("https://discord.com/api/webhooks/x/y");
         s.logReport("Alice", "Bob", "cheating");
-        assertEquals(1, s.sent.size());
-        assertTrue(s.sent.get(0).contains("Alice") && s.sent.get(0).contains("Bob") && s.sent.get(0).contains("cheating"));
+        assertEquals(1, s.posts.size());
+        assertTrue(s.posts.get(0).contains("Alice") && s.posts.get(0).contains("Bob") && s.posts.get(0).contains("cheating"));
     }
 
     @Test void blankUrlSendsNothing() {
-        var s = new WebhookDiscordService("") {
-            int calls = 0;
-            @Override protected void send(String content) { calls++; }
-        };
-        s.logReport("a", "b", "c");
-        // blank URL: logReport should early-return without calling send
-        // (verified indirectly: no exception, and the real send() guards on blank)
-        assertTrue(true);
+        // blank-URL service: send()'s guard must fire before post() is ever called
+        Capturing blank = new Capturing("");
+        blank.logReport("a", "b", "c");
+        assertEquals(0, blank.posts.size(), "blank URL must not reach post()");
+
+        // non-blank-URL service: post() must be called exactly once
+        Capturing real = new Capturing("https://discord.com/api/webhooks/x/y");
+        real.logReport("a", "b", "c");
+        assertEquals(1, real.posts.size(), "non-blank URL must reach post() exactly once");
     }
 
     @Test void presenceAndShutdownAreNoops() {
