@@ -23,16 +23,19 @@ class PlayersGuiButtonsTest {
         return new PlayersGui(plugin, 0, new ArrayList<>(), new boolean[0], new int[0], 0);
     }
 
-    @Test void vanishButtonTogglesVanish() {
-        PlayerMock mod = server.addPlayer("Mod");
-        PlayersGui gui = emptyGui();
-        gui.open(mod);
-
-        InventoryClickEvent event = ConfirmGuiTest.clickSlot(mod, gui, 49); // Vanish
-        gui.onClick(event);
-
-        assertTrue(event.isCancelled());
-        assertTrue(plugin.vanish().isVanished(mod.getUniqueId()));
+    @Test void playerListNoLongerHasVanishOrStaffChat() throws Exception {
+        PlayerMock mod = server.addPlayer("Mod2");
+        PlayersGui.open(plugin, 0, mod);
+        plugin.db().submit(() -> null).get(2, java.util.concurrent.TimeUnit.SECONDS);
+        server.getScheduler().performTicks(2);
+        var inv = mod.getOpenInventory().getTopInventory();
+        // slots 48 (staff) and 49 (vanish) must now be empty/border-filled, not the toggle buttons
+        var staff = inv.getItem(48);
+        var vanish = inv.getItem(49);
+        assertTrue(staff == null || staff.getType() != org.bukkit.Material.NETHER_STAR,
+            "slot 48 should not be staff chat (NETHER_STAR)");
+        assertTrue(vanish == null || vanish.getType() != org.bukkit.Material.ENDER_EYE,
+            "slot 49 should not be vanish (ENDER_EYE)");
     }
 
     @Test void reportsButtonOpensReportsGui() throws Exception {

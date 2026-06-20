@@ -16,7 +16,7 @@ import java.util.concurrent.CompletableFuture;
 
 public final class PlayersGui extends Gui {
     private static final int PAGE_SIZE = 45;
-    private static final int PREV = 45, SEARCH = 46, REPORTS = 47, STAFF = 48, VANISH = 49, PANEL = 50, CLOSE = 52, NEXT = 53;
+    private static final int PREV = 45, SEARCH = 46, REPORTS = 47, PANEL = 50, CLOSE = 52, NEXT = 53;
 
     private final int page;
     private final List<Player> players;
@@ -104,14 +104,9 @@ public final class PlayersGui extends Gui {
         inventory.setItem(REPORTS, Items.button(Material.BOOK, Component.text("Reports", NamedTextColor.AQUA),
             List.of(hint("View open player reports"),
                     line("Open: " + reportCount, NamedTextColor.GRAY))));
-        inventory.setItem(STAFF, Items.button(Material.NETHER_STAR, Component.text("Toggle staff chat", NamedTextColor.LIGHT_PURPLE),
-            List.of(hint("Toggle your staff-only chat"))));
-        inventory.setItem(VANISH, Items.button(Material.ENDER_EYE, Component.text("Toggle vanish", NamedTextColor.AQUA),
-            List.of(hint("Toggle your own vanish"))));
         inventory.setItem(PANEL, Items.button(Material.COMPARATOR,
-            Component.text("Admin Panel", NamedTextColor.AQUA),
-            List.of(Component.text("Server info, ops, bans, mutes, reports", NamedTextColor.GRAY)
-                .decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false))));
+            Component.text("Back to menu", NamedTextColor.AQUA),
+            List.of(hint("Return to the main menu"))));
         inventory.setItem(CLOSE, Items.button(Material.BARRIER, Component.text("Close", NamedTextColor.RED),
             List.of(hint("Close this menu"))));
         if (from + PAGE_SIZE < players.size()) inventory.setItem(NEXT, Items.button(Material.ARROW, Component.text("Next", NamedTextColor.GRAY),
@@ -143,16 +138,6 @@ public final class PlayersGui extends Gui {
         }
         if (slot == REPORTS) { ReportsGui.open(plugin, 0, mod); return; }
         if (slot == PANEL) { new AdminPanelGui(plugin).open(mod); return; }
-        if (slot == STAFF) {
-            boolean on = plugin.staffChat().toggle(mod.getUniqueId());
-            mod.sendMessage(plugin.messages().prefixed(on ? "staffchat-on" : "staffchat-off"));
-            return;
-        }
-        if (slot == VANISH) {
-            boolean vanished = plugin.vanish().toggle(mod);
-            mod.sendMessage(plugin.messages().prefixed(vanished ? "vanish-on" : "vanish-off"));
-            return;
-        }
         int index = page * PAGE_SIZE + slot;
         if (slot >= 0 && slot < PAGE_SIZE && index < players.size()) {
             PlayerActionsGui.open(plugin, players.get(index), mod);
