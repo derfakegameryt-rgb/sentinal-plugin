@@ -20,12 +20,14 @@ dependencies {
     compileOnly("com.google.code.gson:gson:2.11.0")
     compileOnly("org.apache.logging.log4j:log4j-core:2.22.1")
     implementation("org.xerial:sqlite-jdbc:3.47.1.0")
+    implementation("org.mariadb.jdbc:mariadb-java-client:3.5.1")
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.11.3")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("org.mockbukkit.mockbukkit:mockbukkit-v1.21:4.110.0")
     testImplementation("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
     testImplementation("org.xerial:sqlite-jdbc:3.47.1.0")
+    testImplementation("org.mariadb.jdbc:mariadb-java-client:3.5.1")
     testImplementation("com.google.code.gson:gson:2.11.0")
 }
 
@@ -34,6 +36,7 @@ tasks.test { useJUnitPlatform() }
 tasks.shadowJar {
     archiveClassifier.set("")
     relocate("org.sqlite", "de.derfakegamer.sentinel.libs.sqlite")
+    relocate("org.mariadb.jdbc", "de.derfakegamer.sentinel.libs.mariadb")
     // sqlite-jdbc ships native binaries for ~24 platforms (~24 MB). Keep only the ones
     // real Paper servers run on to shrink the jar; drop the exotic/mobile/legacy ones.
     exclude("org/sqlite/native/Linux-Android/**")
