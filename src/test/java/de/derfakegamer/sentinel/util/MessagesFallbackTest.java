@@ -34,9 +34,9 @@ class MessagesFallbackTest {
         assertNotNull(out);
     }
 
-    @Test void secretMessagesWellFormedTemplateStillWorks() {
+    @Test void secretMessagesUnknownKeyReturnsKeyAsText() {
         SecretMessages sm = new SecretMessages("");
-        Component out = assertDoesNotThrow(() -> sm.plain("orbital-wrong-code"));
+        Component out = assertDoesNotThrow(() -> sm.plain("unknown-key-fallback"));
         assertNotNull(out);
     }
 }
