@@ -4,9 +4,11 @@ import de.derfakegamer.sentinel.Sentinel;
 import de.derfakegamer.sentinel.model.Punishment;
 import de.derfakegamer.sentinel.model.PunishmentType;
 import de.derfakegamer.sentinel.storage.PunishmentDao;
+import de.derfakegamer.sentinel.util.TtlCache;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -18,6 +20,18 @@ public final class PunishmentManager {
         public static Result ok() { return new Result(true, null); }
         public static Result fail(String m) { return new Result(false, m); }
     }
+
+    /**
+     * Short-TTL caches for mute / shadow-mute checks. A cache hit skips the DB query within the
+     * window. Accepted staleness: a mute that expires naturally may be reported active for up to
+     * ~3 s longer than its actual expiry — acceptable for chat. Explicit mute/unmute calls always
+     * invalidate immediately so the issuing server sees the correct state right away.
+     *
+     * Ban checks are intentionally NOT cached (login path; correctness critical).
+     */
+    private static final long MUTE_CACHE_TTL_MS = 3_000L;
+    private final TtlCache<UUID, Optional<Punishment>> muteCache = new TtlCache<>(MUTE_CACHE_TTL_MS);
+    private final TtlCache<UUID, Optional<Punishment>> shadowMuteCache = new TtlCache<>(MUTE_CACHE_TTL_MS);
 
     private final Sentinel plugin;
     private final PunishmentDao dao;
@@ -43,7 +57,14 @@ public final class PunishmentManager {
 
     public CompletableFuture<Result> mute(UUID target, String targetName, UUID issuer, String issuerName,
                                            String reason, long expiresAt) {
-        return record(PunishmentType.MUTE, target, targetName, null, issuer, issuerName, reason, expiresAt);
+        if (isExempt(target)) return CompletableFuture.completedFuture(Result.fail("exempt"));
+        return plugin.db().submit(() -> {
+            dao.insert(Punishment.builder().type(PunishmentType.MUTE).targetUuid(target)
+                .targetName(targetName).reason(reason).issuerUuid(issuer).issuerName(issuerName)
+                .createdAt(System.currentTimeMillis()).expiresAt(expiresAt).active(true).build());
+            muteCache.invalidate(target);
+            return Result.ok();
+        });
     }
 
     public CompletableFuture<Result> warn(UUID target, String targetName, UUID issuer, String issuerName,
@@ -80,7 +101,9 @@ public final class PunishmentManager {
     }
 
     public CompletableFuture<Punishment> activeMute(UUID target, long now) {
-        return plugin.db().submit(() -> activeOrExpire(PunishmentType.MUTE, target, now));
+        return plugin.db().submit(() ->
+            muteCache.get(target, k -> Optional.ofNullable(activeOrExpire(PunishmentType.MUTE, k, now)))
+                     .orElse(null));
     }
 
     public CompletableFuture<Punishment> activeIpBan(String ip, long now) {
@@ -113,17 +136,27 @@ public final class PunishmentManager {
             Punishment p = dao.findActive(PunishmentType.MUTE, target);
             if (p == null) return false;
             dao.deactivate(p.id(), remover, now);
+            muteCache.invalidate(target);
             return true;
         });
     }
 
     public CompletableFuture<Result> shadowMute(UUID target, String targetName, UUID issuer,
                                                  String issuerName, String reason, long expiresAt) {
-        return record(PunishmentType.SHADOWMUTE, target, targetName, null, issuer, issuerName, reason, expiresAt);
+        if (isExempt(target)) return CompletableFuture.completedFuture(Result.fail("exempt"));
+        return plugin.db().submit(() -> {
+            dao.insert(Punishment.builder().type(PunishmentType.SHADOWMUTE).targetUuid(target)
+                .targetName(targetName).reason(reason).issuerUuid(issuer).issuerName(issuerName)
+                .createdAt(System.currentTimeMillis()).expiresAt(expiresAt).active(true).build());
+            shadowMuteCache.invalidate(target);
+            return Result.ok();
+        });
     }
 
     public CompletableFuture<Punishment> activeShadowMute(UUID target, long now) {
-        return plugin.db().submit(() -> activeOrExpire(PunishmentType.SHADOWMUTE, target, now));
+        return plugin.db().submit(() ->
+            shadowMuteCache.get(target, k -> Optional.ofNullable(activeOrExpire(PunishmentType.SHADOWMUTE, k, now)))
+                           .orElse(null));
     }
 
     public CompletableFuture<Boolean> unShadowMute(UUID target, String remover, long now) {
@@ -131,6 +164,7 @@ public final class PunishmentManager {
             Punishment p = dao.findActive(PunishmentType.SHADOWMUTE, target);
             if (p == null) return false;
             dao.deactivate(p.id(), remover, now);
+            shadowMuteCache.invalidate(target);
             return true;
         });
     }
