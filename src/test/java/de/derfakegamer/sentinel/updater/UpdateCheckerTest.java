@@ -86,9 +86,9 @@ class UpdateCheckerTest {
 
     @Test void newerThanRunningVersionIsDetected() {
         UpdateChecker checker = new UpdateChecker(plugin);
-        // plugin.yml version is 1.0.0
-        assertTrue(checker.isNewer("v1.5.0"));
-        assertFalse(checker.isNewer("v1.0.0"));
-        assertFalse(checker.isNewer("v0.9.0"));
+        String running = plugin.getPluginMeta().getVersion();
+        assertTrue(checker.isNewer("v999.0.0"));   // far newer than any running version
+        assertFalse(checker.isNewer(running));      // same as running version
+        assertFalse(checker.isNewer("v0.0.1"));     // older than any running version
     }
 }
