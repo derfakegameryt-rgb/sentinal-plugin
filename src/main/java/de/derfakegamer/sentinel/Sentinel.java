@@ -82,6 +82,13 @@ public class Sentinel extends JavaPlugin {
             this, new de.derfakegamer.sentinel.storage.ChatLogDao(db.database()));
         this.chatLogManager.prune(getConfig().getInt("logging.retention-days", 30));
         this.discordService = de.derfakegamer.sentinel.discord.DiscordFactory.create(this);
+        if (discordService instanceof de.derfakegamer.sentinel.discord.BotDiscordService bot) {
+            getServer().getScheduler().runTaskAsynchronously(this, bot::start);
+            int statusSecs = Math.max(1, getConfig().getInt("discord.bot.status-seconds", 60));
+            getServer().getScheduler().runTaskTimer(this, () ->
+                discordService.updatePresence(getServer().getOnlinePlayers().size(), getServer().getMaxPlayers()),
+                20L * statusSecs, 20L * statusSecs);
+        }
         this.maintenanceManager = new de.derfakegamer.sentinel.manager.MaintenanceManager(this);
         this.autoAnnouncer = new de.derfakegamer.sentinel.manager.AutoAnnouncer(this);
         this.restartManager = new de.derfakegamer.sentinel.manager.RestartManager(this);

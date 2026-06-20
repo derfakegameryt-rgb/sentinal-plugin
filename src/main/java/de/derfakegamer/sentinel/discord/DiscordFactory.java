@@ -11,8 +11,7 @@ public final class DiscordFactory {
         boolean botEnabled = cfg.getBoolean("discord.bot.enabled", false);
         String token = cfg.getString("discord.bot.token", "");
         if (botEnabled && token != null && !token.isBlank()) {
-            // Replaced by BotDiscordService in Task 5.
-            return new NoopDiscordService();
+            return new BotDiscordService(plugin);
         }
         String webhook = cfg.getString("discord.webhook-url", "");
         if (webhook != null && !webhook.isBlank()) return new WebhookDiscordService(webhook);
