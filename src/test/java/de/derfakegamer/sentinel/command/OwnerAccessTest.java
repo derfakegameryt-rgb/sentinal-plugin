@@ -19,24 +19,20 @@ class OwnerAccessTest {
         PlayerMock other = server.addPlayer("Admin"); other.setOp(true);
         SentinelCommand cmd = new SentinelCommand(plugin);
         Command sentinel = server.getCommandMap().getCommand("sentinel");
-        assertTrue(cmd.onTabComplete(boss, sentinel, "sentinel", new String[]{"ow"}).contains("owner"));
-        assertFalse(cmd.onTabComplete(other, sentinel, "sentinel", new String[]{"ow"}).contains("owner"));
-    }
-
-    @Test void ownerWithoutOpGetsCommandAndOrbitalPermissions() {
-        PlayerMock owner = new PlayerMock(server, "Owner", OWNER);
-        server.addPlayer(owner); // fires join → OrbitalAccessListener grants the perms
-        assertFalse(owner.isOp(), "owner is intentionally not an operator");
-        assertTrue(owner.hasPermission("sentinel.use"), "owner can run all commands without OP");
-        assertTrue(owner.hasPermission("sentinel.orbital"), "owner can use the orbital strike");
+        assertFalse(cmd.onTabComplete(boss, sentinel, "sentinel", new String[]{"ow"}).contains("owner"),
+            "owner subcommand no longer exists");
+        assertFalse(cmd.onTabComplete(other, sentinel, "sentinel", new String[]{"ow"}).contains("owner"),
+            "owner subcommand no longer exists");
     }
 
     @Test void nonOwnerOwnerSubcommandDoesNotOpenPanel() {
         PlayerMock other = server.addPlayer("Admin"); other.setOp(true);
         SentinelCommand cmd = new SentinelCommand(plugin);
         cmd.onCommand(other, server.getCommandMap().getCommand("sentinel"), "sentinel", new String[]{"owner"});
+        // "owner" is not a recognized subcommand, so no GUI opens — the command falls through to player lookup
         org.bukkit.inventory.InventoryView view = other.getOpenInventory();
         assertFalse(view != null && view.getTopInventory() != null
-            && view.getTopInventory().getHolder() instanceof de.derfakegamer.sentinel.gui.OwnerPanelGui);
+            && view.getTopInventory().getHolder() instanceof de.derfakegamer.sentinel.gui.AdminPanelGui,
+            "no admin panel should open for unknown subcommand");
     }
 }
