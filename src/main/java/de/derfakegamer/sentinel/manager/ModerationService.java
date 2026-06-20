@@ -65,13 +65,11 @@ public final class ModerationService {
             // Capture effectively-final values for the lambda.
             long now = System.currentTimeMillis();
             String dur = de.derfakegamer.sentinel.util.TimeFormat.until(expiresAt, now);
-            String discordMsg = "**" + targetName + "** was " + key + " by " + issuerName
-                + (reason == null || reason.isBlank() ? "" : ": " + reason);
 
             // All Bukkit side-effects (broadcast, kick, sendMessage) must run on the main thread.
             return onMain(() -> {
                 Bukkit.broadcast(plugin.messages().prefixed(key, "player", targetName, "reason", reason));
-                plugin.discord().post(discordMsg);
+                plugin.discord().logPunishment(type, targetName, issuerName, reason, expiresAt);
 
                 Player online = Bukkit.getPlayer(targetId);
                 if (online != null) {

@@ -157,6 +157,21 @@ On a network, ban on one server and confirm the ban is enforced when joining ano
 
 ---
 
+## Discord
+
+Sentinel can mirror events to Discord two ways:
+
+- **Webhook (simple):** set `discord.webhook-url` for one-line punishment/report messages.
+- **Bot (full):** set `discord.bot.enabled: true` and a `discord.bot.token` to run a real bot —
+  colour-coded embeds in `log-channel-id`, a live `{online}/{max}` presence, and moderation
+  slash commands (`/ban`, `/tempban`, `/mute`, `/tempmute`, `/kick`, `/warn`, `/unban`, `/unmute`)
+  usable by members holding any role in `staff-role-ids`. The token is read from the server's
+  config only — never commit it.
+
+The bot is fail-soft: a Discord outage or bad token never affects gameplay.
+
+---
+
 ## Auto-updater
 
 Sentinel checks this repository's GitHub Releases on startup and every 5 minutes. When a newer
