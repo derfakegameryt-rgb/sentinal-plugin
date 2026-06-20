@@ -49,6 +49,7 @@ public class Sentinel extends JavaPlugin {
         saveResource("messages.yml", false);
         saveResource("rules.txt", false);
         mergeMessagesDefaults();
+        de.derfakegamer.sentinel.util.ConfigValidator.validate(getConfig(), getLogger());
         this.messages = new Messages(loadMessages());
         this.secret = new de.derfakegamer.sentinel.manager.SecretMessages(this.messages.prefix());
         try {
