@@ -21,6 +21,8 @@ public interface SqlDialect {
                   active INTEGER NOT NULL DEFAULT 1, removed_by TEXT, removed_at INTEGER NOT NULL DEFAULT 0)""",
                 "CREATE INDEX IF NOT EXISTS idx_pun_target ON punishments(target_uuid)",
                 "CREATE INDEX IF NOT EXISTS idx_pun_ip ON punishments(target_ip)",
+                "CREATE INDEX IF NOT EXISTS idx_pun_active ON punishments(target_uuid, type, active)",
+                "CREATE INDEX IF NOT EXISTS idx_pun_type_active ON punishments(type, active)",
                 """
                 CREATE TABLE IF NOT EXISTS reports (
                   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -88,6 +90,8 @@ public interface SqlDialect {
                   active TINYINT NOT NULL DEFAULT 1, removed_by VARCHAR(64), removed_at BIGINT NOT NULL DEFAULT 0)""",
                 "CREATE INDEX idx_pun_target ON punishments(target_uuid)",
                 "CREATE INDEX idx_pun_ip ON punishments(target_ip)",
+                "CREATE INDEX idx_pun_active ON punishments(target_uuid, type, active)",
+                "CREATE INDEX idx_pun_type_active ON punishments(type, active)",
                 """
                 CREATE TABLE IF NOT EXISTS reports (
                   id BIGINT AUTO_INCREMENT PRIMARY KEY,

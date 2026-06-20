@@ -46,4 +46,12 @@ class SqlDialectTest {
         assertEquals(" COLLATE NOCASE", SqlDialect.SQLITE.nameWhereCollate());
         assertEquals("", SqlDialect.MYSQL.nameWhereCollate());
     }
+
+    @Test void bothDialectsHaveCompositeIndexes() {
+        for (SqlDialect d : List.of(SqlDialect.SQLITE, SqlDialect.MYSQL)) {
+            String s = schema(d);
+            assertTrue(s.contains("idx_pun_active"), "missing idx_pun_active in " + d.getClass().getSimpleName());
+            assertTrue(s.contains("idx_pun_type_active"), "missing idx_pun_type_active in " + d.getClass().getSimpleName());
+        }
+    }
 }

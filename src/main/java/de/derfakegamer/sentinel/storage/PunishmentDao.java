@@ -43,7 +43,7 @@ public final class PunishmentDao {
 
     public Punishment findActive(PunishmentType type, UUID target) {
       synchronized (db) {
-        String sql = "SELECT * FROM punishments WHERE type=? AND target_uuid=? AND active=1 LIMIT 1";
+        String sql = "SELECT id,type,target_uuid,target_name,target_ip,reason,issuer_uuid,issuer_name,created_at,expires_at,active,removed_by,removed_at FROM punishments WHERE type=? AND target_uuid=? AND active=1 LIMIT 1";
         try (PreparedStatement ps = db.connection().prepareStatement(sql)) {
             ps.setString(1, type.name());
             ps.setString(2, target.toString());
@@ -91,7 +91,7 @@ public final class PunishmentDao {
             de.derfakegamer.sentinel.model.PunishmentType type) {
         synchronized (db) {
             java.util.List<de.derfakegamer.sentinel.model.Punishment> out = new java.util.ArrayList<>();
-            String sql = "SELECT * FROM punishments WHERE type=? AND active=1 ORDER BY created_at DESC";
+            String sql = "SELECT id,type,target_uuid,target_name,target_ip,reason,issuer_uuid,issuer_name,created_at,expires_at,active,removed_by,removed_at FROM punishments WHERE type=? AND active=1 ORDER BY created_at DESC";
             try (java.sql.PreparedStatement ps = db.connection().prepareStatement(sql)) {
                 ps.setString(1, type.name());
                 try (java.sql.ResultSet rs = ps.executeQuery()) { while (rs.next()) out.add(map(rs)); }
