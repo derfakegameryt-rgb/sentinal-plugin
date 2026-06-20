@@ -30,6 +30,27 @@ public final class SlashCommandListener extends ListenerAdapter {
             return;
         }
         String cmd = e.getName();
+
+        if (cmd.equals("stats")) {
+            e.deferReply(true).queue();
+            long since = System.currentTimeMillis() - 30L * 24 * 3600 * 1000;
+            plugin.audit().topActors(since, 10).whenComplete((top, err1) ->
+                plugin.audit().countsByAction(since).whenComplete((acts, err2) -> {
+                    EmbedData d = AuditStatsEmbeds.stats(top == null ? java.util.List.of() : top,
+                                                         acts == null ? java.util.List.of() : acts);
+                    e.getHook().sendMessageEmbeds(toEmbed(d)).queue();
+                }));
+            return;
+        }
+        if (cmd.equals("audit")) {
+            String who = e.getOption("player") == null ? null : e.getOption("player").getAsString();
+            e.deferReply(true).queue();
+            if (who == null) { e.getHook().sendMessage("Missing player.").queue(); return; }
+            plugin.audit().recentForTarget(who, 10).whenComplete((list, err) ->
+                e.getHook().sendMessageEmbeds(toEmbed(AuditStatsEmbeds.audit(who, list == null ? java.util.List.of() : list))).queue());
+            return;
+        }
+
         String playerName = e.getOption("player") == null ? null : e.getOption("player").getAsString();
         if (playerName == null) { e.reply("Missing player.").setEphemeral(true).queue(); return; }
         String reason = e.getOption("reason") == null ? "" : e.getOption("reason").getAsString();
@@ -66,6 +87,13 @@ public final class SlashCommandListener extends ListenerAdapter {
                 default -> e.getHook().sendMessage("Unknown command.").queue();
             }
         });
+    }
+
+    private net.dv8tion.jda.api.entities.MessageEmbed toEmbed(EmbedData d) {
+        net.dv8tion.jda.api.EmbedBuilder b = new net.dv8tion.jda.api.EmbedBuilder()
+            .setTitle(d.title()).setColor(new java.awt.Color(d.color()));
+        for (EmbedData.Field f : d.fields()) b.addField(f.name(), f.value(), false);
+        return b.build();
     }
 
     private void apply(SlashCommandInteractionEvent e, PunishmentType type, UUID target, String targetName,
