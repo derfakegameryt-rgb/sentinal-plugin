@@ -1,6 +1,7 @@
 package de.derfakegamer.sentinel.command;
 
 import de.derfakegamer.sentinel.Sentinel;
+import de.derfakegamer.sentinel.gui.AdminPanelGui;
 import org.junit.jupiter.api.*;
 import org.mockbukkit.mockbukkit.MockBukkit;
 import org.mockbukkit.mockbukkit.ServerMock;
@@ -30,6 +31,13 @@ class SubcommandTest {
             "sentinel", new String[]{"ban", "Griefer", "cheating"});
         drain();
         assertNotNull(plugin.punishments().activeBan(target.getUniqueId(), System.currentTimeMillis()).get(2, TimeUnit.SECONDS));
+    }
+
+    @Test void snNoArgOpensHub() throws Exception {
+        PlayerMock p = server.addPlayer("HubAdmin"); p.setOp(true);
+        server.dispatchCommand(p, "sn");
+        drain();
+        assertInstanceOf(AdminPanelGui.class, p.getOpenInventory().getTopInventory().getHolder());
     }
 
     @Test void subcommandsAppearInTab() {
