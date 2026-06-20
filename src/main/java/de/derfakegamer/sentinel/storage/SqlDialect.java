@@ -55,7 +55,14 @@ public interface SqlDialect {
                   uuid TEXT NOT NULL, name TEXT NOT NULL, kind TEXT NOT NULL, text TEXT NOT NULL,
                   created_at INTEGER NOT NULL)""",
                 "CREATE INDEX IF NOT EXISTS idx_chatlog_uuid ON chatlog(uuid)",
-                "CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)");
+                "CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)",
+                """
+                CREATE TABLE IF NOT EXISTS audit (
+                  id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  actor TEXT NOT NULL, action TEXT NOT NULL, target TEXT, details TEXT,
+                  created_at INTEGER NOT NULL)""",
+                "CREATE INDEX IF NOT EXISTS idx_audit_created ON audit(created_at)",
+                "CREATE INDEX IF NOT EXISTS idx_audit_actor ON audit(actor)");
         }
         @Override public String playersUpsert() {
             return """
@@ -115,7 +122,14 @@ public interface SqlDialect {
                   uuid VARCHAR(36) NOT NULL, name VARCHAR(64) NOT NULL, kind VARCHAR(16) NOT NULL, text TEXT NOT NULL,
                   created_at BIGINT NOT NULL)""",
                 "CREATE INDEX idx_chatlog_uuid ON chatlog(uuid)",
-                "CREATE TABLE IF NOT EXISTS settings (`key` VARCHAR(255) PRIMARY KEY, `value` TEXT NOT NULL)");
+                "CREATE TABLE IF NOT EXISTS settings (`key` VARCHAR(255) PRIMARY KEY, `value` TEXT NOT NULL)",
+                """
+                CREATE TABLE IF NOT EXISTS audit (
+                  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                  actor VARCHAR(64) NOT NULL, action VARCHAR(32) NOT NULL, target VARCHAR(64), details TEXT,
+                  created_at BIGINT NOT NULL)""",
+                "CREATE INDEX idx_audit_created ON audit(created_at)",
+                "CREATE INDEX idx_audit_actor ON audit(actor)");
         }
         @Override public String playersUpsert() {
             return """
