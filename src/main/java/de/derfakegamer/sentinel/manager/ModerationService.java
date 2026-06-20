@@ -45,6 +45,9 @@ public final class ModerationService {
 
         return resultFuture.thenCompose(result -> {
             if (!result.isSuccess()) return CompletableFuture.completedFuture(false);
+            String auditDetails = (reason == null ? "" : reason)
+                + (expiresAt > 0 ? " (" + de.derfakegamer.sentinel.util.TimeFormat.until(expiresAt, System.currentTimeMillis()) + ")" : "");
+            plugin.audit().record(issuerName, type.name(), targetName, auditDetails);
 
             if (type == PunishmentType.SHADOWMUTE) {
                 // Covert: only notify staff on the main thread, no public broadcast, no kick.
@@ -105,21 +108,25 @@ public final class ModerationService {
     public CompletableFuture<Boolean> removeBan(UUID issuerId, String issuerName, UUID targetId, String targetName) {
         long now = System.currentTimeMillis();
         return plugin.punishments().unban(targetId, issuerName, now)
-            .thenCompose(ok ->
-                onMain(() -> {
+            .thenCompose(ok -> {
+                if (ok) plugin.audit().record(issuerName, "UNBAN", targetName, "");
+                return onMain(() -> {
                     if (ok) Bukkit.broadcast(plugin.messages().prefixed("unbanned", "player", targetName, "reason", ""));
                 })
-                .thenApply(v -> ok));
+                .thenApply(v -> ok);
+            });
     }
 
     public CompletableFuture<Boolean> removeMute(UUID issuerId, String issuerName, UUID targetId, String targetName) {
         long now = System.currentTimeMillis();
         return plugin.punishments().unmute(targetId, issuerName, now)
-            .thenCompose(ok ->
-                onMain(() -> {
+            .thenCompose(ok -> {
+                if (ok) plugin.audit().record(issuerName, "UNMUTE", targetName, "");
+                return onMain(() -> {
                     if (ok) Bukkit.broadcast(plugin.messages().prefixed("unmuted", "player", targetName, "reason", ""));
                 })
-                .thenApply(v -> ok));
+                .thenApply(v -> ok);
+            });
     }
 
     private void notifyStaff(net.kyori.adventure.text.Component message) {
@@ -131,6 +138,7 @@ public final class ModerationService {
         long now = System.currentTimeMillis();
         return plugin.punishments().unShadowMute(targetId, issuerName, now)
             .thenCompose(ok -> {
+                if (ok) plugin.audit().record(issuerName, "UNSHADOWMUTE", targetName, "");
                 net.kyori.adventure.text.Component msg = plugin.messages().plain("unshadowmuted", "player", targetName);
                 return onMain(() -> { if (ok) notifyStaff(msg); })
                     .thenApply(v -> ok);

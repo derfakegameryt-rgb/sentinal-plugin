@@ -23,6 +23,7 @@ public final class ClearChatCommand implements CommandExecutor {
             for (int i = 0; i < 100; i++) p.sendMessage(Component.empty());
         }
         Bukkit.broadcast(plugin.messages().prefixed("chat-cleared", "player", sender.getName()));
+        plugin.audit().record(sender.getName(), "CLEARCHAT", null, "");
         return true;
     }
 }

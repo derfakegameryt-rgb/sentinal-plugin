@@ -15,8 +15,8 @@ import java.util.List;
 public final class AdminPanelGui extends Gui {
     private static final int INFO = 10, OPS = 11, BANS = 12, MUTES = 13, REPORTS = 14, WHITELIST = 15, STATS = 16;
     private static final int PLAYERS = 19, VANISH = 20, STAFFCHAT = 21, APPEALS = 22;
+    private static final int AUDIT = 23, MODSTATS = 24;
     private static final int CLOSE = 25;
-    // slots 23, 24 reserved for future Audit / Stats entries
 
     public AdminPanelGui(Sentinel plugin) {
         super(plugin);
@@ -29,6 +29,8 @@ public final class AdminPanelGui extends Gui {
         inventory.setItem(WHITELIST, button(Material.NAME_TAG, "Whitelist", "Manage the server whitelist"));
         inventory.setItem(STATS, button(Material.CLOCK, "Playtime", "Top players by playtime"));
         inventory.setItem(APPEALS, button(Material.WRITABLE_BOOK, "Appeals", "Review ban/mute appeals"));
+        inventory.setItem(AUDIT, button(Material.WRITABLE_BOOK, "Audit Log", "Recent staff actions"));
+        inventory.setItem(MODSTATS, button(Material.KNOWLEDGE_BOOK, "Mod Stats", "Moderation statistics (30d)"));
         inventory.setItem(PLAYERS, button(Material.PLAYER_HEAD, "Player Manager", "Browse and manage players"));
         inventory.setItem(VANISH, button(Material.ENDER_EYE, "Vanish", "Toggle your own vanish"));
         inventory.setItem(STAFFCHAT, button(Material.NETHER_STAR, "Staff Chat", "Toggle your staff-only chat"));
@@ -55,14 +57,18 @@ public final class AdminPanelGui extends Gui {
             case WHITELIST -> new WhitelistGui(plugin, 0).open(p);
             case STATS -> StatsGui.open(plugin, p);
             case APPEALS -> AppealsGui.open(plugin, p, 0);
+            case AUDIT -> AuditGui.open(plugin, p, 0);
+            case MODSTATS -> ModStatsGui.open(plugin, p);
             case PLAYERS -> PlayersGui.open(plugin, 0, p);
             case VANISH -> {
                 boolean v = plugin.vanish().toggle(p);
                 p.sendMessage(plugin.messages().prefixed(v ? "vanish-on" : "vanish-off"));
+                plugin.audit().record(p.getName(), "VANISH", p.getName(), v ? "on" : "off");
             }
             case STAFFCHAT -> {
                 boolean on = plugin.staffChat().toggle(p.getUniqueId());
                 p.sendMessage(plugin.messages().prefixed(on ? "staffchat-on" : "staffchat-off"));
+                plugin.audit().record(p.getName(), "STAFFCHAT", p.getName(), on ? "on" : "off");
             }
             case CLOSE -> p.closeInventory();
         }

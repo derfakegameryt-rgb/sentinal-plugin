@@ -11,6 +11,12 @@ public final class TimeFormat {
         return ms <= 0 ? "expired" : duration(ms);
     }
 
+    /** "X ago" where X is the elapsed time since the given epoch-ms timestamp. */
+    public static String ago(long epochMs) {
+        long ms = System.currentTimeMillis() - epochMs;
+        return ms <= 0 ? "just now" : duration(ms) + " ago";
+    }
+
     /** Formats a positive millisecond span like "1d 2h 3m" (or "45s"). */
     public static String duration(long ms) {
         long s = Math.max(0, ms) / 1000;

@@ -57,6 +57,9 @@ public final class BotDiscordService implements DiscordService {
                     net.dv8tion.jda.api.interactions.commands.build.Commands.slash("unban", "Unban a player")
                         .addOption(net.dv8tion.jda.api.interactions.commands.OptionType.STRING, "player", "player name", true),
                     net.dv8tion.jda.api.interactions.commands.build.Commands.slash("unmute", "Unmute a player")
+                        .addOption(net.dv8tion.jda.api.interactions.commands.OptionType.STRING, "player", "player name", true),
+                    net.dv8tion.jda.api.interactions.commands.build.Commands.slash("stats", "Moderation statistics"),
+                    net.dv8tion.jda.api.interactions.commands.build.Commands.slash("audit", "Recent audit for a player")
                         .addOption(net.dv8tion.jda.api.interactions.commands.OptionType.STRING, "player", "player name", true)
                 ).queue();
             }
