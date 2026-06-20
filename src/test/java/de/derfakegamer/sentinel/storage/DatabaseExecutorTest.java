@@ -60,4 +60,20 @@ class DatabaseExecutorTest {
         exec.shutdown();
         assertEquals(20, counter.get());
     }
+
+    @Test void ensureValidIsCalledBeforeWork() throws Exception {
+        java.util.concurrent.atomic.AtomicInteger validations = new java.util.concurrent.atomic.AtomicInteger();
+        Database counting = new Database() {
+            public java.sql.Connection connection() { return db.connection(); }
+            public SqlDialect dialect() { return SqlDialect.SQLITE; }
+            public void ensureValid() { validations.incrementAndGet(); }
+            public void close() { }
+        };
+        DatabaseExecutor ex = new DatabaseExecutor(counting, java.util.logging.Logger.getLogger("t"), null);
+        ex.submit(() -> 1).get(2, java.util.concurrent.TimeUnit.SECONDS);
+        ex.execute(() -> {});
+        ex.submit(() -> 2).get(2, java.util.concurrent.TimeUnit.SECONDS);
+        assertTrue(validations.get() >= 2, "ensureValid must run before tasks");
+        ex.shutdown();
+    }
 }

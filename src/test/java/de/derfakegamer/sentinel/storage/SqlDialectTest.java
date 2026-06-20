@@ -26,6 +26,7 @@ class SqlDialectTest {
         assertFalse(s.contains("AUTOINCREMENT"));          // the SQLite keyword must not appear
         assertFalse(s.toUpperCase().contains("PRAGMA"));
         assertTrue(s.contains("`key`") && s.contains("`value`")); // reserved words are backticked
+        assertTrue(s.contains("COLLATE utf8mb4_general_ci"), "players.name must be explicitly case-insensitive via utf8mb4_general_ci");
     }
 
     @Test void upsertsAreDialectCorrect() {

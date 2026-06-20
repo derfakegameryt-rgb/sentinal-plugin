@@ -98,7 +98,7 @@ public interface SqlDialect {
                 "CREATE INDEX idx_appeal_target ON appeals(target_uuid)",
                 """
                 CREATE TABLE IF NOT EXISTS players (
-                  uuid VARCHAR(36) PRIMARY KEY, name VARCHAR(64) NOT NULL, last_ip VARCHAR(64),
+                  uuid VARCHAR(36) PRIMARY KEY, name VARCHAR(64) NOT NULL COLLATE utf8mb4_general_ci, last_ip VARCHAR(64),
                   first_seen BIGINT NOT NULL, last_seen BIGINT NOT NULL,
                   playtime BIGINT NOT NULL DEFAULT 0)""",
                 "CREATE INDEX idx_players_name ON players(name)",
