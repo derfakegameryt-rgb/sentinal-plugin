@@ -28,6 +28,7 @@ public final class SentinelCommand implements CommandExecutor, TabCompleter {
         if (!sender.hasPermission("sentinel.use")) { sender.sendMessage(plugin.messages().prefixed("no-permission")); return true; }
         if (args.length == 1 && args[0].equalsIgnoreCase("reload")) {
             plugin.reloadAll();
+            plugin.audit().record(sender.getName(), "RELOAD", null, "");
             sender.sendMessage(plugin.messages().prefixed("reloaded"));
             return true;
         }

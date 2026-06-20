@@ -19,6 +19,7 @@ public final class BroadcastCommand implements CommandExecutor {
         if (args.length == 0) { sender.sendMessage(plugin.messages().prefixed("usage", "usage", "/broadcast <message>")); return true; }
         String prefix = plugin.getConfig().getString("announcements.prefix", "");
         Bukkit.broadcast(MiniMessage.miniMessage().deserialize(prefix + String.join(" ", args)));
+        plugin.audit().record(sender.getName(), "BROADCAST", null, String.join(" ", args));
         return true;
     }
 }

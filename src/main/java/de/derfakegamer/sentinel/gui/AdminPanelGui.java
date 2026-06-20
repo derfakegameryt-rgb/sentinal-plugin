@@ -59,10 +59,12 @@ public final class AdminPanelGui extends Gui {
             case VANISH -> {
                 boolean v = plugin.vanish().toggle(p);
                 p.sendMessage(plugin.messages().prefixed(v ? "vanish-on" : "vanish-off"));
+                plugin.audit().record(p.getName(), "VANISH", p.getName(), v ? "on" : "off");
             }
             case STAFFCHAT -> {
                 boolean on = plugin.staffChat().toggle(p.getUniqueId());
                 p.sendMessage(plugin.messages().prefixed(on ? "staffchat-on" : "staffchat-off"));
+                plugin.audit().record(p.getName(), "STAFFCHAT", p.getName(), on ? "on" : "off");
             }
             case CLOSE -> p.closeInventory();
         }

@@ -217,6 +217,7 @@ public final class PlayerActionsGui extends Gui {
                 Player online = target.getPlayer();
                 if (online != null) {
                     boolean nowFrozen = plugin.freeze().toggle(target.getUniqueId());
+                    plugin.audit().record(mod.getName(), "FREEZE", name(), nowFrozen ? "frozen" : "unfrozen");
                     if (nowFrozen) online.sendMessage(plugin.messages().prefixed("you-are-frozen"));
                     mod.sendMessage(plugin.messages().prefixed(nowFrozen ? "freeze-frozen" : "freeze-unfrozen", "player", name()));
                     mod.closeInventory();

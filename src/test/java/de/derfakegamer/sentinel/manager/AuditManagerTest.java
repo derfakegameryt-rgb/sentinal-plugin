@@ -30,4 +30,21 @@ class AuditManagerTest {
         assertEquals("A", top.get(0).actor());
         assertEquals(2, top.get(0).count());
     }
+
+    @Test void moderationApplyRecordsAudit() throws Exception {
+        java.util.UUID target = java.util.UUID.randomUUID();
+        java.util.concurrent.CompletableFuture<Boolean> applyFuture =
+            plugin.moderation().apply(java.util.UUID.randomUUID(), "Mod", target, "Bob", null,
+                de.derfakegamer.sentinel.model.PunishmentType.BAN, 0, "spam");
+        // Pump the MockBukkit scheduler so the onMain hop in ModerationService fires.
+        for (int i = 0; i < 200 && !applyFuture.isDone(); i++) {
+            server.getScheduler().performTicks(1);
+            Thread.sleep(5);
+        }
+        applyFuture.get(2, TimeUnit.SECONDS);
+        // drain the executor (a no-op submit completes after the queued audit insert)
+        plugin.db().submit(() -> null).get(2, TimeUnit.SECONDS);
+        var all = plugin.audit().recent(10, 0).get(2, TimeUnit.SECONDS);
+        assertTrue(all.stream().anyMatch(e -> e.action().equals("BAN") && "Bob".equals(e.target()) && "Mod".equals(e.actor())));
+    }
 }
