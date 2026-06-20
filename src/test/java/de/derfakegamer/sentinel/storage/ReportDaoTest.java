@@ -12,7 +12,7 @@ class ReportDaoTest {
 
     @BeforeEach void setup() throws Exception {
         tmp = Files.createTempFile("sentinel", ".db").toFile();
-        db = new Database(tmp);
+        db = new SqliteDatabase(tmp);
         dao = new ReportDao(db);
     }
     @AfterEach void teardown() throws Exception { db.close(); tmp.delete(); }

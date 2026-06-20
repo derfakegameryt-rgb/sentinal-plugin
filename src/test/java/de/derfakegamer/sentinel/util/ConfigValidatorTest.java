@@ -286,4 +286,34 @@ class ConfigValidatorTest {
         ConfigValidator.validate(load(yaml), log);
         assertTrue(hasWarningContaining("appeals.url"), "Expected warning for non-http appeals.url");
     }
+
+    // -----------------------------------------------------------------------
+    // 10. database validation
+    // -----------------------------------------------------------------------
+    private List<String> warnings(String yaml) {
+        records.clear();
+        ConfigValidator.validate(load(yaml), log);
+        return records.stream()
+                .filter(r -> r.getLevel() == Level.WARNING)
+                .map(LogRecord::getMessage)
+                .toList();
+    }
+
+    @Test void mysqlTypeRequiresHostDatabaseUser() {
+        String yaml = "database:\n  type: mysql\n  mysql:\n    host: ''\n    port: 3306\n    database: ''\n    user: ''\n";
+        assertTrue(warnings(yaml).stream().anyMatch(w -> w.contains("database.mysql")));
+    }
+
+    @Test void mysqlBadPortWarns() {
+        String yaml = "database:\n  type: mysql\n  mysql:\n    host: h\n    port: 70000\n    database: d\n    user: u\n";
+        assertTrue(warnings(yaml).stream().anyMatch(w -> w.contains("port")));
+    }
+
+    @Test void unknownDatabaseTypeWarns() {
+        assertTrue(warnings("database:\n  type: postgres\n").stream().anyMatch(w -> w.contains("database.type")));
+    }
+
+    @Test void sqliteTypeProducesNoDatabaseWarning() {
+        assertTrue(warnings("database:\n  type: sqlite\n").stream().noneMatch(w -> w.contains("database")));
+    }
 }

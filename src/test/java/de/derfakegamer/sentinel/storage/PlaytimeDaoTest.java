@@ -10,7 +10,7 @@ class PlaytimeDaoTest {
     Database db; PlayerDao dao; File tmp;
     @BeforeEach void setup() throws Exception {
         tmp = Files.createTempFile("sentinel", ".db").toFile();
-        db = new Database(tmp); dao = new PlayerDao(db);
+        db = new SqliteDatabase(tmp); dao = new PlayerDao(db);
     }
     @AfterEach void teardown() throws Exception { db.close(); tmp.delete(); }
 

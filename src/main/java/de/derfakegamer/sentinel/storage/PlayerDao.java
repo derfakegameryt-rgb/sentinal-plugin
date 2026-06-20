@@ -14,11 +14,7 @@ public final class PlayerDao {
 
     public void upsert(UUID uuid, String name, String ip, long now) {
         synchronized (db) {
-            String sql = """
-                INSERT INTO players (uuid,name,last_ip,first_seen,last_seen)
-                VALUES (?,?,?,?,?)
-                ON CONFLICT(uuid) DO UPDATE SET name=excluded.name, last_ip=excluded.last_ip,
-                    last_seen=excluded.last_seen""";
+            String sql = db.dialect().playersUpsert();
             try (PreparedStatement ps = db.connection().prepareStatement(sql)) {
                 ps.setString(1, uuid.toString());
                 ps.setString(2, name);
@@ -42,7 +38,7 @@ public final class PlayerDao {
     public PlayerRecord byName(String name) {
         synchronized (db) {
             try (PreparedStatement ps = db.connection().prepareStatement(
-                    "SELECT * FROM players WHERE name=? COLLATE NOCASE LIMIT 1")) {
+                    "SELECT * FROM players WHERE name=?" + db.dialect().nameWhereCollate() + " LIMIT 1")) {
                 ps.setString(1, name);
                 try (ResultSet rs = ps.executeQuery()) { return rs.next() ? map(rs) : null; }
             } catch (SQLException e) { throw new RuntimeException(e); }

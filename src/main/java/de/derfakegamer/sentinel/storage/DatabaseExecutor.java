@@ -34,6 +34,7 @@ public final class DatabaseExecutor {
         CompletableFuture<T> f = new CompletableFuture<>();
         exec.execute(() -> {
             try {
+                database.ensureValid();
                 f.complete(work.call());
             } catch (Throwable t) {
                 logger.log(Level.SEVERE, "DB read failed", t);
@@ -46,9 +47,10 @@ public final class DatabaseExecutor {
     public void execute(Runnable work) {
         exec.execute(() -> {
             try {
+                database.ensureValid();
                 work.run();
             } catch (Throwable t) {
-                logger.log(Level.SEVERE, "DB write failed", t);
+                logger.log(Level.SEVERE, "DB write failed (operation dropped)", t);
             }
         });
     }

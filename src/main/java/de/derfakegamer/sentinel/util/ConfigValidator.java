@@ -30,6 +30,7 @@ public final class ConfigValidator {
         checkWarnActions(cfg, log);
         checkScheduledTasks(cfg, log);
         checkExemptUuids(cfg, log);
+        checkDatabase(cfg, log);
     }
 
     // 1. discord.webhook-url
@@ -202,7 +203,23 @@ public final class ConfigValidator {
         }
     }
 
-    // 8. exempt UUID list
+    // 8. database block
+    private static void checkDatabase(FileConfiguration cfg, Logger log) {
+        String dbType = cfg.getString("database.type", "sqlite").trim().toLowerCase();
+        if (!dbType.equals("sqlite") && !dbType.equals("mysql")) {
+            log.warning("Sentinel config: database.type '" + dbType + "' is unknown — using sqlite. Use 'sqlite' or 'mysql'.");
+        } else if (dbType.equals("mysql")) {
+            if (cfg.getString("database.mysql.host", "").isBlank()
+                || cfg.getString("database.mysql.database", "").isBlank()
+                || cfg.getString("database.mysql.user", "").isBlank())
+                log.warning("Sentinel config: database.mysql requires non-empty host, database, and user.");
+            int port = cfg.getInt("database.mysql.port", 3306);
+            if (port < 1 || port > 65535)
+                log.warning("Sentinel config: database.mysql.port " + port + " is out of range (1-65535).");
+        }
+    }
+
+    // 9. exempt UUID list
     private static void checkExemptUuids(FileConfiguration cfg, Logger log) {
         List<String> exempt = cfg.getStringList("exempt");
         for (String entry : exempt) {

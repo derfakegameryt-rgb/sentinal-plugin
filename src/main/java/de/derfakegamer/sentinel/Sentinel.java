@@ -53,7 +53,7 @@ public class Sentinel extends JavaPlugin {
         this.messages = new Messages(loadMessages());
         this.secret = new de.derfakegamer.sentinel.manager.SecretMessages(this.messages.prefix());
         try {
-            Database raw = new Database(new File(getDataFolder(), "sentinel.db"));
+            Database raw = de.derfakegamer.sentinel.storage.DatabaseFactory.open(this);
             this.db = new de.derfakegamer.sentinel.storage.DatabaseExecutor(raw, getLogger(), this);
         } catch (Exception e) {
             getLogger().severe("Failed to open database: " + e.getMessage());

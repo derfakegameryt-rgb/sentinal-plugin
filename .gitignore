@@ -3,3 +3,6 @@ build/
 .gradle/
 *.iml
 .idea/
+
+# Claude Code worktree artifacts
+.claude/

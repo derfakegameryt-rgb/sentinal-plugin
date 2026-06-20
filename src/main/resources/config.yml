@@ -12,6 +12,16 @@ update:
   # (Optional: a GitHub Personal Access Token here only raises the API rate
   # limit from 60/h to 5000/h. Keep it secret and never commit it.)
   github-token: ''
+database:
+  type: sqlite            # sqlite | mysql
+  mysql:                  # only used when type is mysql
+    host: localhost
+    port: 3306
+    database: sentinel
+    user: sentinel
+    password: ""
+    properties: "useUnicode=true&characterEncoding=utf8mb4"   # optional JDBC params
+
 maintenance:
   enabled: false
   kick-message: "The server is under maintenance. Please come back later."
