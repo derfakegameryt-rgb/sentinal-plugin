@@ -46,13 +46,13 @@ public final class AdminPanelGui extends Gui {
         switch (event.getRawSlot()) {
             case INFO -> new ServerInfoGui(plugin).open(p);
             case OPS -> new OperatorsGui(plugin, 0).open(p);
-            case BANS -> new ActiveBansGui(plugin, 0).open(p);
-            case MUTES -> new ActiveMutesGui(plugin, 0).open(p);
-            case REPORTS -> new ReportsGui(plugin, 0).open(p);
+            case BANS -> ActiveBansGui.open(plugin, p, 0);
+            case MUTES -> ActiveMutesGui.open(plugin, p, 0);
+            case REPORTS -> ReportsGui.open(plugin, 0, p);
             case WHITELIST -> new WhitelistGui(plugin, 0).open(p);
-            case STATS -> new StatsGui(plugin).open(p);
-            case APPEALS -> new AppealsGui(plugin, 0).open(p);
-            case BACK -> new PlayersGui(plugin, 0).open(p);
+            case STATS -> StatsGui.open(plugin, p);
+            case APPEALS -> AppealsGui.open(plugin, p, 0);
+            case BACK -> PlayersGui.open(plugin, 0, p);
             case CLOSE -> p.closeInventory();
         }
     }

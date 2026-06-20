@@ -12,6 +12,7 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public final class PlayersGui extends Gui {
     private static final int PAGE_SIZE = 45;
@@ -20,23 +21,81 @@ public final class PlayersGui extends Gui {
     private final int page;
     private final List<Player> players;
 
-    public PlayersGui(Sentinel plugin, int page) {
-        super(plugin);
-        this.page = page;
-        this.players = new ArrayList<>(Bukkit.getOnlinePlayers());
-        this.players.sort(java.util.Comparator.comparing(
+    /**
+     * Asynchronously fetches per-player mute/warn state, then constructs and opens the GUI on the
+     * main thread. Use this instead of {@code new PlayersGui(...).open(viewer)}.
+     */
+    public static void open(Sentinel plugin, int page, Player viewer) {
+        List<Player> players = new ArrayList<>(Bukkit.getOnlinePlayers());
+        players.sort(java.util.Comparator.comparing(
             p -> p.getName() != null ? p.getName() : p.getUniqueId().toString(),
             String.CASE_INSENSITIVE_ORDER));
+
+        int from = page * PAGE_SIZE;
+        int count = Math.min(PAGE_SIZE, players.size() - from);
+
+        CompletableFuture<java.util.List<de.derfakegamer.sentinel.model.Report>> reportsFuture =
+            plugin.reports().open();
+
+        if (count <= 0) {
+            // No players on this page — only wait for report count
+            plugin.db().callback(reportsFuture, reports ->
+                new PlayersGui(plugin, page, players, new boolean[0], new int[0],
+                    reports != null ? reports.size() : 0).open(viewer));
+            return;
+        }
+
+        long now = System.currentTimeMillis();
+        CompletableFuture<?>[] muteFutures  = new CompletableFuture[count];
+        CompletableFuture<?>[] warnFutures  = new CompletableFuture[count];
+        for (int i = 0; i < count; i++) {
+            Player p = players.get(from + i);
+            muteFutures[i] = plugin.punishments().activeMute(p.getUniqueId(), now);
+            warnFutures[i] = plugin.punishments().warnCount(p.getUniqueId());
+        }
+        @SuppressWarnings("unchecked")
+        CompletableFuture<de.derfakegamer.sentinel.model.Punishment>[] typedMute =
+            (CompletableFuture<de.derfakegamer.sentinel.model.Punishment>[]) muteFutures;
+        @SuppressWarnings("unchecked")
+        CompletableFuture<Integer>[] typedWarn = (CompletableFuture<Integer>[]) warnFutures;
+
+        CompletableFuture<Void> all = CompletableFuture.allOf(
+            CompletableFuture.allOf(muteFutures),
+            CompletableFuture.allOf(warnFutures),
+            reportsFuture);
+
+        plugin.db().callback(all, ignored -> {
+            boolean[] muted = new boolean[count];
+            int[] warns = new int[count];
+            for (int i = 0; i < count; i++) {
+                muted[i] = typedMute[i].join() != null;
+                warns[i] = typedWarn[i].join();
+            }
+            java.util.List<de.derfakegamer.sentinel.model.Report> reports = reportsFuture.join();
+            int reportCount = reports != null ? reports.size() : 0;
+            new PlayersGui(plugin, page, players, muted, warns, reportCount).open(viewer);
+        });
+    }
+
+    private final boolean[] muted;
+    private final int[] warns;
+    private final int reportCount;
+
+    PlayersGui(Sentinel plugin, int page, List<Player> players, boolean[] muted, int[] warns, int reportCount) {
+        super(plugin);
+        this.page = page;
+        this.players = players;
+        this.muted = muted;
+        this.warns = warns;
+        this.reportCount = reportCount;
         this.inventory = Bukkit.createInventory(this, 54, plugin.messages().plain("gui-players-title"));
 
         int from = page * PAGE_SIZE;
-        for (int i = 0; i < PAGE_SIZE && from + i < players.size(); i++) {
+        for (int i = 0; i < PAGE_SIZE && from + i < players.size() && i < muted.length; i++) {
             Player p = players.get(from + i);
-            long now = System.currentTimeMillis();
-            boolean muted = plugin.punishments().activeMute(p.getUniqueId(), now) != null;
             inventory.setItem(i, Items.head(p, Component.text(p.getName(), NamedTextColor.AQUA), List.of(
-                line(muted ? "Muted" : "Not muted", muted ? NamedTextColor.RED : NamedTextColor.GREEN),
-                line("Warns: " + plugin.punishments().warnCount(p.getUniqueId()), NamedTextColor.GRAY))));
+                line(muted[i] ? "Muted" : "Not muted", muted[i] ? NamedTextColor.RED : NamedTextColor.GREEN),
+                line("Warns: " + warns[i], NamedTextColor.GRAY))));
         }
         if (page > 0) inventory.setItem(PREV, Items.button(Material.ARROW, Component.text("Previous", NamedTextColor.GRAY),
             List.of(hint("Go to the previous page"))));
@@ -44,7 +103,7 @@ public final class PlayersGui extends Gui {
             List.of(hint("Find a player by name"))));
         inventory.setItem(REPORTS, Items.button(Material.BOOK, Component.text("Reports", NamedTextColor.AQUA),
             List.of(hint("View open player reports"),
-                    line("Open: " + plugin.reports().open().size(), NamedTextColor.GRAY))));
+                    line("Open: " + reportCount, NamedTextColor.GRAY))));
         inventory.setItem(STAFF, Items.button(Material.NETHER_STAR, Component.text("Toggle staff chat", NamedTextColor.LIGHT_PURPLE),
             List.of(hint("Toggle your staff-only chat"))));
         inventory.setItem(VANISH, Items.button(Material.ENDER_EYE, Component.text("Toggle vanish", NamedTextColor.AQUA),
@@ -73,16 +132,16 @@ public final class PlayersGui extends Gui {
         event.setCancelled(true);
         Player mod = (Player) event.getWhoClicked();
         int slot = event.getRawSlot();
-        if (slot == PREV) { new PlayersGui(plugin, page - 1).open(mod); return; }
-        if (slot == NEXT) { new PlayersGui(plugin, page + 1).open(mod); return; }
+        if (slot == PREV) { PlayersGui.open(plugin, page - 1, mod); return; }
+        if (slot == NEXT) { PlayersGui.open(plugin, page + 1, mod); return; }
         if (slot == CLOSE) { mod.closeInventory(); return; }
         if (slot == SEARCH) {
             mod.closeInventory();
             mod.sendMessage(plugin.messages().prefixed("enter-search"));
-            plugin.chatInput().await(mod.getUniqueId(), q -> new SearchResultsGui(plugin, q).open(mod));
+            plugin.chatInput().await(mod.getUniqueId(), q -> SearchResultsGui.open(plugin, q, mod));
             return;
         }
-        if (slot == REPORTS) { new ReportsGui(plugin, 0).open(mod); return; }
+        if (slot == REPORTS) { ReportsGui.open(plugin, 0, mod); return; }
         if (slot == PANEL) { new AdminPanelGui(plugin).open(mod); return; }
         if (slot == STAFF) {
             boolean on = plugin.staffChat().toggle(mod.getUniqueId());
@@ -96,7 +155,7 @@ public final class PlayersGui extends Gui {
         }
         int index = page * PAGE_SIZE + slot;
         if (slot >= 0 && slot < PAGE_SIZE && index < players.size()) {
-            new PlayerActionsGui(plugin, players.get(index)).open(mod);
+            PlayerActionsGui.open(plugin, players.get(index), mod);
         }
     }
 }

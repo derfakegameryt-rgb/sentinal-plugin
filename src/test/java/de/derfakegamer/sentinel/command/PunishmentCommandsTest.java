@@ -10,7 +10,9 @@ import org.junit.jupiter.api.*;
 import org.mockbukkit.mockbukkit.MockBukkit;
 import org.mockbukkit.mockbukkit.ServerMock;
 
+import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -29,8 +31,20 @@ class PunishmentCommandsTest {
         MockBukkit.unmock();
     }
 
+    /**
+     * Pumps the scheduler enough to flush all async hops: DB executor callback → onMain task →
+     * optional warnCount DB hop → optional escalation onMain task. 200 iterations × 5 ms gives
+     * up to 1 second of wall time which is ample for the in-memory SQLite executor.
+     */
+    private void drain() throws InterruptedException {
+        for (int i = 0; i < 200; i++) {
+            server.getScheduler().performTicks(1);
+            Thread.sleep(5);
+        }
+    }
+
     @Test
-    void opCanBanTarget() {
+    void opCanBanTarget() throws Exception {
         Player target = server.addPlayer("Griefer");
         Player admin = server.addPlayer("Admin");
         admin.setOp(true);
@@ -41,12 +55,14 @@ class PunishmentCommandsTest {
         new PunishmentCommands(plugin).onCommand(admin, banCmd, "ban",
                 new String[]{"Griefer", "cheating"});
 
-        assertNotNull(plugin.punishments().activeBan(target.getUniqueId(), System.currentTimeMillis()),
+        drain();
+
+        assertNotNull(plugin.punishments().activeBan(target.getUniqueId(), System.currentTimeMillis()).get(2, TimeUnit.SECONDS),
                 "an active ban should exist after an op runs /ban");
     }
 
     @Test
-    void nonOpCannotBanTarget() {
+    void nonOpCannotBanTarget() throws Exception {
         Player target = server.addPlayer("Victim");
         Player notOp = server.addPlayer("Regular");
         notOp.setOp(false);
@@ -57,12 +73,14 @@ class PunishmentCommandsTest {
         new PunishmentCommands(plugin).onCommand(notOp, banCmd, "ban",
                 new String[]{"Victim", "cheating"});
 
-        assertNull(plugin.punishments().activeBan(target.getUniqueId(), System.currentTimeMillis()),
+        drain();
+
+        assertNull(plugin.punishments().activeBan(target.getUniqueId(), System.currentTimeMillis()).get(2, TimeUnit.SECONDS),
                 "a non-op must not be able to record a ban");
     }
 
     @Test
-    void ipbanOfOfflinePlayerRecordsNothing() {
+    void ipbanOfOfflinePlayerRecordsNothing() throws Exception {
         Player admin = server.addPlayer("Admin");
         admin.setOp(true);
 
@@ -76,16 +94,19 @@ class PunishmentCommandsTest {
                 new String[]{offlineName, "evading"});
         assertTrue(result, "command should return true");
 
-        for (Punishment p : plugin.punishments().history(offlineId)) {
+        drain();
+
+        List<Punishment> hist = plugin.punishments().history(offlineId).get(2, TimeUnit.SECONDS);
+        for (Punishment p : hist) {
             assertNotEquals(PunishmentType.IPBAN, p.type(),
                     "an offline ipban must not create a stored IPBAN entry");
         }
-        assertTrue(plugin.punishments().history(offlineId).isEmpty(),
+        assertTrue(hist.isEmpty(),
                 "no punishment should be recorded for an offline ipban target");
     }
 
     @Test
-    void historyEmptyForNeverPunishedPlayer() {
+    void historyEmptyForNeverPunishedPlayer() throws Exception {
         Player admin = server.addPlayer("Admin");
         admin.setOp(true);
         server.addPlayer("Clean");
@@ -99,7 +120,7 @@ class PunishmentCommandsTest {
     }
 
     @Test
-    void unknownOfflineNameIsRejected() {
+    void unknownOfflineNameIsRejected() throws Exception {
         Player admin = server.addPlayer("Admin");
         admin.setOp(true);
 
@@ -109,13 +130,17 @@ class PunishmentCommandsTest {
         boolean handled = new PunishmentCommands(plugin).onCommand(admin, banCmd, "ban",
                 new String[]{"NeverSeenXYZ", "spam"});
         assertTrue(handled);
-        assertTrue(plugin.punishments().activeList(
-                de.derfakegamer.sentinel.model.PunishmentType.BAN, System.currentTimeMillis()).isEmpty(),
+
+        drain();
+
+        List<Punishment> bans = plugin.punishments().activeList(
+                PunishmentType.BAN, System.currentTimeMillis()).get(2, TimeUnit.SECONDS);
+        assertTrue(bans.isEmpty(),
                 "a never-seen name must not produce a phantom ban");
     }
 
     @Test
-    void historyRendersAfterBan() {
+    void historyRendersAfterBan() throws Exception {
         Player target = server.addPlayer("Offender");
         Player admin = server.addPlayer("Admin");
         admin.setOp(true);
@@ -124,7 +149,10 @@ class PunishmentCommandsTest {
         new PunishmentCommands(plugin).onCommand(admin, banCmd, "ban",
                 new String[]{"Offender", "griefing"});
 
-        assertFalse(plugin.punishments().history(target.getUniqueId()).isEmpty(),
+        drain();
+
+        List<Punishment> hist = plugin.punishments().history(target.getUniqueId()).get(2, TimeUnit.SECONDS);
+        assertFalse(hist.isEmpty(),
                 "history should contain the ban entry");
 
         Command historyCmd = server.getCommandMap().getCommand("history");

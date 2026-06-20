@@ -55,6 +55,6 @@ public final class OperatorsGui extends Gui {
         if (slot == BACK) { new AdminPanelGui(plugin).open(p); return; }
         int index = page * PAGE_SIZE + slot;
         if (slot >= 0 && slot < PAGE_SIZE && index < ops.size())
-            new PlayerActionsGui(plugin, ops.get(index)).open(p);
+            PlayerActionsGui.open(plugin, ops.get(index), p);
     }
 }

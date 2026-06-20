@@ -24,11 +24,16 @@ public final class ChatLogGui extends Gui {
 
     private final OfflinePlayer target;
 
-    public ChatLogGui(Sentinel plugin, OfflinePlayer target) {
+    /** Async opener: fetches recent entries off the main thread, then constructs and opens the GUI on the main thread. */
+    public static void open(Sentinel plugin, OfflinePlayer target, Player viewer) {
+        plugin.db().callback(plugin.chatLog().recent(target.getUniqueId(), 45),
+            entries -> new ChatLogGui(plugin, target, entries).open(viewer));
+    }
+
+    public ChatLogGui(Sentinel plugin, OfflinePlayer target, List<ChatLogEntry> entries) {
         super(plugin);
         this.target = target;
         this.inventory = Bukkit.createInventory(this, 54, plugin.messages().plain("gui-chatlog-title", "player", name()));
-        List<ChatLogEntry> entries = plugin.chatLog().recent(target.getUniqueId(), 45);
         for (int i = 0; i < entries.size() && i < 45; i++) {
             ChatLogEntry e = entries.get(i);
             boolean cmd = e.kind().equals("COMMAND");
@@ -48,7 +53,7 @@ public final class ChatLogGui extends Gui {
     public void onClick(InventoryClickEvent event) {
         event.setCancelled(true);
         Player p = (Player) event.getWhoClicked();
-        if (event.getRawSlot() == BACK) new PlayerActionsGui(plugin, target).open(p);
+        if (event.getRawSlot() == BACK) PlayerActionsGui.open(plugin, target, p);
         else if (event.getRawSlot() == CLOSE) p.closeInventory();
     }
 }

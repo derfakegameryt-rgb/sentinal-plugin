@@ -16,6 +16,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class ScheduledStrikeManager {
@@ -25,22 +26,23 @@ public final class ScheduledStrikeManager {
 
     public ScheduledStrikeManager(Sentinel plugin, ScheduledStrikeDao dao) { this.plugin = plugin; this.dao = dao; }
 
-    public long schedule(World world, int x, int z, OrbitalPayload payload, long fireAt) {
-        long id = dao.insert(world.getName(), x, z, payload.name(), fireAt);
-        arm(new ScheduledStrike(id, world.getName(), x, z, payload, fireAt));
-        return id;
+    public CompletableFuture<Long> schedule(World world, int x, int z, OrbitalPayload payload, long fireAt) {
+        CompletableFuture<Long> idFut =
+            plugin.db().submit(() -> dao.insert(world.getName(), x, z, payload.name(), fireAt));
+        plugin.db().callback(idFut, id -> arm(new ScheduledStrike(id, world.getName(), x, z, payload, fireAt)));
+        return idFut;
     }
 
     /** On enable: re-arm all persisted strikes (firing immediately any that are already due). */
     public void rearmAll() {
-        for (ScheduledStrike s : dao.pending()) arm(s);
+        plugin.db().callback(plugin.db().submit(() -> dao.pending()), list -> list.forEach(this::arm));
     }
 
-    public List<ScheduledStrike> pending() { return dao.pending(); }
+    public CompletableFuture<List<ScheduledStrike>> pending() { return plugin.db().submit(() -> dao.pending()); }
 
-    public boolean cancel(long id) {
-        cancelTasks(id);
-        return dao.delete(id) > 0;
+    public CompletableFuture<Boolean> cancel(long id) {
+        cancelTasks(id);                                   // main-thread Bukkit cancel — stays synchronous
+        return plugin.db().submit(() -> dao.delete(id) > 0);
     }
 
     private void arm(ScheduledStrike s) {
@@ -68,7 +70,7 @@ public final class ScheduledStrikeManager {
         cancelTasks(s.id());
         World world = Bukkit.getWorld(s.world());
         if (world != null) plugin.orbital().strike(world, s.x(), s.z(), s.payload());
-        dao.delete(s.id());
+        plugin.db().execute(() -> dao.delete(s.id()));
     }
 
     private void cancelTasks(long id) {

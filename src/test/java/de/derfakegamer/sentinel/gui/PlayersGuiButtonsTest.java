@@ -1,11 +1,15 @@
 package de.derfakegamer.sentinel.gui;
 
 import de.derfakegamer.sentinel.Sentinel;
+import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.junit.jupiter.api.*;
 import org.mockbukkit.mockbukkit.MockBukkit;
 import org.mockbukkit.mockbukkit.ServerMock;
 import org.mockbukkit.mockbukkit.entity.PlayerMock;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -15,9 +19,13 @@ class PlayersGuiButtonsTest {
     @BeforeEach void setup() { server = MockBukkit.mock(); plugin = MockBukkit.load(Sentinel.class); }
     @AfterEach void teardown() { MockBukkit.unmock(); }
 
+    private PlayersGui emptyGui() {
+        return new PlayersGui(plugin, 0, new ArrayList<>(), new boolean[0], new int[0], 0);
+    }
+
     @Test void vanishButtonTogglesVanish() {
         PlayerMock mod = server.addPlayer("Mod");
-        PlayersGui gui = new PlayersGui(plugin, 0);
+        PlayersGui gui = emptyGui();
         gui.open(mod);
 
         InventoryClickEvent event = ConfirmGuiTest.clickSlot(mod, gui, 49); // Vanish
@@ -27,13 +35,17 @@ class PlayersGuiButtonsTest {
         assertTrue(plugin.vanish().isVanished(mod.getUniqueId()));
     }
 
-    @Test void reportsButtonOpensReportsGui() {
+    @Test void reportsButtonOpensReportsGui() throws Exception {
         PlayerMock mod = server.addPlayer("Mod");
-        PlayersGui gui = new PlayersGui(plugin, 0);
+        PlayersGui gui = emptyGui();
         gui.open(mod);
 
         InventoryClickEvent event = ConfirmGuiTest.clickSlot(mod, gui, 47); // Reports
         gui.onClick(event);
+
+        // ReportsGui.open is async; drain DB executor then tick Bukkit scheduler
+        plugin.db().submit(() -> null).get(2, java.util.concurrent.TimeUnit.SECONDS);
+        server.getScheduler().performTicks(1);
 
         assertTrue(event.isCancelled());
         assertInstanceOf(ReportsGui.class, mod.getOpenInventory().getTopInventory().getHolder());

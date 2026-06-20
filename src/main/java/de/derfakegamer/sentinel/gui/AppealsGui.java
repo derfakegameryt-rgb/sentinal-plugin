@@ -28,10 +28,15 @@ public final class AppealsGui extends Gui {
     private final int page;
     private final List<Appeal> appeals;
 
-    public AppealsGui(Sentinel plugin, int page) {
+    /** Fetches the open appeals list asynchronously and opens the GUI on the main thread. */
+    public static void open(Sentinel plugin, Player viewer, int page) {
+        plugin.db().callback(plugin.appeals().open(), appeals -> new AppealsGui(plugin, page, appeals).open(viewer));
+    }
+
+    public AppealsGui(Sentinel plugin, int page, List<Appeal> appeals) {
         super(plugin);
         this.page = page;
-        this.appeals = plugin.appeals().open();
+        this.appeals = appeals;
         this.inventory = Bukkit.createInventory(this, 54, plugin.messages().plain("gui-appeals-title"));
 
         int from = page * PAGE_SIZE;
@@ -81,8 +86,8 @@ public final class AppealsGui extends Gui {
         Player p = (Player) event.getWhoClicked();
         if (!plugin.staffPerms().canUse(p, "sentinel.use")) return;
         int slot = event.getRawSlot();
-        if (slot == PREV) { new AppealsGui(plugin, page - 1).open(p); return; }
-        if (slot == NEXT) { new AppealsGui(plugin, page + 1).open(p); return; }
+        if (slot == PREV) { AppealsGui.open(plugin, p, page - 1); return; }
+        if (slot == NEXT) { AppealsGui.open(plugin, p, page + 1); return; }
         if (slot == BACK) { new AdminPanelGui(plugin).open(p); return; }
         if (slot == CLOSE) { p.closeInventory(); return; }
 
@@ -92,18 +97,20 @@ public final class AppealsGui extends Gui {
         long now = System.currentTimeMillis();
 
         if (event.isRightClick()) {
+            // deny is fire-and-forget; refresh the list after calling it
             plugin.appeals().deny(a, p.getName(), now);
             p.sendMessage(plugin.messages().prefixed("appeal-denied", "player", a.targetName()));
-            new AppealsGui(plugin, page).open(p);
+            AppealsGui.open(plugin, p, page);
         } else if (event.isLeftClick()) {
             String node = a.type() == PunishmentType.MUTE ? "sentinel.unmute" : "sentinel.unban";
             if (!plugin.staffPerms().canUse(p, node)) {
                 p.sendMessage(plugin.messages().prefixed("no-permission"));
                 return;
             }
-            plugin.appeals().accept(a, p.getName(), now);
-            p.sendMessage(plugin.messages().prefixed("appeal-accepted", "player", a.targetName()));
-            new AppealsGui(plugin, page).open(p);
+            plugin.db().callback(plugin.appeals().accept(a, p.getName(), now), ignored -> {
+                p.sendMessage(plugin.messages().prefixed("appeal-accepted", "player", a.targetName()));
+                AppealsGui.open(plugin, p, page);
+            });
         }
     }
 }

@@ -6,6 +6,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 /** Executes a punishment and performs the side effects (broadcast + kick). Shared by commands and GUIs. */
 public final class ModerationService {
@@ -13,11 +14,27 @@ public final class ModerationService {
 
     public ModerationService(Sentinel plugin) { this.plugin = plugin; }
 
-    /** Applies a punishment. Returns false if the target is exempt (nothing recorded). */
-    public boolean apply(UUID issuerId, String issuerName, UUID targetId, String targetName,
+    /**
+     * Hops to the main server thread and runs {@code sideEffects}, returning a future that
+     * completes after the runnable finishes. If already on the main thread, runs inline.
+     */
+    private CompletableFuture<Void> onMain(Runnable sideEffects) {
+        CompletableFuture<Void> f = new CompletableFuture<>();
+        if (plugin.getServer().isPrimaryThread()) {
+            try { sideEffects.run(); } finally { f.complete(null); }
+        } else {
+            plugin.getServer().getScheduler().runTask(plugin, () -> {
+                try { sideEffects.run(); } finally { f.complete(null); }
+            });
+        }
+        return f;
+    }
+
+    /** Applies a punishment. Returns a future of false if the target is exempt (nothing recorded). */
+    public CompletableFuture<Boolean> apply(UUID issuerId, String issuerName, UUID targetId, String targetName,
                          String ip, PunishmentType type, long expiresAt, String reason) {
         PunishmentManager pm = plugin.punishments();
-        PunishmentManager.Result result = switch (type) {
+        CompletableFuture<PunishmentManager.Result> resultFuture = switch (type) {
             case BAN   -> pm.ban(targetId, targetName, issuerId, issuerName, reason, expiresAt);
             case IPBAN -> pm.ipBan(targetId, targetName, ip, issuerId, issuerName, reason, expiresAt);
             case MUTE  -> pm.mute(targetId, targetName, issuerId, issuerName, reason, expiresAt);
@@ -25,61 +42,86 @@ public final class ModerationService {
             case KICK  -> pm.kick(targetId, targetName, issuerId, issuerName, reason);
             case SHADOWMUTE -> pm.shadowMute(targetId, targetName, issuerId, issuerName, reason, expiresAt);
         };
-        if (!result.isSuccess()) return false;
 
-        if (type == PunishmentType.SHADOWMUTE) {
-            notifyStaff(plugin.messages().plain("shadowmuted", "player", targetName, "reason", reason));
-            return true; // covert: no public broadcast, no kick
-        }
+        return resultFuture.thenCompose(result -> {
+            if (!result.isSuccess()) return CompletableFuture.completedFuture(false);
 
-        String key = switch (type) {
-            case BAN, IPBAN -> "banned";
-            case MUTE       -> "muted";
-            case WARN       -> "warned";
-            case KICK       -> "kicked";
-            case SHADOWMUTE -> "muted";
-        };
-        Bukkit.broadcast(plugin.messages().prefixed(key, "player", targetName, "reason", reason));
-        plugin.discord().post("**" + targetName + "** was " + key + " by " + issuerName
-            + (reason == null || reason.isBlank() ? "" : ": " + reason));
+            if (type == PunishmentType.SHADOWMUTE) {
+                // Covert: only notify staff on the main thread, no public broadcast, no kick.
+                net.kyori.adventure.text.Component staffMsg =
+                    plugin.messages().plain("shadowmuted", "player", targetName, "reason", reason);
+                return onMain(() -> notifyStaff(staffMsg))
+                    .thenApply(v -> true);
+            }
 
-        long now = System.currentTimeMillis();
-        String dur = de.derfakegamer.sentinel.util.TimeFormat.until(expiresAt, now);
-        Player online = Bukkit.getPlayer(targetId);
-        if (online != null) {
-            switch (type) {
-                case BAN, IPBAN -> {
-                    String url = plugin.getConfig().getString("appeals.url", "");
-                    String appealSuffix = url.isBlank() ? "" : "\n\nAppeal at: " + url;
-                    online.kick(plugin.messages().plain("ban-screen", "reason", reason, "duration", dur, "appeal", appealSuffix));
+            String key = switch (type) {
+                case BAN, IPBAN -> "banned";
+                case MUTE       -> "muted";
+                case WARN       -> "warned";
+                case KICK       -> "kicked";
+                case SHADOWMUTE -> "muted"; // unreachable; handled above
+            };
+
+            // Capture effectively-final values for the lambda.
+            long now = System.currentTimeMillis();
+            String dur = de.derfakegamer.sentinel.util.TimeFormat.until(expiresAt, now);
+            String discordMsg = "**" + targetName + "** was " + key + " by " + issuerName
+                + (reason == null || reason.isBlank() ? "" : ": " + reason);
+
+            // All Bukkit side-effects (broadcast, kick, sendMessage) must run on the main thread.
+            return onMain(() -> {
+                Bukkit.broadcast(plugin.messages().prefixed(key, "player", targetName, "reason", reason));
+                plugin.discord().post(discordMsg);
+
+                Player online = Bukkit.getPlayer(targetId);
+                if (online != null) {
+                    switch (type) {
+                        case BAN, IPBAN -> {
+                            String url = plugin.getConfig().getString("appeals.url", "");
+                            String appealSuffix = url.isBlank() ? "" : "\n\nAppeal at: " + url;
+                            online.kick(plugin.messages().plain("ban-screen", "reason", reason, "duration", dur, "appeal", appealSuffix));
+                        }
+                        case KICK -> online.kick(plugin.messages().plain("kick-screen", "reason", reason));
+                        case MUTE -> online.sendMessage(plugin.messages().prefixed("you-were-muted", "reason", reason, "duration", dur));
+                        case WARN -> online.sendMessage(plugin.messages().prefixed("you-were-warned", "reason", reason));
+                        default -> {}
+                    }
                 }
-                case KICK -> online.kick(plugin.messages().plain("kick-screen", "reason", reason));
-                case MUTE -> online.sendMessage(plugin.messages().prefixed("you-were-muted", "reason", reason, "duration", dur));
-                case WARN -> online.sendMessage(plugin.messages().prefixed("you-were-warned", "reason", reason));
-                default -> {}
-            }
-        }
-        if (type == PunishmentType.WARN) {
-            int count = plugin.punishments().warnCount(targetId);
-            de.derfakegamer.sentinel.model.EscalationAction esc = plugin.escalation().actionFor(count);
-            if (esc != null) {
-                long escExpiresAt = esc.durationMs() == 0 ? 0 : System.currentTimeMillis() + esc.durationMs();
-                apply(issuerId, issuerName, targetId, targetName, ip, esc.type(), escExpiresAt, esc.reason());
-            }
-        }
-        return true;
+            }).thenCompose(v -> {
+                if (type == PunishmentType.WARN) {
+                    return plugin.punishments().warnCount(targetId).thenCompose(count -> {
+                        de.derfakegamer.sentinel.model.EscalationAction esc = plugin.escalation().actionFor(count);
+                        if (esc != null) {
+                            long escExpiresAt = esc.durationMs() == 0 ? 0 : System.currentTimeMillis() + esc.durationMs();
+                            return apply(issuerId, issuerName, targetId, targetName, ip, esc.type(), escExpiresAt, esc.reason())
+                                .thenApply(ignored -> true);
+                        }
+                        return CompletableFuture.completedFuture(true);
+                    });
+                }
+                return CompletableFuture.completedFuture(true);
+            });
+        });
     }
 
-    public boolean removeBan(UUID issuerId, String issuerName, UUID targetId, String targetName) {
-        boolean ok = plugin.punishments().unban(targetId, issuerName, System.currentTimeMillis());
-        if (ok) Bukkit.broadcast(plugin.messages().prefixed("unbanned", "player", targetName, "reason", ""));
-        return ok;
+    public CompletableFuture<Boolean> removeBan(UUID issuerId, String issuerName, UUID targetId, String targetName) {
+        long now = System.currentTimeMillis();
+        return plugin.punishments().unban(targetId, issuerName, now)
+            .thenCompose(ok ->
+                onMain(() -> {
+                    if (ok) Bukkit.broadcast(plugin.messages().prefixed("unbanned", "player", targetName, "reason", ""));
+                })
+                .thenApply(v -> ok));
     }
 
-    public boolean removeMute(UUID issuerId, String issuerName, UUID targetId, String targetName) {
-        boolean ok = plugin.punishments().unmute(targetId, issuerName, System.currentTimeMillis());
-        if (ok) Bukkit.broadcast(plugin.messages().prefixed("unmuted", "player", targetName, "reason", ""));
-        return ok;
+    public CompletableFuture<Boolean> removeMute(UUID issuerId, String issuerName, UUID targetId, String targetName) {
+        long now = System.currentTimeMillis();
+        return plugin.punishments().unmute(targetId, issuerName, now)
+            .thenCompose(ok ->
+                onMain(() -> {
+                    if (ok) Bukkit.broadcast(plugin.messages().prefixed("unmuted", "player", targetName, "reason", ""));
+                })
+                .thenApply(v -> ok));
     }
 
     private void notifyStaff(net.kyori.adventure.text.Component message) {
@@ -87,10 +129,14 @@ public final class ModerationService {
             if (op.isOp()) op.sendMessage(message);
     }
 
-    public boolean removeShadowMute(java.util.UUID issuerId, String issuerName, java.util.UUID targetId, String targetName) {
-        boolean ok = plugin.punishments().unShadowMute(targetId, issuerName, System.currentTimeMillis());
-        if (ok) notifyStaff(plugin.messages().plain("unshadowmuted", "player", targetName));
-        return ok;
+    public CompletableFuture<Boolean> removeShadowMute(java.util.UUID issuerId, String issuerName, java.util.UUID targetId, String targetName) {
+        long now = System.currentTimeMillis();
+        return plugin.punishments().unShadowMute(targetId, issuerName, now)
+            .thenCompose(ok -> {
+                net.kyori.adventure.text.Component msg = plugin.messages().plain("unshadowmuted", "player", targetName);
+                return onMain(() -> { if (ok) notifyStaff(msg); })
+                    .thenApply(v -> ok);
+            });
     }
 
 }

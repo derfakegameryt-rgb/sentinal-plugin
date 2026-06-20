@@ -29,8 +29,16 @@ public final class LoginListener implements Listener {
             return;
         }
 
-        Punishment ban = plugin.punishments().activeBan(event.getUniqueId(), now);
-        if (ban == null && ip != null) ban = plugin.punishments().activeIpBan(ip, now);
+        Punishment ban;
+        try {
+            ban = plugin.punishments().activeBan(event.getUniqueId(), now).join();
+            if (ban == null && ip != null) ban = plugin.punishments().activeIpBan(ip, now).join();
+        } catch (Exception e) {
+            // Fail-open: if the DB check errors, allow the player in rather than locking everyone out
+            plugin.getLogger().warning("Ban check failed for " + event.getName() + ": " + e.getMessage());
+            return;
+        }
+
         if (ban != null) {
             String url = plugin.getConfig().getString("appeals.url", "");
             String appealSuffix = url.isBlank() ? "" : "\n\nAppeal at: " + url;

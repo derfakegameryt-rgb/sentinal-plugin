@@ -11,7 +11,6 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public final class ScheduledStrikesGui extends Gui {
@@ -20,9 +19,15 @@ public final class ScheduledStrikesGui extends Gui {
 
     private final List<ScheduledStrike> strikes;
 
-    public ScheduledStrikesGui(Sentinel plugin) {
+    /** Async opener — fetches pending strikes on the DB executor, then opens the GUI on the main thread. */
+    public static void open(Sentinel plugin, Player player) {
+        plugin.db().callback(plugin.scheduledStrikes().pending(),
+            list -> new ScheduledStrikesGui(plugin, list).open(player));
+    }
+
+    public ScheduledStrikesGui(Sentinel plugin, List<ScheduledStrike> strikes) {
         super(plugin);
-        this.strikes = new ArrayList<>(plugin.scheduledStrikes().pending());
+        this.strikes = strikes;
         this.inventory = Bukkit.createInventory(this, 54, plugin.secret().plain("gui-scheduled-title"));
         for (int i = 0; i < PAGE_SIZE && i < strikes.size(); i++) {
             ScheduledStrike s = strikes.get(i);
@@ -66,9 +71,10 @@ public final class ScheduledStrikesGui extends Gui {
         if (slot == CLOSE) { p.closeInventory(); return; }
         if (slot >= 0 && slot < PAGE_SIZE && slot < strikes.size()) {
             ScheduledStrike s = strikes.get(slot);
-            plugin.scheduledStrikes().cancel(s.id());
-            p.sendMessage(plugin.secret().prefixed("scheduled-cancelled"));
-            new ScheduledStrikesGui(plugin).open(p);
+            plugin.db().callback(plugin.scheduledStrikes().cancel(s.id()), ok -> {
+                p.sendMessage(plugin.secret().prefixed("scheduled-cancelled"));
+                ScheduledStrikesGui.open(plugin, p);
+            });
         }
     }
 }

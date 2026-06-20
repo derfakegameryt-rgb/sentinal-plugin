@@ -9,6 +9,8 @@ import org.mockbukkit.mockbukkit.MockBukkit;
 import org.mockbukkit.mockbukkit.ServerMock;
 import org.mockbukkit.mockbukkit.entity.PlayerMock;
 
+import java.util.concurrent.TimeUnit;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class PlayerActionsGuiTest {
@@ -20,7 +22,8 @@ class PlayerActionsGuiTest {
     @Test void banButtonOpensReasonGui() {
         PlayerMock mod = server.addPlayer("Mod"); mod.setOp(true);
         OfflinePlayer target = server.addPlayer("Griefer");
-        PlayerActionsGui gui = new PlayerActionsGui(plugin, target);
+        // target is not banned — construct with banned=false
+        PlayerActionsGui gui = new PlayerActionsGui(plugin, target, false, false, false, 0, null);
         gui.open(mod);
 
         InventoryClickEvent event = ConfirmGuiTest.clickSlot(mod, gui, 10); // Ban
@@ -30,18 +33,24 @@ class PlayerActionsGuiTest {
         assertInstanceOf(ReasonGui.class, mod.getOpenInventory().getTopInventory().getHolder());
     }
 
-    @Test void unbanButtonShownWhenBannedAndRemovesBan() {
+    @Test void unbanButtonShownWhenBannedAndRemovesBan() throws Exception {
         PlayerMock mod = server.addPlayer("Mod"); mod.setOp(true);
         OfflinePlayer target = server.addPlayer("Griefer");
-        plugin.punishments().ban(target.getUniqueId(), "Griefer", mod.getUniqueId(), "Mod", "x", 0);
-        PlayerActionsGui gui = new PlayerActionsGui(plugin, target);
+        plugin.punishments().ban(target.getUniqueId(), "Griefer", mod.getUniqueId(), "Mod", "x", 0).get(2, TimeUnit.SECONDS);
+        // construct with banned=true (pre-fetched)
+        PlayerActionsGui gui = new PlayerActionsGui(plugin, target, true, false, false, 0, null);
         gui.open(mod);
 
         InventoryClickEvent event = ConfirmGuiTest.clickSlot(mod, gui, 10); // now "Unban"
         gui.onClick(event);
 
         assertTrue(event.isCancelled());
-        assertNull(plugin.punishments().activeBan(target.getUniqueId(), System.currentTimeMillis()),
+        // removeBan now schedules a main-thread task via onMain(); pump ticks so it completes.
+        for (int i = 0; i < 200; i++) {
+            server.getScheduler().performTicks(1);
+            Thread.sleep(5);
+        }
+        assertNull(plugin.punishments().activeBan(target.getUniqueId(), System.currentTimeMillis()).get(2, TimeUnit.SECONDS),
             "clicking Unban removes the active ban");
     }
 }

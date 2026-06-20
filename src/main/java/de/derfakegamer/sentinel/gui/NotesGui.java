@@ -25,12 +25,17 @@ public final class NotesGui extends Gui {
 
     private final OfflinePlayer target;
 
-    public NotesGui(Sentinel plugin, OfflinePlayer target) {
+    /** Async opener: fetches notes then constructs and opens the GUI on the main thread. */
+    public static void open(Sentinel plugin, OfflinePlayer target, Player viewer) {
+        plugin.db().callback(plugin.notes().list(target.getUniqueId()),
+            notes -> new NotesGui(plugin, target, notes != null ? notes : List.of()).open(viewer));
+    }
+
+    public NotesGui(Sentinel plugin, OfflinePlayer target, List<Note> notes) {
         super(plugin);
         this.target = target;
         this.inventory = Bukkit.createInventory(this, 54,
             plugin.messages().plain("gui-notes-title", "player", name()));
-        List<Note> notes = plugin.notes().list(target.getUniqueId());
         for (int i = 0; i < PAGE_SIZE && i < notes.size(); i++) {
             Note n = notes.get(i);
             inventory.setItem(i, Items.button(Material.PAPER,
@@ -65,10 +70,10 @@ public final class NotesGui extends Gui {
                 plugin.chatInput().await(mod.getUniqueId(), text -> {
                     plugin.notes().add(target.getUniqueId(), mod.getName(), text);
                     mod.sendMessage(plugin.messages().prefixed("note-added"));
-                    new NotesGui(plugin, target).open(mod);
+                    NotesGui.open(plugin, target, mod);
                 });
             }
-            case BACK -> new PlayerActionsGui(plugin, target).open(mod);
+            case BACK -> PlayerActionsGui.open(plugin, target, mod);
             case CLOSE -> mod.closeInventory();
         }
     }

@@ -1,55 +1,62 @@
 package de.derfakegamer.sentinel.manager;
 
-import de.derfakegamer.sentinel.model.Punishment;
-import de.derfakegamer.sentinel.storage.Database;
+import de.derfakegamer.sentinel.Sentinel;
 import de.derfakegamer.sentinel.storage.PunishmentDao;
 import org.junit.jupiter.api.*;
-import java.io.File;
-import java.nio.file.Files;
+import org.mockbukkit.mockbukkit.MockBukkit;
+import org.mockbukkit.mockbukkit.ServerMock;
+
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class PunishmentManagerTest {
-    Database db; PunishmentManager mgr; File tmp;
-    UUID target = UUID.randomUUID(); UUID issuer = UUID.randomUUID();
-    UUID exempt = UUID.randomUUID();
+    ServerMock server;
+    Sentinel plugin;
+    PunishmentManager mgr;
+    UUID target = UUID.randomUUID();
+    UUID issuer = UUID.randomUUID();
 
-    @BeforeEach void setup() throws Exception {
-        tmp = Files.createTempFile("sentinel", ".db").toFile();
-        db = new Database(tmp);
-        mgr = new PunishmentManager(new PunishmentDao(db), Set.of(exempt));
+    @BeforeEach void setup() {
+        server = MockBukkit.mock();
+        plugin = MockBukkit.load(Sentinel.class);
+        mgr = plugin.punishments();
     }
-    @AfterEach void teardown() throws Exception { db.close(); tmp.delete(); }
+    @AfterEach void teardown() { MockBukkit.unmock(); }
 
-    @Test void banThenActiveBanFound() {
-        assertTrue(mgr.ban(target, "Notch", issuer, "Admin", "hax", 0).isSuccess());
-        assertNotNull(mgr.activeBan(target, System.currentTimeMillis()));
+    @Test void banThenActiveBanFound() throws Exception {
+        assertTrue(mgr.ban(target, "Notch", issuer, "Admin", "hax", 0).get(2, TimeUnit.SECONDS).isSuccess());
+        assertNotNull(mgr.activeBan(target, System.currentTimeMillis()).get(2, TimeUnit.SECONDS));
     }
 
-    @Test void exemptCannotBeBanned() {
-        var result = mgr.ban(exempt, "Owner", issuer, "Admin", "x", 0);
+    @Test void exemptCannotBeBanned() throws Exception {
+        UUID exemptId = UUID.randomUUID();
+        // Construct a manager with this UUID in the exempt set, sharing the plugin's executor and DB
+        PunishmentManager pm2 = new PunishmentManager(plugin, new PunishmentDao(plugin.db().database()), Set.of(exemptId));
+        var result = pm2.ban(exemptId, "Owner", issuer, "Admin", "x", 0).get(2, TimeUnit.SECONDS);
         assertFalse(result.isSuccess());
-        assertNull(mgr.activeBan(exempt, System.currentTimeMillis()));
+        assertNull(pm2.activeBan(exemptId, System.currentTimeMillis()).get(2, TimeUnit.SECONDS));
     }
 
-    @Test void expiredBanReturnsNullAndIsDeactivated() {
+    @Test void expiredBanReturnsNullAndIsDeactivated() throws Exception {
         long now = 1_000_000L;
-        mgr.ban(target, "Notch", issuer, "Admin", "hax", now + 1000); // expires soon
-        assertNull(mgr.activeBan(target, now + 2000));                 // past expiry
+        mgr.ban(target, "Notch", issuer, "Admin", "hax", now + 1000).get(2, TimeUnit.SECONDS);
+        assertNull(mgr.activeBan(target, now + 2000).get(2, TimeUnit.SECONDS));
         // second lookup confirms it was deactivated, not just filtered
-        assertNull(mgr.activeBan(target, now + 1));
+        assertNull(mgr.activeBan(target, now + 1).get(2, TimeUnit.SECONDS));
     }
 
-    @Test void unbanClearsBan() {
-        mgr.ban(target, "Notch", issuer, "Admin", "hax", 0);
-        assertTrue(mgr.unban(target, "Admin", System.currentTimeMillis()));
-        assertNull(mgr.activeBan(target, System.currentTimeMillis()));
+    @Test void unbanClearsBan() throws Exception {
+        mgr.ban(target, "Notch", issuer, "Admin", "hax", 0).get(2, TimeUnit.SECONDS);
+        assertTrue(mgr.unban(target, "Admin", System.currentTimeMillis()).get(2, TimeUnit.SECONDS));
+        assertNull(mgr.activeBan(target, System.currentTimeMillis()).get(2, TimeUnit.SECONDS));
     }
 
-    @Test void warnIncrementsCount() {
-        mgr.warn(target, "Notch", issuer, "Admin", "spam");
-        mgr.warn(target, "Notch", issuer, "Admin", "spam");
-        assertEquals(2, mgr.warnCount(target));
+    @Test void warnIncrementsCount() throws Exception {
+        mgr.warn(target, "Notch", issuer, "Admin", "spam").get(2, TimeUnit.SECONDS);
+        mgr.warn(target, "Notch", issuer, "Admin", "spam").get(2, TimeUnit.SECONDS);
+        assertEquals(2, mgr.warnCount(target).get(2, TimeUnit.SECONDS));
     }
 }

@@ -24,7 +24,20 @@ public final class SearchResultsGui extends Gui {
 
     private final List<OfflinePlayer> results = new ArrayList<>();
 
-    public SearchResultsGui(Sentinel plugin, String query) {
+    /**
+     * Asynchronously fetches stored player record for {@code query} then constructs and opens the
+     * GUI on the main thread. Use this instead of {@code new SearchResultsGui(...).open(viewer)}.
+     */
+    public static void open(Sentinel plugin, String query, Player viewer) {
+        plugin.db().callback(plugin.players().byName(query),
+            stored -> new SearchResultsGui(plugin, query, stored).open(viewer));
+    }
+
+    /**
+     * Constructs the GUI with pre-fetched stored player record. Call
+     * {@link #open(Sentinel, String, Player)} from the main thread instead of this constructor.
+     */
+    public SearchResultsGui(Sentinel plugin, String query, PlayerRecord stored) {
         super(plugin);
         this.inventory = Bukkit.createInventory(this, 54, plugin.messages().plain("gui-search-title"));
         String low = query.toLowerCase();
@@ -32,7 +45,6 @@ public final class SearchResultsGui extends Gui {
         Map<UUID, OfflinePlayer> found = new LinkedHashMap<>();
         for (Player p : Bukkit.getOnlinePlayers())
             if (p.getName().toLowerCase().contains(low)) found.put(p.getUniqueId(), p);
-        PlayerRecord stored = plugin.players().byName(query);
         if (stored != null) found.putIfAbsent(stored.uuid(), Bukkit.getOfflinePlayer(stored.uuid()));
 
         results.addAll(found.values());
@@ -56,9 +68,9 @@ public final class SearchResultsGui extends Gui {
         event.setCancelled(true);
         Player mod = (Player) event.getWhoClicked();
         int slot = event.getRawSlot();
-        if (slot == BACK) { new PlayersGui(plugin, 0).open(mod); return; }
+        if (slot == BACK) { PlayersGui.open(plugin, 0, mod); return; }
         if (slot == CLOSE) { mod.closeInventory(); return; }
         if (slot >= 0 && slot < PAGE_SIZE && slot < results.size())
-            new PlayerActionsGui(plugin, results.get(slot)).open(mod);
+            PlayerActionsGui.open(plugin, results.get(slot), mod);
     }
 }

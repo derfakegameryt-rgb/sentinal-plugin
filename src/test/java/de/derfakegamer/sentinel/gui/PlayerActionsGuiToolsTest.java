@@ -18,7 +18,7 @@ class PlayerActionsGuiToolsTest {
     @Test void freezeButtonTogglesFreeze() {
         PlayerMock mod = server.addPlayer("Mod");
         PlayerMock target = server.addPlayer("Suspect");
-        PlayerActionsGui gui = new PlayerActionsGui(plugin, target);
+        PlayerActionsGui gui = new PlayerActionsGui(plugin, target, false, false, false, 0, null);
         gui.open(mod);
 
         InventoryClickEvent event = ConfirmGuiTest.clickSlot(mod, gui, 20); // Freeze
@@ -31,7 +31,7 @@ class PlayerActionsGuiToolsTest {
     @Test void invseeOpensTargetInventory() {
         PlayerMock mod = server.addPlayer("Mod");
         PlayerMock target = server.addPlayer("Suspect");
-        PlayerActionsGui gui = new PlayerActionsGui(plugin, target);
+        PlayerActionsGui gui = new PlayerActionsGui(plugin, target, false, false, false, 0, null);
         gui.open(mod);
 
         InventoryClickEvent event = ConfirmGuiTest.clickSlot(mod, gui, 21); // Invsee
@@ -42,13 +42,18 @@ class PlayerActionsGuiToolsTest {
             "moderator is now viewing the target via the InvseeGui");
     }
 
-    @Test void offlineIpBanUsesStoredIp() {
+    @Test void offlineIpBanUsesStoredIp() throws Exception {
         org.mockbukkit.mockbukkit.entity.PlayerMock mod = server.addPlayer("Mod");
         java.util.UUID offline = java.util.UUID.randomUUID();
         plugin.players().record(offline, "GoneGuy", "7.7.7.7");
         org.bukkit.OfflinePlayer target = server.getOfflinePlayer(offline);
 
-        PlayerActionsGui gui = new PlayerActionsGui(plugin, target);
+        // Fetch the stored IP as the static open() method would
+        de.derfakegamer.sentinel.model.PlayerRecord rec =
+            plugin.players().byUuid(offline).get(2, java.util.concurrent.TimeUnit.SECONDS);
+        String storedIp = rec != null ? rec.lastIp() : null;
+
+        PlayerActionsGui gui = new PlayerActionsGui(plugin, target, false, false, false, 0, storedIp);
         // IP-Ban button is present at slot 19 even though the target is offline
         assertNotNull(gui.getInventory().getItem(19));
         assertEquals(org.bukkit.Material.IRON_BARS, gui.getInventory().getItem(19).getType());
@@ -62,7 +67,7 @@ class PlayerActionsGuiToolsTest {
         plugin.saveConfig();
         plugin.reloadAll(); // rebuilds the punishment manager with the exempt set
 
-        PlayerActionsGui gui = new PlayerActionsGui(plugin, owner);
+        PlayerActionsGui gui = new PlayerActionsGui(plugin, owner, false, false, false, 0, null);
         gui.open(mod);
         org.bukkit.event.inventory.InventoryClickEvent ev = ConfirmGuiTest.clickSlot(mod, gui, 26); // OPTOGGLE
         gui.onClick(ev);
@@ -74,7 +79,7 @@ class PlayerActionsGuiToolsTest {
     @Test void shadowMuteButtonIsShown() {
         org.mockbukkit.mockbukkit.entity.PlayerMock mod = server.addPlayer("Mod");
         org.mockbukkit.mockbukkit.entity.PlayerMock target = server.addPlayer("Sneaky");
-        PlayerActionsGui gui = new PlayerActionsGui(plugin, target);
+        PlayerActionsGui gui = new PlayerActionsGui(plugin, target, false, false, false, 0, null);
         assertNotNull(gui.getInventory().getItem(16));
         assertEquals(org.bukkit.Material.INK_SAC, gui.getInventory().getItem(16).getType());
     }

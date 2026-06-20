@@ -70,6 +70,7 @@ public final class ReasonGui extends Gui {
     private void openConfirm(Player mod, String reason) {
         Component summary = plugin.messages().plain("confirm-summary",
             "type", type.name(), "player", target.getName() == null ? "?" : target.getName(), "reason", reason);
+        // moderation().apply() returns a CompletableFuture; fire-and-forget here (broadcast happens inside)
         Runnable action = () -> plugin.moderation().apply(
             mod.getUniqueId(), mod.getName(), target.getUniqueId(),
             target.getName() == null ? "?" : target.getName(), ip, type, expiresAt, reason);

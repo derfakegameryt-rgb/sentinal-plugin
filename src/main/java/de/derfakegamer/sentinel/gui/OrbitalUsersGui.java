@@ -53,12 +53,13 @@ public final class OrbitalUsersGui extends Gui {
             p.closeInventory();
             p.sendMessage(plugin.secret().prefixed("owner-enter-user"));
             plugin.chatInput().await(p.getUniqueId(), name -> {
-                PlayerRecord rec = plugin.players().byName(name);
-                UUID id = rec != null ? rec.uuid() : Bukkit.getOfflinePlayer(name).getUniqueId();
-                plugin.orbitalAccess().add(id, name);
-                Player online = Bukkit.getPlayer(id);
-                if (online != null) plugin.orbitalAccessListener().apply(online);
-                p.sendMessage(plugin.secret().prefixed("owner-user-added", "player", name));
+                plugin.db().callback(plugin.players().byName(name), rec -> {
+                    UUID id = rec != null ? rec.uuid() : Bukkit.getOfflinePlayer(name).getUniqueId();
+                    plugin.orbitalAccess().add(id, name);
+                    Player online = Bukkit.getPlayer(id);
+                    if (online != null) plugin.orbitalAccessListener().apply(online);
+                    p.sendMessage(plugin.secret().prefixed("owner-user-added", "player", name));
+                });
             });
             return;
         }

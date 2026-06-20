@@ -42,7 +42,7 @@ public final class TemplatesGui extends Gui {
         event.setCancelled(true);
         Player mod = (Player) event.getWhoClicked();
         int slot = event.getRawSlot();
-        if (slot == BACK) { new PlayerActionsGui(plugin, target).open(mod); return; }
+        if (slot == BACK) { PlayerActionsGui.open(plugin, target, mod); return; }
         if (slot == CLOSE) { mod.closeInventory(); return; }
         if (slot < 0 || slot >= PAGE_SIZE || slot >= templates.size()) return;
         apply(mod, templates.get(slot));
@@ -69,10 +69,10 @@ public final class TemplatesGui extends Gui {
         }
         String reason = reasonFrom >= parts.length ? "" : String.join(" ", java.util.Arrays.copyOfRange(parts, reasonFrom, parts.length));
         if (!plugin.staffPerms().canPerform(mod, type)) { mod.sendMessage(plugin.messages().prefixed("no-permission")); return; }
-        plugin.moderation().apply(mod.getUniqueId(), mod.getName(), target.getUniqueId(),
+        plugin.db().callback(plugin.moderation().apply(mod.getUniqueId(), mod.getName(), target.getUniqueId(),
             target.getName() == null ? "?" : target.getName(),
             target.getPlayer() != null && target.getPlayer().getAddress() != null
                 ? target.getPlayer().getAddress().getAddress().getHostAddress() : null,
-            type, expiresAt, reason);
+            type, expiresAt, reason), ignored -> {});
     }
 }

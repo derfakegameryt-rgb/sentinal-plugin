@@ -21,10 +21,16 @@ public final class ActiveBansGui extends Gui {
     private final int page;
     private final List<Punishment> bans;
 
-    public ActiveBansGui(Sentinel plugin, int page) {
+    /** Async opener: fetches active bans then constructs and opens the GUI on the main thread. */
+    public static void open(Sentinel plugin, Player viewer, int page) {
+        plugin.db().callback(plugin.punishments().activeList(PunishmentType.BAN, System.currentTimeMillis()),
+            bans -> new ActiveBansGui(plugin, bans != null ? bans : List.of(), page).open(viewer));
+    }
+
+    public ActiveBansGui(Sentinel plugin, List<Punishment> bans, int page) {
         super(plugin);
         this.page = page;
-        this.bans = plugin.punishments().activeList(PunishmentType.BAN, System.currentTimeMillis());
+        this.bans = bans;
         this.inventory = Bukkit.createInventory(this, 54, plugin.messages().plain("gui-bans-title"));
         int from = page * PAGE_SIZE;
         for (int i = 0; i < PAGE_SIZE && from + i < bans.size(); i++) {
@@ -49,11 +55,11 @@ public final class ActiveBansGui extends Gui {
         event.setCancelled(true);
         Player p = (Player) event.getWhoClicked();
         int slot = event.getRawSlot();
-        if (slot == PREV) { new ActiveBansGui(plugin, page - 1).open(p); return; }
-        if (slot == NEXT) { new ActiveBansGui(plugin, page + 1).open(p); return; }
+        if (slot == PREV) { open(plugin, p, page - 1); return; }
+        if (slot == NEXT) { open(plugin, p, page + 1); return; }
         if (slot == BACK) { new AdminPanelGui(plugin).open(p); return; }
         int index = page * PAGE_SIZE + slot;
         if (slot >= 0 && slot < PAGE_SIZE && index < bans.size())
-            new PlayerActionsGui(plugin, Bukkit.getOfflinePlayer(bans.get(index).targetUuid())).open(p);
+            PlayerActionsGui.open(plugin, Bukkit.getOfflinePlayer(bans.get(index).targetUuid()), p);
     }
 }
