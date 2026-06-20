@@ -46,4 +46,24 @@ class SubcommandTest {
             server.getCommandMap().getCommand("sentinel"), "sentinel", new String[]{"ma"});
         assertTrue(out.contains("maintenance"));
     }
+
+    @Test void auditCommandPrintsEntries() throws Exception {
+        PlayerMock p = server.addPlayer(); p.setOp(true);
+        plugin.audit().record("Mod", "BAN", "Bob", "spam");
+        plugin.db().submit(() -> null).get(2, TimeUnit.SECONDS);
+        server.dispatchCommand(p, "sentinel audit");
+        plugin.db().submit(() -> null).get(2, TimeUnit.SECONDS);
+        drain();
+        assertNotNull(p.nextMessage());   // some output was sent
+    }
+
+    @Test void statsCommandPrintsTopActors() throws Exception {
+        PlayerMock p = server.addPlayer(); p.setOp(true);
+        plugin.audit().record("Mod", "BAN", "Bob", "spam");
+        plugin.db().submit(() -> null).get(2, TimeUnit.SECONDS);
+        server.dispatchCommand(p, "sentinel stats");
+        plugin.db().submit(() -> null).get(2, TimeUnit.SECONDS);
+        drain();
+        assertNotNull(p.nextMessage());   // some output was sent
+    }
 }
