@@ -30,7 +30,7 @@ public abstract class Gui implements InventoryHolder {
 
     public void open(Player player) { player.openInventory(inventory); }
 
-    /** Fills every empty slot with the blue glass filler. */
+    /** Fills every empty slot with the black glass filler. */
     protected void fillEmpty() {
         for (int i = 0; i < inventory.getSize(); i++) {
             if (inventory.getItem(i) == null) inventory.setItem(i, Items.filler());
