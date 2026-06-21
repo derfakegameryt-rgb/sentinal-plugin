@@ -31,7 +31,7 @@ class InvseeGuiTest {
         // armor label
         assertEquals(Material.ARMOR_STAND, gui.getInventory().getItem(45).getType());
         // separator filler
-        assertEquals(Material.GRAY_STAINED_GLASS_PANE, gui.getInventory().getItem(36).getType());
+        assertEquals(Material.BLACK_STAINED_GLASS_PANE, gui.getInventory().getItem(36).getType());
     }
 
     @Test void writesBackEditsOnClose() {
