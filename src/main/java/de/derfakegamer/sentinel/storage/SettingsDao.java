@@ -7,7 +7,7 @@ public final class SettingsDao {
     public SettingsDao(Database db) { this.db = db; }
 
     public String get(String key, String def) {
-        synchronized (db) {
+        {
             try (PreparedStatement ps = db.connection().prepareStatement("SELECT value FROM settings WHERE key=?")) {
                 ps.setString(1, key);
                 try (ResultSet rs = ps.executeQuery()) { return rs.next() ? rs.getString(1) : def; }
@@ -16,7 +16,7 @@ public final class SettingsDao {
     }
 
     public void set(String key, String value) {
-        synchronized (db) {
+        {
             String sql = db.dialect().settingsUpsert();
             try (PreparedStatement ps = db.connection().prepareStatement(sql)) {
                 ps.setString(1, key); ps.setString(2, value); ps.executeUpdate();

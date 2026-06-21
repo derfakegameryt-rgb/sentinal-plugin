@@ -13,7 +13,7 @@ public final class NoteDao {
     public NoteDao(Database db) { this.db = db; }
 
     public long insert(Note n) {
-        synchronized (db) {
+        {
             String sql = "INSERT INTO notes (target_uuid,author,text,created_at) VALUES (?,?,?,?)";
             try (PreparedStatement ps = db.connection().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
                 ps.setString(1, n.targetUuid().toString());
@@ -27,7 +27,7 @@ public final class NoteDao {
     }
 
     public List<Note> listFor(UUID target) {
-        synchronized (db) {
+        {
             List<Note> out = new ArrayList<>();
             try (PreparedStatement ps = db.connection().prepareStatement(
                     "SELECT * FROM notes WHERE target_uuid=? ORDER BY created_at DESC")) {

@@ -13,7 +13,7 @@ public final class ReportDao {
     public ReportDao(Database db) { this.db = db; }
 
     public long insert(Report r) {
-        synchronized (db) {
+        {
             String sql = """
                 INSERT INTO reports (reporter_uuid,reporter_name,target_uuid,target_name,reason,created_at,handled,handled_by)
                 VALUES (?,?,?,?,?,?,?,?)""";
@@ -33,7 +33,7 @@ public final class ReportDao {
     }
 
     public List<Report> findOpen() {
-        synchronized (db) {
+        {
             String sql = "SELECT * FROM reports WHERE handled=0 ORDER BY created_at ASC";
             List<Report> out = new ArrayList<>();
             try (PreparedStatement ps = db.connection().prepareStatement(sql);
@@ -45,7 +45,7 @@ public final class ReportDao {
     }
 
     public void markHandled(long id, String handledBy) {
-        synchronized (db) {
+        {
             String sql = "UPDATE reports SET handled=1, handled_by=? WHERE id=?";
             try (PreparedStatement ps = db.connection().prepareStatement(sql)) {
                 ps.setString(1, handledBy);

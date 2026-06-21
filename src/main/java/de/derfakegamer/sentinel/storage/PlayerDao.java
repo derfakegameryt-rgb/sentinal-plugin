@@ -13,7 +13,7 @@ public final class PlayerDao {
     public PlayerDao(Database db) { this.db = db; }
 
     public void upsert(UUID uuid, String name, String ip, long now) {
-        synchronized (db) {
+        {
             String sql = db.dialect().playersUpsert();
             try (PreparedStatement ps = db.connection().prepareStatement(sql)) {
                 ps.setString(1, uuid.toString());
@@ -27,7 +27,7 @@ public final class PlayerDao {
     }
 
     public PlayerRecord byUuid(UUID uuid) {
-        synchronized (db) {
+        {
             try (PreparedStatement ps = db.connection().prepareStatement("SELECT * FROM players WHERE uuid=?")) {
                 ps.setString(1, uuid.toString());
                 try (ResultSet rs = ps.executeQuery()) { return rs.next() ? map(rs) : null; }
@@ -36,7 +36,7 @@ public final class PlayerDao {
     }
 
     public PlayerRecord byName(String name) {
-        synchronized (db) {
+        {
             try (PreparedStatement ps = db.connection().prepareStatement(
                     "SELECT * FROM players WHERE name=?" + db.dialect().nameWhereCollate() + " LIMIT 1")) {
                 ps.setString(1, name);
@@ -46,7 +46,7 @@ public final class PlayerDao {
     }
 
     public List<PlayerRecord> byIp(String ip) {
-        synchronized (db) {
+        {
             List<PlayerRecord> out = new ArrayList<>();
             if (ip == null) return out;
             try (PreparedStatement ps = db.connection().prepareStatement(
@@ -59,7 +59,7 @@ public final class PlayerDao {
     }
 
     public void addPlaytime(java.util.UUID uuid, long ms) {
-        synchronized (db) {
+        {
             try (java.sql.PreparedStatement ps = db.connection().prepareStatement(
                     "UPDATE players SET playtime = playtime + ? WHERE uuid=?")) {
                 ps.setLong(1, ms); ps.setString(2, uuid.toString()); ps.executeUpdate();
@@ -68,7 +68,7 @@ public final class PlayerDao {
     }
 
     public long playtime(java.util.UUID uuid) {
-        synchronized (db) {
+        {
             try (java.sql.PreparedStatement ps = db.connection().prepareStatement("SELECT playtime FROM players WHERE uuid=?")) {
                 ps.setString(1, uuid.toString());
                 try (java.sql.ResultSet rs = ps.executeQuery()) { return rs.next() ? rs.getLong(1) : 0; }
@@ -78,7 +78,7 @@ public final class PlayerDao {
 
     /** Top players by playtime: list of {name, playtimeMs}. */
     public java.util.List<de.derfakegamer.sentinel.model.PlayerRecord> topByPlaytime(int limit) {
-        synchronized (db) {
+        {
             java.util.List<de.derfakegamer.sentinel.model.PlayerRecord> out = new java.util.ArrayList<>();
             try (java.sql.PreparedStatement ps = db.connection().prepareStatement(
                     "SELECT * FROM players ORDER BY playtime DESC LIMIT ?")) {

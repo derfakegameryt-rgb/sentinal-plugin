@@ -13,7 +13,7 @@ public final class AuditDao {
     public AuditDao(Database db) { this.db = db; }
 
     public void insert(String actor, String action, String target, String details, long createdAt) {
-        synchronized (db) {
+        {
             String sql = "INSERT INTO audit (actor,action,target,details,created_at) VALUES (?,?,?,?,?)";
             try (PreparedStatement ps = db.connection().prepareStatement(sql)) {
                 ps.setString(1, actor);
@@ -31,7 +31,7 @@ public final class AuditDao {
      */
     public void insertBatch(List<AuditEntry> entries) {
         if (entries == null || entries.isEmpty()) return;
-        synchronized (db) {
+        {
             String sql = "INSERT INTO audit (actor,action,target,details,created_at) VALUES (?,?,?,?,?)";
             try (PreparedStatement ps = db.connection().prepareStatement(sql)) {
                 for (AuditEntry e : entries) {
@@ -48,7 +48,7 @@ public final class AuditDao {
     }
 
     public List<AuditEntry> recent(int limit, int offset) {
-        synchronized (db) {
+        {
             String sql = "SELECT * FROM audit ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?";
             try (PreparedStatement ps = db.connection().prepareStatement(sql)) {
                 ps.setInt(1, limit); ps.setInt(2, offset);
@@ -58,7 +58,7 @@ public final class AuditDao {
     }
 
     public List<AuditEntry> recentForTarget(String target, int limit) {
-        synchronized (db) {
+        {
             String sql = "SELECT * FROM audit WHERE target=? ORDER BY created_at DESC, id DESC LIMIT ?";
             try (PreparedStatement ps = db.connection().prepareStatement(sql)) {
                 ps.setString(1, target); ps.setInt(2, limit);
@@ -68,7 +68,7 @@ public final class AuditDao {
     }
 
     public List<ActorCount> topActors(long sinceMillis, int limit) {
-        synchronized (db) {
+        {
             String sql = "SELECT actor, COUNT(*) AS c FROM audit WHERE created_at >= ? GROUP BY actor ORDER BY c DESC LIMIT ?";
             try (PreparedStatement ps = db.connection().prepareStatement(sql)) {
                 ps.setLong(1, sinceMillis); ps.setInt(2, limit);
@@ -82,7 +82,7 @@ public final class AuditDao {
     }
 
     public List<ActionCount> countsByAction(long sinceMillis) {
-        synchronized (db) {
+        {
             String sql = "SELECT action, COUNT(*) AS c FROM audit WHERE created_at >= ? GROUP BY action ORDER BY c DESC";
             try (PreparedStatement ps = db.connection().prepareStatement(sql)) {
                 ps.setLong(1, sinceMillis);

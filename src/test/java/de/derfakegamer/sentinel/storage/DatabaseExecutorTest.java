@@ -61,12 +61,52 @@ class DatabaseExecutorTest {
         assertEquals(20, counter.get());
     }
 
+    @Test
+    void connectionIsNonNullInsideATask() throws Exception {
+        java.sql.Connection inTask = exec.submit(() -> db.connection()).get(2, TimeUnit.SECONDS);
+        assertNotNull(inTask, "db.connection() must be bound (non-null) inside an executor task");
+    }
+
+    @Test
+    void manyConcurrentReadsAllSucceedWithCorrectData() throws Exception {
+        // Seed a row, then hammer it with many concurrent reads. On SQLite this is the single
+        // writer thread serialising the work; the guard is that nothing corrupts or returns null
+        // and every read sees the seeded value. This protects the per-task connection refactor.
+        exec.execute(() -> {
+            try (var ps = db.connection().prepareStatement(
+                    "CREATE TABLE IF NOT EXISTS t6 (id INTEGER PRIMARY KEY, v INTEGER)")) {
+                ps.executeUpdate();
+            } catch (Exception e) { throw new RuntimeException(e); }
+        });
+        exec.execute(() -> {
+            try (var ps = db.connection().prepareStatement("INSERT INTO t6 (id, v) VALUES (1, 99)")) {
+                ps.executeUpdate();
+            } catch (Exception e) { throw new RuntimeException(e); }
+        });
+
+        int n = 200;
+        var futures = new java.util.ArrayList<CompletableFuture<Integer>>();
+        for (int i = 0; i < n; i++) {
+            futures.add(exec.submit(() -> {
+                assertNotNull(db.connection(), "connection bound during read task");
+                try (var ps = db.connection().prepareStatement("SELECT v FROM t6 WHERE id=1");
+                     var rs = ps.executeQuery()) {
+                    return rs.next() ? rs.getInt(1) : -1;
+                }
+            }));
+        }
+        for (var fu : futures) assertEquals(99, fu.get(5, TimeUnit.SECONDS), "every concurrent read sees seeded value");
+    }
+
     @Test void ensureValidIsCalledBeforeWork() throws Exception {
         java.util.concurrent.atomic.AtomicInteger validations = new java.util.concurrent.atomic.AtomicInteger();
         Database counting = new Database() {
             public java.sql.Connection connection() { return db.connection(); }
             public SqlDialect dialect() { return SqlDialect.SQLITE; }
             public void ensureValid() { validations.incrementAndGet(); }
+            public java.sql.Connection acquire() { return db.connection(); }
+            public void release(java.sql.Connection c) { }
+            public boolean supportsConcurrentReads() { return false; }
             public void close() { }
         };
         DatabaseExecutor ex = new DatabaseExecutor(counting, java.util.logging.Logger.getLogger("t"), null);
