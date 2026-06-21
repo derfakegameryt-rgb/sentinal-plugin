@@ -175,12 +175,7 @@ gui:
     close-lore:
       - "<gray>Close this menu"
   actions:
-    head-lore:
-      - "<red>Banned"
-      - "<green>Not banned"
-      - "<red>Muted"
-      - "<green>Not muted"
-      - "<gray>Warns: <count>"
+    head-lore: "<gray>Warns: <count>"
     banned-status: "<red>Banned"
     not-banned-status: "<green>Not banned"
     muted-status: "<red>Muted"

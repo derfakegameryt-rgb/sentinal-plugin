@@ -19,6 +19,17 @@ class PlayerActionsGuiTest {
     @BeforeEach void setup() { server = MockBukkit.mock(); plugin = MockBukkit.load(Sentinel.class); }
     @AfterEach void teardown() { MockBukkit.unmock(); }
 
+    @Test void headWarnsLoreResolvesFromMessagesNotRawKey() {
+        OfflinePlayer target = server.addPlayer("Griefer");
+        PlayerActionsGui gui = new PlayerActionsGui(plugin, target, false, false, false, 3, null);
+        var lore = gui.getInventory().getItem(4).getItemMeta().lore(); // HEAD slot
+        String joined = lore == null ? "" : lore.stream()
+            .map(c -> net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(c))
+            .reduce("", (a, b) -> a + "\n" + b);
+        assertTrue(joined.contains("Warns: 3"), "head lore must show the warn count, got: " + joined);
+        assertFalse(joined.contains("head-lore"), "head lore must not render the raw message key, got: " + joined);
+    }
+
     @Test void banButtonOpensReasonGui() {
         PlayerMock mod = server.addPlayer("Mod"); mod.setOp(true);
         OfflinePlayer target = server.addPlayer("Griefer");
