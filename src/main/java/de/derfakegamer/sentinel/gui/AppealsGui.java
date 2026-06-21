@@ -98,7 +98,7 @@ public final class AppealsGui extends Gui {
                 p.sendMessage(plugin.messages().prefixed("no-permission"));
                 return;
             }
-            plugin.db().callback(plugin.appeals().accept(a, p.getName(), now), ignored -> {
+            plugin.db().callbackOrError(p, plugin.appeals().accept(a, p.getName(), now), ignored -> {
                 p.sendMessage(plugin.messages().prefixed("appeal-accepted", "player", a.targetName()));
                 AppealsGui.open(plugin, p, page);
             });

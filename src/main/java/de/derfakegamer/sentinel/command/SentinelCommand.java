@@ -41,19 +41,36 @@ public final class SentinelCommand implements CommandExecutor, TabCompleter {
             if (!sender.hasPermission("sentinel.use")) { sender.sendMessage(plugin.messages().prefixed("no-permission")); return true; }
             if (args.length >= 2) {
                 String name = args[1];
-                plugin.db().callback(plugin.audit().recentForTarget(name, 10), list -> printAudit(sender, list));
+                if (sender instanceof org.bukkit.entity.Player p) {
+                    plugin.db().callbackOrError(p, plugin.audit().recentForTarget(name, 10), list -> printAudit(sender, list));
+                } else {
+                    plugin.db().callback(plugin.audit().recentForTarget(name, 10), list -> printAudit(sender, list),
+                        error -> plugin.getLogger().log(java.util.logging.Level.SEVERE, "Failed to fetch audit log", error));
+                }
             } else {
-                plugin.db().callback(plugin.audit().recent(10, 0), list -> printAudit(sender, list));
+                if (sender instanceof org.bukkit.entity.Player p) {
+                    plugin.db().callbackOrError(p, plugin.audit().recent(10, 0), list -> printAudit(sender, list));
+                } else {
+                    plugin.db().callback(plugin.audit().recent(10, 0), list -> printAudit(sender, list),
+                        error -> plugin.getLogger().log(java.util.logging.Level.SEVERE, "Failed to fetch audit log", error));
+                }
             }
             return true;
         }
         if (args.length == 1 && args[0].equalsIgnoreCase("stats")) {
             if (!sender.hasPermission("sentinel.use")) { sender.sendMessage(plugin.messages().prefixed("no-permission")); return true; }
             long since = System.currentTimeMillis() - 30L * 24 * 3600 * 1000;
-            plugin.db().callback(plugin.audit().topActors(since, 10), top -> {
-                sender.sendMessage(net.kyori.adventure.text.Component.text("Top staff (30d):", net.kyori.adventure.text.format.NamedTextColor.AQUA));
-                if (top != null) for (var a : top) sender.sendMessage(net.kyori.adventure.text.Component.text("  " + a.actor() + ": " + a.count(), net.kyori.adventure.text.format.NamedTextColor.GRAY));
-            });
+            if (sender instanceof org.bukkit.entity.Player p) {
+                plugin.db().callbackOrError(p, plugin.audit().topActors(since, 10), top -> {
+                    sender.sendMessage(net.kyori.adventure.text.Component.text("Top staff (30d):", net.kyori.adventure.text.format.NamedTextColor.AQUA));
+                    if (top != null) for (var a : top) sender.sendMessage(net.kyori.adventure.text.Component.text("  " + a.actor() + ": " + a.count(), net.kyori.adventure.text.format.NamedTextColor.GRAY));
+                });
+            } else {
+                plugin.db().callback(plugin.audit().topActors(since, 10), top -> {
+                    sender.sendMessage(net.kyori.adventure.text.Component.text("Top staff (30d):", net.kyori.adventure.text.format.NamedTextColor.AQUA));
+                    if (top != null) for (var a : top) sender.sendMessage(net.kyori.adventure.text.Component.text("  " + a.actor() + ": " + a.count(), net.kyori.adventure.text.format.NamedTextColor.GRAY));
+                }, error -> plugin.getLogger().log(java.util.logging.Level.SEVERE, "Failed to fetch stats", error));
+            }
             return true;
         }
         if (args.length >= 1 && SUBCOMMANDS.contains(args[0].toLowerCase())) {

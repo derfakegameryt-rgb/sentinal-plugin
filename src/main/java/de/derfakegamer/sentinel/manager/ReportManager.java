@@ -35,7 +35,7 @@ public final class ReportManager {
                         "reporter", reporter.getName(), "player", targetName, "reason", reason));
                 }
             }
-        });
+        }, error -> plugin.getLogger().log(java.util.logging.Level.SEVERE, "Failed to file report", error));
         return future;
     }
 

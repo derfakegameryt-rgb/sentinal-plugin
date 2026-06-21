@@ -164,7 +164,7 @@ public final class PlayerActionsGui extends Gui {
             case BAN -> {
                 if (banned) {
                     if (!plugin.staffPerms().canUse(mod, "sentinel.unban")) { mod.sendMessage(plugin.messages().prefixed("no-permission")); return; }
-                    plugin.db().callback(plugin.moderation().removeBan(mod.getUniqueId(), mod.getName(), target.getUniqueId(), name()),
+                    plugin.db().callbackOrError(mod, plugin.moderation().removeBan(mod.getUniqueId(), mod.getName(), target.getUniqueId(), name()),
                         ignored -> mod.closeInventory());
                 } else {
                     if (!plugin.staffPerms().canPerform(mod, PunishmentType.BAN)) { mod.sendMessage(plugin.messages().prefixed("no-permission")); return; }
@@ -174,7 +174,7 @@ public final class PlayerActionsGui extends Gui {
             case MUTE -> {
                 if (muted) {
                     if (!plugin.staffPerms().canUse(mod, "sentinel.unmute")) { mod.sendMessage(plugin.messages().prefixed("no-permission")); return; }
-                    plugin.db().callback(plugin.moderation().removeMute(mod.getUniqueId(), mod.getName(), target.getUniqueId(), name()),
+                    plugin.db().callbackOrError(mod, plugin.moderation().removeMute(mod.getUniqueId(), mod.getName(), target.getUniqueId(), name()),
                         ignored -> mod.closeInventory());
                 } else {
                     if (!plugin.staffPerms().canPerform(mod, PunishmentType.MUTE)) { mod.sendMessage(plugin.messages().prefixed("no-permission")); return; }
@@ -184,7 +184,7 @@ public final class PlayerActionsGui extends Gui {
             case SHADOWMUTE_SLOT -> {
                 if (!plugin.staffPerms().canPerform(mod, PunishmentType.SHADOWMUTE)) { mod.sendMessage(plugin.messages().prefixed("no-permission")); return; }
                 if (shadowMuted) {
-                    plugin.db().callback(plugin.moderation().removeShadowMute(mod.getUniqueId(), mod.getName(), target.getUniqueId(), name()),
+                    plugin.db().callbackOrError(mod, plugin.moderation().removeShadowMute(mod.getUniqueId(), mod.getName(), target.getUniqueId(), name()),
                         ignored -> mod.closeInventory());
                 } else new ReasonGui(plugin, target, null, PunishmentType.SHADOWMUTE, 0).open(mod);
             }

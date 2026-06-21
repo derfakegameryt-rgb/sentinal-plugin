@@ -41,12 +41,22 @@ public final class PunishmentCommands implements CommandExecutor, TabCompleter {
                     default -> de.derfakegamer.sentinel.model.PunishmentType.MUTE;
                 };
                 if (!plugin.staffPerms().canPerform(sender, type)) { sender.sendMessage(plugin.messages().prefixed("no-permission")); return true; }
-                plugin.db().callback(resolve(args[0]), t -> {
-                    if (t == null) { sender.sendMessage(plugin.messages().prefixed("player-not-found")); return; }
-                    if (cmd.equals("ipban") && t.ip == null) { sender.sendMessage(plugin.messages().prefixed("ipban-requires-online")); return; }
-                    plugin.db().callback(plugin.moderation().apply(issuerId, issuerName, t.id, t.name, t.ip, type, 0, reason),
-                        applied -> { if (applied == null || !applied) sender.sendMessage(plugin.messages().prefixed("exempt")); });
-                });
+                if (sender instanceof Player sp) {
+                    plugin.db().callbackOrError(sp, resolve(args[0]), t -> {
+                        if (t == null) { sender.sendMessage(plugin.messages().prefixed("player-not-found")); return; }
+                        if (cmd.equals("ipban") && t.ip == null) { sender.sendMessage(plugin.messages().prefixed("ipban-requires-online")); return; }
+                        plugin.db().callbackOrError(sp, plugin.moderation().apply(issuerId, issuerName, t.id, t.name, t.ip, type, 0, reason),
+                            applied -> { if (applied == null || !applied) sender.sendMessage(plugin.messages().prefixed("exempt")); });
+                    });
+                } else {
+                    plugin.db().callback(resolve(args[0]), t -> {
+                        if (t == null) { sender.sendMessage(plugin.messages().prefixed("player-not-found")); return; }
+                        if (cmd.equals("ipban") && t.ip == null) { sender.sendMessage(plugin.messages().prefixed("ipban-requires-online")); return; }
+                        plugin.db().callback(plugin.moderation().apply(issuerId, issuerName, t.id, t.name, t.ip, type, 0, reason),
+                            applied -> { if (applied == null || !applied) sender.sendMessage(plugin.messages().prefixed("exempt")); },
+                            error -> plugin.getLogger().log(java.util.logging.Level.SEVERE, "Failed to apply punishment", error));
+                    }, error -> plugin.getLogger().log(java.util.logging.Level.SEVERE, "Failed to resolve player", error));
+                }
             }
             case "tempban", "tempmute" -> {
                 if (args.length < 3) return usage(sender, "/" + cmd + " <player> <duration> <reason>");
@@ -59,11 +69,20 @@ public final class PunishmentCommands implements CommandExecutor, TabCompleter {
                     : de.derfakegamer.sentinel.model.PunishmentType.MUTE;
                 if (!plugin.staffPerms().canPerform(sender, type)) { sender.sendMessage(plugin.messages().prefixed("no-permission")); return true; }
                 final long expiry = expiresAt;
-                plugin.db().callback(resolve(args[0]), t -> {
-                    if (t == null) { sender.sendMessage(plugin.messages().prefixed("player-not-found")); return; }
-                    plugin.db().callback(plugin.moderation().apply(issuerId, issuerName, t.id, t.name, t.ip, type, expiry, reason),
-                        applied -> { if (applied == null || !applied) sender.sendMessage(plugin.messages().prefixed("exempt")); });
-                });
+                if (sender instanceof Player sp) {
+                    plugin.db().callbackOrError(sp, resolve(args[0]), t -> {
+                        if (t == null) { sender.sendMessage(plugin.messages().prefixed("player-not-found")); return; }
+                        plugin.db().callbackOrError(sp, plugin.moderation().apply(issuerId, issuerName, t.id, t.name, t.ip, type, expiry, reason),
+                            applied -> { if (applied == null || !applied) sender.sendMessage(plugin.messages().prefixed("exempt")); });
+                    });
+                } else {
+                    plugin.db().callback(resolve(args[0]), t -> {
+                        if (t == null) { sender.sendMessage(plugin.messages().prefixed("player-not-found")); return; }
+                        plugin.db().callback(plugin.moderation().apply(issuerId, issuerName, t.id, t.name, t.ip, type, expiry, reason),
+                            applied -> { if (applied == null || !applied) sender.sendMessage(plugin.messages().prefixed("exempt")); },
+                            error -> plugin.getLogger().log(java.util.logging.Level.SEVERE, "Failed to apply punishment", error));
+                    }, error -> plugin.getLogger().log(java.util.logging.Level.SEVERE, "Failed to resolve player", error));
+                }
             }
             case "kick", "warn" -> {
                 if (args.length < 2) return usage(sender, "/" + cmd + " <player> <reason>");
@@ -72,68 +91,131 @@ public final class PunishmentCommands implements CommandExecutor, TabCompleter {
                     ? de.derfakegamer.sentinel.model.PunishmentType.KICK
                     : de.derfakegamer.sentinel.model.PunishmentType.WARN;
                 if (!plugin.staffPerms().canPerform(sender, type)) { sender.sendMessage(plugin.messages().prefixed("no-permission")); return true; }
-                plugin.db().callback(resolve(args[0]), t -> {
-                    if (t == null) { sender.sendMessage(plugin.messages().prefixed("player-not-found")); return; }
-                    plugin.db().callback(plugin.moderation().apply(issuerId, issuerName, t.id, t.name, t.ip, type, 0, reason),
-                        applied -> { if (applied == null || !applied) sender.sendMessage(plugin.messages().prefixed("exempt")); });
-                });
+                if (sender instanceof Player sp) {
+                    plugin.db().callbackOrError(sp, resolve(args[0]), t -> {
+                        if (t == null) { sender.sendMessage(plugin.messages().prefixed("player-not-found")); return; }
+                        plugin.db().callbackOrError(sp, plugin.moderation().apply(issuerId, issuerName, t.id, t.name, t.ip, type, 0, reason),
+                            applied -> { if (applied == null || !applied) sender.sendMessage(plugin.messages().prefixed("exempt")); });
+                    });
+                } else {
+                    plugin.db().callback(resolve(args[0]), t -> {
+                        if (t == null) { sender.sendMessage(plugin.messages().prefixed("player-not-found")); return; }
+                        plugin.db().callback(plugin.moderation().apply(issuerId, issuerName, t.id, t.name, t.ip, type, 0, reason),
+                            applied -> { if (applied == null || !applied) sender.sendMessage(plugin.messages().prefixed("exempt")); },
+                            error -> plugin.getLogger().log(java.util.logging.Level.SEVERE, "Failed to apply punishment", error));
+                    }, error -> plugin.getLogger().log(java.util.logging.Level.SEVERE, "Failed to resolve player", error));
+                }
             }
             case "shadowmute" -> {
                 if (args.length < 2) return usage(sender, "/shadowmute <player> <reason>");
                 if (!plugin.staffPerms().canPerform(sender, de.derfakegamer.sentinel.model.PunishmentType.SHADOWMUTE)) { sender.sendMessage(plugin.messages().prefixed("no-permission")); return true; }
                 String reason = join(args, 1);
-                plugin.db().callback(resolve(args[0]), t -> {
-                    if (t == null) { sender.sendMessage(plugin.messages().prefixed("player-not-found")); return; }
-                    plugin.db().callback(plugin.moderation().apply(issuerId, issuerName, t.id, t.name, t.ip,
-                        de.derfakegamer.sentinel.model.PunishmentType.SHADOWMUTE, 0, reason),
-                        ok -> { if (ok == null || !ok) sender.sendMessage(plugin.messages().prefixed("exempt")); });
-                });
+                if (sender instanceof Player sp) {
+                    plugin.db().callbackOrError(sp, resolve(args[0]), t -> {
+                        if (t == null) { sender.sendMessage(plugin.messages().prefixed("player-not-found")); return; }
+                        plugin.db().callbackOrError(sp, plugin.moderation().apply(issuerId, issuerName, t.id, t.name, t.ip,
+                            de.derfakegamer.sentinel.model.PunishmentType.SHADOWMUTE, 0, reason),
+                            ok -> { if (ok == null || !ok) sender.sendMessage(plugin.messages().prefixed("exempt")); });
+                    });
+                } else {
+                    plugin.db().callback(resolve(args[0]), t -> {
+                        if (t == null) { sender.sendMessage(plugin.messages().prefixed("player-not-found")); return; }
+                        plugin.db().callback(plugin.moderation().apply(issuerId, issuerName, t.id, t.name, t.ip,
+                            de.derfakegamer.sentinel.model.PunishmentType.SHADOWMUTE, 0, reason),
+                            ok -> { if (ok == null || !ok) sender.sendMessage(plugin.messages().prefixed("exempt")); },
+                            error -> plugin.getLogger().log(java.util.logging.Level.SEVERE, "Failed to apply shadowmute", error));
+                    }, error -> plugin.getLogger().log(java.util.logging.Level.SEVERE, "Failed to resolve player", error));
+                }
             }
             case "unshadowmute" -> {
                 if (args.length < 1) return usage(sender, "/unshadowmute <player>");
                 if (!plugin.staffPerms().canUse(sender, "sentinel.shadowmute")) { sender.sendMessage(plugin.messages().prefixed("no-permission")); return true; }
-                plugin.db().callback(resolve(args[0]), t -> {
-                    if (t == null) { sender.sendMessage(plugin.messages().prefixed("player-not-found")); return; }
-                    plugin.db().callback(plugin.moderation().removeShadowMute(issuerId, issuerName, t.id, t.name),
-                        ok -> { if (ok == null || !ok) sender.sendMessage(plugin.messages().prefixed("not-muted")); });
-                });
+                if (sender instanceof Player sp) {
+                    plugin.db().callbackOrError(sp, resolve(args[0]), t -> {
+                        if (t == null) { sender.sendMessage(plugin.messages().prefixed("player-not-found")); return; }
+                        plugin.db().callbackOrError(sp, plugin.moderation().removeShadowMute(issuerId, issuerName, t.id, t.name),
+                            ok -> { if (ok == null || !ok) sender.sendMessage(plugin.messages().prefixed("not-muted")); });
+                    });
+                } else {
+                    plugin.db().callback(resolve(args[0]), t -> {
+                        if (t == null) { sender.sendMessage(plugin.messages().prefixed("player-not-found")); return; }
+                        plugin.db().callback(plugin.moderation().removeShadowMute(issuerId, issuerName, t.id, t.name),
+                            ok -> { if (ok == null || !ok) sender.sendMessage(plugin.messages().prefixed("not-muted")); },
+                            error -> plugin.getLogger().log(java.util.logging.Level.SEVERE, "Failed to remove shadowmute", error));
+                    }, error -> plugin.getLogger().log(java.util.logging.Level.SEVERE, "Failed to resolve player", error));
+                }
             }
             case "unban", "unmute" -> {
                 if (args.length < 1) return usage(sender, "/" + cmd + " <player>");
                 String unNode = cmd.equals("unban") ? "sentinel.unban" : "sentinel.unmute";
                 if (!plugin.staffPerms().canUse(sender, unNode)) { sender.sendMessage(plugin.messages().prefixed("no-permission")); return true; }
                 String notKey = cmd.equals("unban") ? "not-banned" : "not-muted";
-                plugin.db().callback(resolve(args[0]), t -> {
-                    if (t == null) { sender.sendMessage(plugin.messages().prefixed("player-not-found")); return; }
-                    CompletableFuture<Boolean> fut = cmd.equals("unban")
-                        ? plugin.moderation().removeBan(issuerId, issuerName, t.id, t.name)
-                        : plugin.moderation().removeMute(issuerId, issuerName, t.id, t.name);
-                    plugin.db().callback(fut, ok -> { if (ok == null || !ok) sender.sendMessage(plugin.messages().prefixed(notKey)); });
-                });
+                if (sender instanceof Player sp) {
+                    plugin.db().callbackOrError(sp, resolve(args[0]), t -> {
+                        if (t == null) { sender.sendMessage(plugin.messages().prefixed("player-not-found")); return; }
+                        CompletableFuture<Boolean> fut = cmd.equals("unban")
+                            ? plugin.moderation().removeBan(issuerId, issuerName, t.id, t.name)
+                            : plugin.moderation().removeMute(issuerId, issuerName, t.id, t.name);
+                        plugin.db().callbackOrError(sp, fut, ok -> { if (ok == null || !ok) sender.sendMessage(plugin.messages().prefixed(notKey)); });
+                    });
+                } else {
+                    plugin.db().callback(resolve(args[0]), t -> {
+                        if (t == null) { sender.sendMessage(plugin.messages().prefixed("player-not-found")); return; }
+                        CompletableFuture<Boolean> fut = cmd.equals("unban")
+                            ? plugin.moderation().removeBan(issuerId, issuerName, t.id, t.name)
+                            : plugin.moderation().removeMute(issuerId, issuerName, t.id, t.name);
+                        plugin.db().callback(fut, ok -> { if (ok == null || !ok) sender.sendMessage(plugin.messages().prefixed(notKey)); },
+                            error -> plugin.getLogger().log(java.util.logging.Level.SEVERE, "Failed to remove punishment", error));
+                    }, error -> plugin.getLogger().log(java.util.logging.Level.SEVERE, "Failed to resolve player", error));
+                }
             }
             case "history" -> {
                 if (args.length < 1) return usage(sender, "/history <player>");
-                plugin.db().callback(resolve(args[0]), t -> {
-                    if (t == null) { sender.sendMessage(plugin.messages().prefixed("player-not-found")); return; }
-                    plugin.db().callback(pm.history(t.id), entries -> {
-                        if (entries == null || entries.isEmpty()) {
-                            sender.sendMessage(plugin.messages().prefixed("history-empty", "player", t.name));
-                            return;
-                        }
-                        sender.sendMessage(plugin.messages().prefixed("history-header", "player", t.name));
-                        for (Punishment p : entries) {
-                            String date = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
-                                .withZone(java.time.ZoneOffset.UTC)
-                                .format(java.time.Instant.ofEpochMilli(p.createdAt()));
-                            sender.sendMessage(plugin.messages().prefixed("history-entry",
-                                "type", p.type().name(),
-                                "issuer", p.issuerName(),
-                                "reason", p.reason(),
-                                "date", date,
-                                "status", p.active() ? "(active)" : ""));
-                        }
+                if (sender instanceof Player sp) {
+                    plugin.db().callbackOrError(sp, resolve(args[0]), t -> {
+                        if (t == null) { sender.sendMessage(plugin.messages().prefixed("player-not-found")); return; }
+                        plugin.db().callbackOrError(sp, pm.history(t.id), entries -> {
+                            if (entries == null || entries.isEmpty()) {
+                                sender.sendMessage(plugin.messages().prefixed("history-empty", "player", t.name));
+                                return;
+                            }
+                            sender.sendMessage(plugin.messages().prefixed("history-header", "player", t.name));
+                            for (Punishment p : entries) {
+                                String date = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+                                    .withZone(java.time.ZoneOffset.UTC)
+                                    .format(java.time.Instant.ofEpochMilli(p.createdAt()));
+                                sender.sendMessage(plugin.messages().prefixed("history-entry",
+                                    "type", p.type().name(),
+                                    "issuer", p.issuerName(),
+                                    "reason", p.reason(),
+                                    "date", date,
+                                    "status", p.active() ? "(active)" : ""));
+                            }
+                        });
                     });
-                });
+                } else {
+                    plugin.db().callback(resolve(args[0]), t -> {
+                        if (t == null) { sender.sendMessage(plugin.messages().prefixed("player-not-found")); return; }
+                        plugin.db().callback(pm.history(t.id), entries -> {
+                            if (entries == null || entries.isEmpty()) {
+                                sender.sendMessage(plugin.messages().prefixed("history-empty", "player", t.name));
+                                return;
+                            }
+                            sender.sendMessage(plugin.messages().prefixed("history-header", "player", t.name));
+                            for (Punishment p : entries) {
+                                String date = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+                                    .withZone(java.time.ZoneOffset.UTC)
+                                    .format(java.time.Instant.ofEpochMilli(p.createdAt()));
+                                sender.sendMessage(plugin.messages().prefixed("history-entry",
+                                    "type", p.type().name(),
+                                    "issuer", p.issuerName(),
+                                    "reason", p.reason(),
+                                    "date", date,
+                                    "status", p.active() ? "(active)" : ""));
+                            }
+                        }, error -> plugin.getLogger().log(java.util.logging.Level.SEVERE, "Failed to fetch history", error));
+                    }, error -> plugin.getLogger().log(java.util.logging.Level.SEVERE, "Failed to resolve player", error));
+                }
             }
         }
         return true;
