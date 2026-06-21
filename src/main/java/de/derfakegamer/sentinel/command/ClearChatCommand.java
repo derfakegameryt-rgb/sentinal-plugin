@@ -6,10 +6,13 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
-public final class ClearChatCommand implements CommandExecutor {
+import java.util.List;
+
+public final class ClearChatCommand implements CommandExecutor, TabCompleter {
     private final Sentinel plugin;
 
     public ClearChatCommand(Sentinel plugin) { this.plugin = plugin; }
@@ -25,5 +28,12 @@ public final class ClearChatCommand implements CommandExecutor {
         Bukkit.broadcast(plugin.messages().prefixed("chat-cleared", "player", sender.getName()));
         plugin.audit().record(sender.getName(), "CLEARCHAT", null, "");
         return true;
+    }
+
+    @Override
+    public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command,
+                                      @NotNull String label, @NotNull String[] args) {
+        // /clearchat takes no arguments
+        return List.of();
     }
 }

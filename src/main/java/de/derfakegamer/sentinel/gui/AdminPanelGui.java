@@ -2,15 +2,10 @@ package de.derfakegamer.sentinel.gui;
 
 import de.derfakegamer.sentinel.Sentinel;
 import de.derfakegamer.sentinel.util.Items;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
-
-import java.util.List;
 
 public final class AdminPanelGui extends Gui {
     // Row 1 (general): server info, operators, whitelist, playtime
@@ -24,27 +19,26 @@ public final class AdminPanelGui extends Gui {
     public AdminPanelGui(Sentinel plugin) {
         super(plugin);
         this.inventory = Bukkit.createInventory(this, 54, plugin.messages().plain("gui-panel-title"));
-        inventory.setItem(INFO, button(Material.COMPARATOR, "Server Info", "Specs, TPS, memory, uptime"));
-        inventory.setItem(OPS, button(Material.PLAYER_HEAD, "Operators", "Everyone with OP"));
-        inventory.setItem(WHITELIST, button(Material.NAME_TAG, "Whitelist", "Manage the server whitelist"));
-        inventory.setItem(STATS, button(Material.CLOCK, "Playtime", "Top players by playtime"));
-        inventory.setItem(BANS, button(Material.IRON_BARS, "Active Bans", "Currently banned players"));
-        inventory.setItem(MUTES, button(Material.BOOK, "Active Mutes", "Currently muted players"));
-        inventory.setItem(REPORTS, button(Material.PAPER, "Open Reports", "Reports waiting for staff"));
-        inventory.setItem(APPEALS, button(Material.WRITABLE_BOOK, "Appeals", "Review ban/mute appeals"));
-        inventory.setItem(AUDIT, button(Material.WRITABLE_BOOK, "Audit Log", "Recent staff actions"));
-        inventory.setItem(MODSTATS, button(Material.KNOWLEDGE_BOOK, "Mod Stats", "Moderation statistics (30d)"));
-        inventory.setItem(PLAYERS, button(Material.PLAYER_HEAD, "Player Manager", "Browse and manage players"));
-        inventory.setItem(VANISH, button(Material.ENDER_EYE, "Vanish", "Toggle your own vanish"));
-        inventory.setItem(STAFFCHAT, button(Material.NETHER_STAR, "Staff Chat", "Toggle your staff-only chat"));
-        inventory.setItem(CLOSE, Items.button(Material.BARRIER, Component.text("Close", NamedTextColor.RED), List.of()));
+        inventory.setItem(INFO,      button(Material.COMPARATOR,    "gui.panel.info",           "gui.panel.info-lore"));
+        inventory.setItem(OPS,       button(Material.PLAYER_HEAD,   "gui.panel.ops",            "gui.panel.ops-lore"));
+        inventory.setItem(WHITELIST, button(Material.NAME_TAG,      "gui.panel.whitelist",      "gui.panel.whitelist-lore"));
+        inventory.setItem(STATS,     button(Material.CLOCK,         "gui.panel.stats",          "gui.panel.stats-lore"));
+        inventory.setItem(BANS,      button(Material.IRON_BARS,     "gui.panel.bans",           "gui.panel.bans-lore"));
+        inventory.setItem(MUTES,     button(Material.BOOK,          "gui.panel.mutes",          "gui.panel.mutes-lore"));
+        inventory.setItem(REPORTS,   button(Material.PAPER,         "gui.panel.reports",        "gui.panel.reports-lore"));
+        inventory.setItem(APPEALS,   button(Material.WRITABLE_BOOK, "gui.panel.appeals",        "gui.panel.appeals-lore"));
+        inventory.setItem(AUDIT,     button(Material.WRITABLE_BOOK, "gui.panel.audit",          "gui.panel.audit-lore"));
+        inventory.setItem(MODSTATS,  button(Material.KNOWLEDGE_BOOK,"gui.panel.modstats",       "gui.panel.modstats-lore"));
+        inventory.setItem(PLAYERS,   button(Material.PLAYER_HEAD,   "gui.panel.player-manager", "gui.panel.player-manager-lore"));
+        inventory.setItem(VANISH,    button(Material.ENDER_EYE,     "gui.panel.vanish",         "gui.panel.vanish-lore"));
+        inventory.setItem(STAFFCHAT, button(Material.NETHER_STAR,   "gui.panel.staffchat",      "gui.panel.staffchat-lore"));
+        inventory.setItem(CLOSE,     Items.button(Material.BARRIER, plugin.messages().plain("gui.panel.close"), java.util.List.of()));
         border();
         fillEmpty();
     }
 
-    private org.bukkit.inventory.ItemStack button(Material m, String title, String hint) {
-        return Items.button(m, Component.text(title, NamedTextColor.AQUA),
-            List.of(Component.text(hint, NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false)));
+    private org.bukkit.inventory.ItemStack button(Material m, String nameKey, String loreKey) {
+        return Items.button(m, plugin.messages().plain(nameKey), plugin.messages().list(loreKey));
     }
 
     @Override

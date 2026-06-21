@@ -41,18 +41,19 @@ public final class AppealsGui extends Gui {
         for (int i = 0; i < PAGE_SIZE && from + i < appeals.size(); i++) {
             Appeal a = appeals.get(from + i);
             OfflinePlayer target = Bukkit.getOfflinePlayer(a.targetUuid());
+            String dateStr = DATE.format(Instant.ofEpochMilli(a.createdAt()));
             List<Component> lore = new ArrayList<>();
-            lore.add(line("Type: " + a.type()));
-            for (String chunk : wrap(a.text(), 40)) lore.add(line("\"" + chunk + "\""));
-            lore.add(line("At: " + DATE.format(Instant.ofEpochMilli(a.createdAt()))));
-            lore.add(line("Left-click: Accept · Right-click: Deny"));
+            lore.addAll(plugin.messages().list("gui.appeals.type-lore",
+                "type", a.type().toString()));
+            for (String chunk : wrap(a.text(), 40)) {
+                lore.add(Component.text("\"" + chunk + "\"", NamedTextColor.GRAY)
+                    .decoration(TextDecoration.ITALIC, false));
+            }
+            lore.addAll(plugin.messages().list("gui.appeals.at-lore", "date", dateStr));
+            lore.addAll(plugin.messages().list("gui.appeals.actions-lore"));
             inventory.setItem(i, Items.head(target, Component.text(a.targetName(), NamedTextColor.AQUA), lore));
         }
         navBar(page > 0, from + PAGE_SIZE < appeals.size(), true);
-    }
-
-    private static Component line(String text) {
-        return Component.text(text, NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false);
     }
 
     /** Splits a long string into chunks of at most {@code max} characters (on a best-effort word basis). */

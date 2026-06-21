@@ -107,3 +107,250 @@ whitelist-added: "<#60A5FA><player></#60A5FA> <gray>was added to the whitelist."
 whitelist-removed: "<#60A5FA><player></#60A5FA> <gray>was removed from the whitelist."
 whitelist-on: "<#60A5FA>Whitelist is now <white>ON<#60A5FA>."
 whitelist-off: "<#60A5FA>Whitelist is now <white>OFF<#60A5FA>."
+
+gui:
+  panel:
+    info: "<aqua>Server Info"
+    info-lore:
+      - "<gray>Specs, TPS, memory, uptime"
+    ops: "<aqua>Operators"
+    ops-lore:
+      - "<gray>Everyone with OP"
+    whitelist: "<aqua>Whitelist"
+    whitelist-lore:
+      - "<gray>Manage the server whitelist"
+    stats: "<aqua>Playtime"
+    stats-lore:
+      - "<gray>Top players by playtime"
+    bans: "<aqua>Active Bans"
+    bans-lore:
+      - "<gray>Currently banned players"
+    mutes: "<aqua>Active Mutes"
+    mutes-lore:
+      - "<gray>Currently muted players"
+    reports: "<aqua>Open Reports"
+    reports-lore:
+      - "<gray>Reports waiting for staff"
+    appeals: "<aqua>Appeals"
+    appeals-lore:
+      - "<gray>Review ban/mute appeals"
+    audit: "<aqua>Audit Log"
+    audit-lore:
+      - "<gray>Recent staff actions"
+    modstats: "<aqua>Mod Stats"
+    modstats-lore:
+      - "<gray>Moderation statistics (30d)"
+    player-manager: "<aqua>Player Manager"
+    player-manager-lore:
+      - "<gray>Browse and manage players"
+    vanish: "<aqua>Vanish"
+    vanish-lore:
+      - "<gray>Toggle your own vanish"
+    staffchat: "<aqua>Staff Chat"
+    staffchat-lore:
+      - "<gray>Toggle your staff-only chat"
+    close: "<red>Close"
+  serverinfo:
+    version: "<aqua>Version"
+    system: "<aqua>System"
+    worlds: "<aqua>Worlds"
+    tps: "<aqua>TPS"
+    memory: "<aqua>Memory"
+    players: "<aqua>Players"
+    uptime: "<aqua>Uptime"
+    back: "<gray>Back"
+    close: "<red>Close"
+  confirm:
+    confirm: "<green>Confirm"
+    confirm-lore:
+      - "<gray>Apply this punishment"
+    cancel: "<red>Cancel"
+    cancel-lore:
+      - "<gray>Discard and go back"
+  reason:
+    preset-lore:
+      - "<gray>Use this preset reason"
+    custom: "<aqua>Custom reason"
+    custom-lore:
+      - "<gray>Type your own reason in chat"
+    close: "<red>Close"
+    close-lore:
+      - "<gray>Close this menu"
+  actions:
+    head-name: "<aqua><player>"
+    head-lore: "<gray>Warns: <count>"
+    banned-status: "<red>Banned"
+    not-banned-status: "<green>Not banned"
+    muted-status: "<red>Muted"
+    not-muted-status: "<green>Not muted"
+    ban: "<red>Ban"
+    ban-lore:
+      - "<gray>Permanently ban this player"
+    unban: "<green>Unban"
+    unban-lore:
+      - "<gray>Remove this player's ban"
+    tempban: "<gold>Tempban"
+    tempban-lore:
+      - "<gray>Ban for a set duration"
+    mute: "<red>Mute"
+    mute-lore:
+      - "<gray>Prevent this player from chatting"
+    unmute: "<green>Unmute"
+    unmute-lore:
+      - "<gray>Remove this player's mute"
+    tempmute: "<gold>Tempmute"
+    tempmute-lore:
+      - "<gray>Mute for a set duration"
+    kick: "<red>Kick"
+    kick-lore:
+      - "<gray>Disconnect this player now"
+    warn: "<yellow>Warn"
+    warn-lore:
+      - "<gray>Issue a formal warning"
+    shadowmute: "<light_purple>Shadow-mute"
+    shadowmute-lore:
+      - "<gray>Covert mute — only they see their chat"
+    unshadowmute: "<green>Un-shadowmute"
+    chatlogs: "<aqua>Chat logs"
+    chatlogs-lore:
+      - "<gray>View recent chat & commands"
+    templates: "<aqua>Templates"
+    templates-lore:
+      - "<gray>Quick preset punishments"
+    ipban: "<dark_red>IP-Ban"
+    ipban-lore:
+      - "<gray>Ban the last known IP"
+    freeze: "<aqua>Freeze"
+    freeze-lore:
+      - "<gray>Stop this player from moving"
+    unfreeze: "<green>Unfreeze"
+    unfreeze-lore:
+      - "<gray>Allow this player to move"
+    invsee: "<aqua>View inventory"
+    invsee-lore:
+      - "<gray>Open this player's inventory"
+    echest: "<light_purple>View ender chest"
+    echest-lore:
+      - "<gray>Open this player's ender chest"
+    history: "<aqua>History"
+    history-lore:
+      - "<gray>View past punishments"
+    notes: "<aqua>Notes"
+    notes-lore:
+      - "<gray>Staff notes about this player"
+    alts: "<aqua>Alts"
+    alts-lore:
+      - "<gray>Accounts sharing this IP"
+    makeop: "<green>Make OP"
+    deop: "<red>De-OP"
+    optoggle-lore:
+      - "<gray>Toggle operator status"
+    back: "<gray>Back"
+    back-lore:
+      - "<gray>Return to the player list"
+    close: "<red>Close"
+    close-lore:
+      - "<gray>Close this menu"
+  bans:
+    entry-perm-lore:
+      - "<gray>Reason: <reason>"
+      - "<gray>By: <issuer>"
+      - "<gray>Permanent"
+      - "<gray>Click to manage / unban"
+    entry-temp-lore:
+      - "<gray>Reason: <reason>"
+      - "<gray>By: <issuer>"
+      - "<gray>Temporary"
+      - "<gray>Click to manage / unban"
+  mutes:
+    entry-perm-lore:
+      - "<gray>Reason: <reason>"
+      - "<gray>By: <issuer>"
+      - "<gray>Permanent"
+      - "<gray>Click to manage / unmute"
+    entry-temp-lore:
+      - "<gray>Reason: <reason>"
+      - "<gray>By: <issuer>"
+      - "<gray>Temporary"
+      - "<gray>Click to manage / unmute"
+  history:
+    reason-lore:
+      - "<gray>Reason: <reason>"
+      - "<gray>By: <issuer>"
+      - "<gray>Date: <date>"
+    active: "<red>Active"
+    expired: "<green>Removed/expired"
+  operators:
+    status-online: "<gray>Online"
+    status-offline: "<gray>Offline"
+    manage-lore:
+      - "<gray>Click to manage"
+  reports:
+    entry-lore:
+      - "<gray>Reported by: <reporter>"
+      - "<gray>Reason: <reason>"
+      - "<gray>At: <date>"
+      - "<gray>Left: teleport  Right: actions  Shift: handled"
+  appeals:
+    type-lore:
+      - "<gray>Type: <type>"
+    at-lore:
+      - "<gray>At: <date>"
+    actions-lore:
+      - "<gray>Left-click: Accept · Right-click: Deny"
+  audit:
+    by-lore:
+      - "<gray>By: <actor>"
+    details-lore:
+      - "<gray><details>"
+    time-lore:
+      - "<gray><ago>"
+  players:
+    search: "<aqua>Search"
+    search-lore:
+      - "<gray>Find a player by name"
+    reports: "<aqua>Reports"
+    reports-lore:
+      - "<gray>View open player reports"
+      - "<gray>Open: <count>"
+    muted: "<red>Muted"
+    not-muted: "<green>Not muted"
+    warns: "<gray>Warns: <count>"
+  whitelist:
+    entry-lore:
+      - "<gray>Click to remove from whitelist"
+    add: "<green>Add Player"
+    add-lore:
+      - "<gray>Type a name in chat"
+    toggle-on: "<green>Whitelist: ON"
+    toggle-off: "<red>Whitelist: OFF"
+    toggle-lore:
+      - "<gray>Click to toggle"
+  notes:
+    add: "<aqua>Add note"
+    add-lore:
+      - "<gray>Type the note in chat"
+    entry-lore:
+      - "<gray>By: <author>"
+      - "<gray>At: <date>"
+  alts:
+    entry-lore:
+      - "<gray>Shared IP: <ip>"
+      - "<gray>Last seen: <date>"
+      - "<gray>Click to open their actions"
+    ban-all: "<red>Ban all alts"
+    ban-all-lore:
+      - "<gray><count> accounts + the target"
+  search:
+    entry-lore:
+      - "<gray>Click to open actions"
+  templates:
+    entry-lore:
+      - "<gray>Click to apply"
+  invsee:
+    armor-label: "<aqua>Armor"
+    armor-lore:
+      - "<dark_gray>Armor / off-hand slot"
+    offhand-label: "<aqua>Off-hand"
+    offhand-lore:
+      - "<dark_gray>Off-hand / shield slot"

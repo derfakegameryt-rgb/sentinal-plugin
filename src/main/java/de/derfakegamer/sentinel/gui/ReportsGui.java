@@ -5,7 +5,6 @@ import de.derfakegamer.sentinel.model.Report;
 import de.derfakegamer.sentinel.util.Items;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
@@ -40,17 +39,15 @@ public final class ReportsGui extends Gui {
         int from = page * PAGE_SIZE;
         for (int i = 0; i < PAGE_SIZE && from + i < reports.size(); i++) {
             Report r = reports.get(from + i);
-            inventory.setItem(i, Items.button(Material.PAPER, Component.text(r.targetName(), NamedTextColor.AQUA), List.of(
-                line("Reported by: " + r.reporterName()),
-                line("Reason: " + r.reason()),
-                line("At: " + DATE.format(Instant.ofEpochMilli(r.createdAt()))),
-                line("Left: teleport  Right: actions  Shift: handled"))));
+            String dateStr = DATE.format(Instant.ofEpochMilli(r.createdAt()));
+            inventory.setItem(i, Items.button(Material.PAPER,
+                Component.text(r.targetName(), NamedTextColor.AQUA),
+                plugin.messages().list("gui.reports.entry-lore",
+                    "reporter", r.reporterName(),
+                    "reason", r.reason(),
+                    "date", dateStr)));
         }
         navBar(page > 0, from + PAGE_SIZE < reports.size(), true);
-    }
-
-    private static Component line(String text) {
-        return Component.text(text, NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false);
     }
 
     @Override

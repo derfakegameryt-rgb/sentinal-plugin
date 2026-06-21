@@ -5,7 +5,6 @@ import de.derfakegamer.sentinel.model.Note;
 import de.derfakegamer.sentinel.util.Items;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
@@ -39,19 +38,17 @@ public final class NotesGui extends Gui {
             Note n = notes.get(i);
             inventory.setItem(i, Items.button(Material.PAPER,
                 Component.text(n.text(), NamedTextColor.WHITE),
-                List.of(grey("By: " + n.author()),
-                        grey("At: " + DATE.format(Instant.ofEpochMilli(n.createdAt()))))));
+                plugin.messages().list("gui.notes.entry-lore",
+                    "author", n.author(),
+                    "date", DATE.format(Instant.ofEpochMilli(n.createdAt())))));
         }
         if (notes.isEmpty())
             inventory.setItem(22, Items.button(Material.BOOK,
                 plugin.messages().plain("notes-empty"), List.of()));
         navBar(false, false, true);
         inventory.setItem(NAV_ACT_L1, Items.button(Material.WRITABLE_BOOK,
-            Component.text("Add note", NamedTextColor.AQUA), List.of(grey("Type the note in chat"))));
-    }
-
-    private Component grey(String s) {
-        return Component.text(s, NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false);
+            plugin.messages().plain("gui.notes.add"),
+            plugin.messages().list("gui.notes.add-lore")));
     }
 
     private String name() { return target.getName() == null ? "?" : target.getName(); }

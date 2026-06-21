@@ -16,6 +16,7 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 
 public final class HistoryGui extends Gui {
@@ -44,18 +45,21 @@ public final class HistoryGui extends Gui {
         int from = page * PAGE_SIZE;
         for (int i = 0; i < PAGE_SIZE && from + i < all.size(); i++) {
             Punishment p = all.get(from + i);
-            inventory.setItem(i, Items.button(iconFor(p.type()), Component.text(p.type().name(), NamedTextColor.AQUA), List.of(
-                line("Reason: " + p.reason()),
-                line("By: " + p.issuerName()),
-                line("Date: " + DATE.format(Instant.ofEpochMilli(p.createdAt()))),
-                p.active() ? Component.text("Active", NamedTextColor.RED).decoration(TextDecoration.ITALIC, false)
-                           : Component.text("Removed/expired", NamedTextColor.GREEN).decoration(TextDecoration.ITALIC, false))));
+            String dateStr = DATE.format(Instant.ofEpochMilli(p.createdAt()));
+            List<Component> lore = new ArrayList<>(
+                plugin.messages().list("gui.history.reason-lore",
+                    "reason", p.reason(),
+                    "issuer", p.issuerName(),
+                    "date", dateStr));
+            lore.add(p.active()
+                ? plugin.messages().plain("gui.history.active")
+                    .decoration(TextDecoration.ITALIC, false)
+                : plugin.messages().plain("gui.history.expired")
+                    .decoration(TextDecoration.ITALIC, false));
+            inventory.setItem(i, Items.button(iconFor(p.type()),
+                Component.text(p.type().name(), NamedTextColor.AQUA), lore));
         }
         navBar(page > 0, from + PAGE_SIZE < total, true);
-    }
-
-    private static Component line(String text) {
-        return Component.text(text, NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false);
     }
 
     private String name() { return target.getName() == null ? "?" : target.getName(); }

@@ -5,6 +5,7 @@ import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -13,7 +14,7 @@ import java.nio.file.Files;
 import java.util.List;
 
 /** Shows the server rules, read live from plugins/Sentinel/rules.txt (MiniMessage per line). */
-public final class RulesCommand implements CommandExecutor {
+public final class RulesCommand implements CommandExecutor, TabCompleter {
     private final Sentinel plugin;
     public RulesCommand(Sentinel plugin) { this.plugin = plugin; }
 
@@ -29,5 +30,12 @@ public final class RulesCommand implements CommandExecutor {
             sender.sendMessage(plugin.messages().prefixed("rules-missing"));
         }
         return true;
+    }
+
+    @Override
+    public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command,
+                                      @NotNull String label, @NotNull String[] args) {
+        // /rules takes no arguments
+        return List.of();
     }
 }
