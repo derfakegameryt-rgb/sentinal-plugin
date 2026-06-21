@@ -16,9 +16,11 @@ class AdminPanelGuiTest {
     @BeforeEach void setup() { server = MockBukkit.mock(); plugin = MockBukkit.load(Sentinel.class); }
     @AfterEach void teardown() { MockBukkit.unmock(); }
 
-    @Test void panelHasTheFiveSections() {
+    @Test void panelIsADoubleChestWithSectionButtons() {
         AdminPanelGui gui = new AdminPanelGui(plugin);
-        for (int slot : new int[]{10, 11, 12, 13, 14})
+        assertEquals(54, gui.getInventory().getSize(), "the hub must be a double chest (54 slots)");
+        // row 1 general (10-13), row 2 moderation (19-24), row 3 tools (28-30)
+        for (int slot : new int[]{10, 11, 12, 13, 19, 20, 21, 22, 23, 24, 28, 29, 30})
             assertNotNull(gui.getInventory().getItem(slot), "section button at " + slot);
     }
 
@@ -37,23 +39,23 @@ class AdminPanelGuiTest {
         AdminPanelGui gui = new AdminPanelGui(plugin);
         gui.open(p);
         var inv = p.getOpenInventory().getTopInventory();
-        // Player Manager at slot 19, Vanish at 20, Staff Chat at 21
-        assertNotNull(inv.getItem(19), "Player Manager at slot 19");
-        assertNotNull(inv.getItem(20), "Vanish at slot 20");
-        assertNotNull(inv.getItem(21), "Staff Chat at slot 21");
+        // Player tools row: Player Manager at slot 28, Vanish at 29, Staff Chat at 30
+        assertNotNull(inv.getItem(28), "Player Manager at slot 28");
+        assertNotNull(inv.getItem(29), "Vanish at slot 29");
+        assertNotNull(inv.getItem(30), "Staff Chat at slot 30");
 
-        // Slot 19 must be specifically the Player Manager button (PLAYER_HEAD, name contains "Player Manager")
-        var pmItem = inv.getItem(19);
-        assertEquals(Material.PLAYER_HEAD, pmItem.getType(), "slot 19 must be PLAYER_HEAD (Player Manager)");
+        // Slot 28 must be specifically the Player Manager button (PLAYER_HEAD, name contains "Player Manager")
+        var pmItem = inv.getItem(28);
+        assertEquals(Material.PLAYER_HEAD, pmItem.getType(), "slot 28 must be PLAYER_HEAD (Player Manager)");
         String pmName = PlainTextComponentSerializer.plainText().serialize(pmItem.getItemMeta().displayName());
-        assertTrue(pmName.contains("Player Manager"), "slot 19 display-name must contain 'Player Manager', got: " + pmName);
+        assertTrue(pmName.contains("Player Manager"), "slot 28 display-name must contain 'Player Manager', got: " + pmName);
     }
 
     @Test void clickingPlayerManagerOpensPlayersList() throws Exception {
         PlayerMock p = server.addPlayer();
         AdminPanelGui gui = new AdminPanelGui(plugin);
         gui.open(p);
-        InventoryClickEvent ev = ConfirmGuiTest.clickSlot(p, gui, 19);
+        InventoryClickEvent ev = ConfirmGuiTest.clickSlot(p, gui, 28);
         gui.onClick(ev);
         // PlayersGui.open is async (DB-backed) -> drain + tick
         plugin.db().submit(() -> null).get(2, java.util.concurrent.TimeUnit.SECONDS);
@@ -67,7 +69,7 @@ class AdminPanelGuiTest {
         AdminPanelGui gui = new AdminPanelGui(plugin);
         gui.open(p);
         boolean before = plugin.vanish().isVanished(p.getUniqueId());
-        InventoryClickEvent ev = ConfirmGuiTest.clickSlot(p, gui, 20);
+        InventoryClickEvent ev = ConfirmGuiTest.clickSlot(p, gui, 29);
         gui.onClick(ev);
         assertTrue(ev.isCancelled());
         assertNotEquals(before, plugin.vanish().isVanished(p.getUniqueId()));
@@ -78,11 +80,11 @@ class AdminPanelGuiTest {
         AdminPanelGui gui = new AdminPanelGui(plugin);
         gui.open(p);
         boolean before = plugin.staffChat().isToggled(p.getUniqueId());
-        InventoryClickEvent ev = ConfirmGuiTest.clickSlot(p, gui, 21);
+        InventoryClickEvent ev = ConfirmGuiTest.clickSlot(p, gui, 30);
         gui.onClick(ev);
         assertTrue(ev.isCancelled());
         assertNotEquals(before, plugin.staffChat().isToggled(p.getUniqueId()),
-            "Staff-chat state must flip after clicking slot 21");
+            "Staff-chat state must flip after clicking slot 30");
     }
 
     @Test void hubHasAuditAndModStatsButtons() {

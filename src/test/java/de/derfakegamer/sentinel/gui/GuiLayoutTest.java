@@ -41,8 +41,8 @@ class GuiLayoutTest {
 
     @Test void menuGuiHasGrayBorder() {
         AdminPanelGui gui = new AdminPanelGui(plugin);
-        // corners of a 27-slot menu are gray-glass border
-        for (int slot : new int[]{0, 8, 18, 26})
+        // corners of the 54-slot (double-chest) menu are gray-glass border
+        for (int slot : new int[]{0, 8, 45, 53})
             assertEquals(Material.GRAY_STAINED_GLASS_PANE, gui.getInventory().getItem(slot).getType());
     }
 

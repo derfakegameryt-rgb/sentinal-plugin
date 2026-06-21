@@ -13,21 +13,24 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import java.util.List;
 
 public final class AdminPanelGui extends Gui {
-    private static final int INFO = 10, OPS = 11, BANS = 12, MUTES = 13, REPORTS = 14, WHITELIST = 15, STATS = 16;
-    private static final int PLAYERS = 19, VANISH = 20, STAFFCHAT = 21, APPEALS = 22;
-    private static final int AUDIT = 23, MODSTATS = 24;
-    private static final int CLOSE = 25;
+    // Row 1 (general): server info, operators, whitelist, playtime
+    private static final int INFO = 10, OPS = 11, WHITELIST = 12, STATS = 13;
+    // Row 2 (moderation): bans, mutes, reports, appeals, audit, mod-stats
+    private static final int BANS = 19, MUTES = 20, REPORTS = 21, APPEALS = 22, AUDIT = 23, MODSTATS = 24;
+    // Row 3 (player tools): player manager, vanish, staff chat
+    private static final int PLAYERS = 28, VANISH = 29, STAFFCHAT = 30;
+    private static final int CLOSE = 49;
 
     public AdminPanelGui(Sentinel plugin) {
         super(plugin);
-        this.inventory = Bukkit.createInventory(this, 27, plugin.messages().plain("gui-panel-title"));
+        this.inventory = Bukkit.createInventory(this, 54, plugin.messages().plain("gui-panel-title"));
         inventory.setItem(INFO, button(Material.COMPARATOR, "Server Info", "Specs, TPS, memory, uptime"));
         inventory.setItem(OPS, button(Material.PLAYER_HEAD, "Operators", "Everyone with OP"));
+        inventory.setItem(WHITELIST, button(Material.NAME_TAG, "Whitelist", "Manage the server whitelist"));
+        inventory.setItem(STATS, button(Material.CLOCK, "Playtime", "Top players by playtime"));
         inventory.setItem(BANS, button(Material.IRON_BARS, "Active Bans", "Currently banned players"));
         inventory.setItem(MUTES, button(Material.BOOK, "Active Mutes", "Currently muted players"));
         inventory.setItem(REPORTS, button(Material.PAPER, "Open Reports", "Reports waiting for staff"));
-        inventory.setItem(WHITELIST, button(Material.NAME_TAG, "Whitelist", "Manage the server whitelist"));
-        inventory.setItem(STATS, button(Material.CLOCK, "Playtime", "Top players by playtime"));
         inventory.setItem(APPEALS, button(Material.WRITABLE_BOOK, "Appeals", "Review ban/mute appeals"));
         inventory.setItem(AUDIT, button(Material.WRITABLE_BOOK, "Audit Log", "Recent staff actions"));
         inventory.setItem(MODSTATS, button(Material.KNOWLEDGE_BOOK, "Mod Stats", "Moderation statistics (30d)"));
