@@ -4,8 +4,6 @@ import de.derfakegamer.sentinel.Sentinel;
 import de.derfakegamer.sentinel.model.PunishmentType;
 import de.derfakegamer.sentinel.util.DurationParser;
 import de.derfakegamer.sentinel.util.Items;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -83,79 +81,77 @@ public final class PlayerActionsGui extends Gui {
         this.inventory = Bukkit.createInventory(this, 45,
             plugin.messages().plain("gui-actions-title", "player", name()));
 
-        inventory.setItem(HEAD, Items.head(target, Component.text(name(), NamedTextColor.AQUA),
-            List.of(status(banned ? "Banned" : "Not banned", banned),
-                    status(muted ? "Muted" : "Not muted", muted),
-                    line("Warns: " + warnCount, NamedTextColor.GRAY))));
+        inventory.setItem(HEAD, Items.head(target, plugin.messages().plain("gui-actions-title", "player", name()),
+            List.of(plugin.messages().plain(banned ? "gui.actions.banned-status" : "gui.actions.not-banned-status")
+                        .decoration(TextDecoration.ITALIC, false),
+                    plugin.messages().plain(muted  ? "gui.actions.muted-status"  : "gui.actions.not-muted-status")
+                        .decoration(TextDecoration.ITALIC, false),
+                    plugin.messages().plain("gui.actions.head-lore", "count", String.valueOf(warnCount))
+                        .decoration(TextDecoration.ITALIC, false))));
 
         inventory.setItem(BAN, Items.button(Material.BARRIER,
-            Component.text(banned ? "Unban" : "Ban", banned ? NamedTextColor.GREEN : NamedTextColor.RED),
-            List.of(hint(banned ? "Remove this player's ban" : "Permanently ban this player"))));
-        inventory.setItem(TEMPBAN, Items.button(Material.CLOCK, Component.text("Tempban", NamedTextColor.GOLD),
-            List.of(hint("Ban for a set duration"))));
+            plugin.messages().plain(banned ? "gui.actions.unban" : "gui.actions.ban"),
+            plugin.messages().list(banned ? "gui.actions.unban-lore" : "gui.actions.ban-lore")));
+        inventory.setItem(TEMPBAN, Items.button(Material.CLOCK,
+            plugin.messages().plain("gui.actions.tempban"),
+            plugin.messages().list("gui.actions.tempban-lore")));
         inventory.setItem(MUTE, Items.button(Material.BOOK,
-            Component.text(muted ? "Unmute" : "Mute", muted ? NamedTextColor.GREEN : NamedTextColor.RED),
-            List.of(hint(muted ? "Remove this player's mute" : "Prevent this player from chatting"))));
-        inventory.setItem(TEMPMUTE, Items.button(Material.CLOCK, Component.text("Tempmute", NamedTextColor.GOLD),
-            List.of(hint("Mute for a set duration"))));
-        inventory.setItem(KICK, Items.button(Material.LEATHER_BOOTS, Component.text("Kick", NamedTextColor.RED),
-            List.of(hint("Disconnect this player now"))));
-        inventory.setItem(WARN, Items.button(Material.YELLOW_BANNER, Component.text("Warn", NamedTextColor.YELLOW),
-            List.of(hint("Issue a formal warning"))));
+            plugin.messages().plain(muted ? "gui.actions.unmute" : "gui.actions.mute"),
+            plugin.messages().list(muted ? "gui.actions.unmute-lore" : "gui.actions.mute-lore")));
+        inventory.setItem(TEMPMUTE, Items.button(Material.CLOCK,
+            plugin.messages().plain("gui.actions.tempmute"),
+            plugin.messages().list("gui.actions.tempmute-lore")));
+        inventory.setItem(KICK, Items.button(Material.LEATHER_BOOTS,
+            plugin.messages().plain("gui.actions.kick"),
+            plugin.messages().list("gui.actions.kick-lore")));
+        inventory.setItem(WARN, Items.button(Material.YELLOW_BANNER,
+            plugin.messages().plain("gui.actions.warn"),
+            plugin.messages().list("gui.actions.warn-lore")));
         inventory.setItem(SHADOWMUTE_SLOT, Items.button(Material.INK_SAC,
-            net.kyori.adventure.text.Component.text(shadowMuted ? "Un-shadowmute" : "Shadow-mute",
-                shadowMuted ? net.kyori.adventure.text.format.NamedTextColor.GREEN
-                            : net.kyori.adventure.text.format.NamedTextColor.LIGHT_PURPLE),
-            List.of(net.kyori.adventure.text.Component.text("Covert mute — only they see their chat",
-                net.kyori.adventure.text.format.NamedTextColor.GRAY)
-                .decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false))));
-        inventory.setItem(LOGS, Items.button(Material.WRITTEN_BOOK, Component.text("Chat logs", NamedTextColor.AQUA),
-            List.of(hint("View recent chat & commands"))));
-        inventory.setItem(TEMPLATES, Items.button(Material.WRITABLE_BOOK, Component.text("Templates", NamedTextColor.AQUA),
-            List.of(hint("Quick preset punishments"))));
+            plugin.messages().plain(shadowMuted ? "gui.actions.unshadowmute" : "gui.actions.shadowmute"),
+            plugin.messages().list("gui.actions.shadowmute-lore")));
+        inventory.setItem(LOGS, Items.button(Material.WRITTEN_BOOK,
+            plugin.messages().plain("gui.actions.chatlogs"),
+            plugin.messages().list("gui.actions.chatlogs-lore")));
+        inventory.setItem(TEMPLATES, Items.button(Material.WRITABLE_BOOK,
+            plugin.messages().plain("gui.actions.templates"),
+            plugin.messages().list("gui.actions.templates-lore")));
         if (lastIp != null) {
-            inventory.setItem(IPBAN, Items.button(Material.IRON_BARS, Component.text("IP-Ban", NamedTextColor.DARK_RED),
-                List.of(hint("Ban the last known IP"))));
+            inventory.setItem(IPBAN, Items.button(Material.IRON_BARS,
+                plugin.messages().plain("gui.actions.ipban"),
+                plugin.messages().list("gui.actions.ipban-lore")));
         }
         if (target.isOnline()) {
             boolean frozen = plugin.freeze().isFrozen(target.getUniqueId());
             inventory.setItem(FREEZE, Items.button(Material.ICE,
-                Component.text(frozen ? "Unfreeze" : "Freeze", frozen ? NamedTextColor.GREEN : NamedTextColor.AQUA),
-                List.of(hint(frozen ? "Allow this player to move" : "Stop this player from moving"))));
-            inventory.setItem(INVSEE, Items.button(Material.CHEST, Component.text("View inventory", NamedTextColor.AQUA),
-                List.of(hint("Open this player's inventory"))));
-            inventory.setItem(ECHEST, Items.button(Material.ENDER_CHEST, Component.text("View ender chest", NamedTextColor.LIGHT_PURPLE),
-                List.of(hint("Open this player's ender chest"))));
+                plugin.messages().plain(frozen ? "gui.actions.unfreeze" : "gui.actions.freeze"),
+                plugin.messages().list(frozen ? "gui.actions.unfreeze-lore" : "gui.actions.freeze-lore")));
+            inventory.setItem(INVSEE, Items.button(Material.CHEST,
+                plugin.messages().plain("gui.actions.invsee"),
+                plugin.messages().list("gui.actions.invsee-lore")));
+            inventory.setItem(ECHEST, Items.button(Material.ENDER_CHEST,
+                plugin.messages().plain("gui.actions.echest"),
+                plugin.messages().list("gui.actions.echest-lore")));
         }
-        inventory.setItem(HISTORY, Items.button(Material.WRITABLE_BOOK, Component.text("History", NamedTextColor.AQUA),
-            List.of(hint("View past punishments"))));
-        inventory.setItem(NOTES, Items.button(Material.BOOK, Component.text("Notes", NamedTextColor.AQUA),
-            List.of(hint("Staff notes about this player"))));
-        inventory.setItem(ALTS, Items.button(Material.PLAYER_HEAD, Component.text("Alts", NamedTextColor.AQUA),
-            List.of(hint("Accounts sharing this IP"))));
+        inventory.setItem(HISTORY, Items.button(Material.WRITABLE_BOOK,
+            plugin.messages().plain("gui.actions.history"),
+            plugin.messages().list("gui.actions.history-lore")));
+        inventory.setItem(NOTES, Items.button(Material.BOOK,
+            plugin.messages().plain("gui.actions.notes"),
+            plugin.messages().list("gui.actions.notes-lore")));
+        inventory.setItem(ALTS, Items.button(Material.PLAYER_HEAD,
+            plugin.messages().plain("gui.actions.alts"),
+            plugin.messages().list("gui.actions.alts-lore")));
         inventory.setItem(OPTOGGLE, Items.button(target.isOp() ? Material.NETHERITE_BLOCK : Material.NETHERITE_SCRAP,
-            net.kyori.adventure.text.Component.text(target.isOp() ? "De-OP" : "Make OP",
-                target.isOp() ? net.kyori.adventure.text.format.NamedTextColor.RED
-                               : net.kyori.adventure.text.format.NamedTextColor.GREEN),
-            List.of(net.kyori.adventure.text.Component.text("Toggle operator status", net.kyori.adventure.text.format.NamedTextColor.GRAY)
-                .decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false))));
-        inventory.setItem(BACK, Items.button(Material.OAK_DOOR, Component.text("Back", NamedTextColor.GRAY),
-            List.of(hint("Return to the player list"))));
-        inventory.setItem(CLOSE, Items.button(Material.BARRIER, Component.text("Close", NamedTextColor.RED),
-            List.of(hint("Close this menu"))));
+            plugin.messages().plain(target.isOp() ? "gui.actions.deop" : "gui.actions.makeop"),
+            plugin.messages().list("gui.actions.optoggle-lore")));
+        inventory.setItem(BACK, Items.button(Material.OAK_DOOR,
+            plugin.messages().plain("gui.actions.back"),
+            plugin.messages().list("gui.actions.back-lore")));
+        inventory.setItem(CLOSE, Items.button(Material.BARRIER,
+            plugin.messages().plain("gui.actions.close"),
+            plugin.messages().list("gui.actions.close-lore")));
         fillEmpty();
-    }
-
-    private static Component hint(String text) {
-        return Component.text(text, NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false);
-    }
-
-    private static Component line(String text, NamedTextColor color) {
-        return Component.text(text, color).decoration(TextDecoration.ITALIC, false);
-    }
-
-    private static Component status(String text, boolean active) {
-        return line(text, active ? NamedTextColor.RED : NamedTextColor.GREEN);
     }
 
     private String name() { return target.getName() == null ? "?" : target.getName(); }

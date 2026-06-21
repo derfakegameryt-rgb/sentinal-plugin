@@ -21,15 +21,15 @@ public final class ServerInfoGui extends Gui {
         this.inventory = Bukkit.createInventory(this, 27, plugin.messages().plain("gui-serverinfo-title"));
 
         // Static items (never change while the GUI is open).
-        inventory.setItem(10, info(Material.BOOK, "Version", List.of(
+        inventory.setItem(10, info(Material.BOOK, "gui.serverinfo.version", List.of(
             "MC/Paper: " + Bukkit.getBukkitVersion(),
             "Server: " + Bukkit.getVersion(),
             "Plugin: " + plugin.getPluginMeta().getVersion())));
-        inventory.setItem(13, info(Material.COMPARATOR, "System", List.of(
+        inventory.setItem(13, info(Material.COMPARATOR, "gui.serverinfo.system", List.of(
             "OS: " + System.getProperty("os.name") + " (" + System.getProperty("os.arch") + ")",
             "CPU cores: " + Runtime.getRuntime().availableProcessors(),
             "Java: " + System.getProperty("java.version"))));
-        inventory.setItem(15, info(Material.GRASS_BLOCK, "Worlds", List.of(
+        inventory.setItem(15, info(Material.GRASS_BLOCK, "gui.serverinfo.worlds", List.of(
             "Loaded: " + Bukkit.getWorlds().size())));
 
         update();
@@ -46,12 +46,12 @@ public final class ServerInfoGui extends Gui {
         long usedMb = (rt.totalMemory() - rt.freeMemory()) / 1048576L;
         long maxMb = rt.maxMemory() / 1048576L;
 
-        inventory.setItem(11, info(Material.CLOCK, "TPS", List.of(tpsLine())));
-        inventory.setItem(12, info(Material.IRON_BLOCK, "Memory", List.of(
+        inventory.setItem(11, info(Material.CLOCK, "gui.serverinfo.tps", List.of(tpsLine())));
+        inventory.setItem(12, info(Material.IRON_BLOCK, "gui.serverinfo.memory", List.of(
             "Used: " + usedMb + " MB", "Max: " + maxMb + " MB")));
-        inventory.setItem(14, info(Material.PLAYER_HEAD, "Players", List.of(
+        inventory.setItem(14, info(Material.PLAYER_HEAD, "gui.serverinfo.players", List.of(
             "Online: " + Bukkit.getOnlinePlayers().size() + " / " + Bukkit.getMaxPlayers())));
-        inventory.setItem(16, info(Material.SUNFLOWER, "Uptime", List.of(uptimeLine())));
+        inventory.setItem(16, info(Material.SUNFLOWER, "gui.serverinfo.uptime", List.of(uptimeLine())));
     }
 
     @Override
@@ -80,10 +80,10 @@ public final class ServerInfoGui extends Gui {
         return h + "h " + m + "m";
     }
 
-    private org.bukkit.inventory.ItemStack info(Material m, String title, List<String> lines) {
+    private org.bukkit.inventory.ItemStack info(Material m, String nameKey, List<String> lines) {
         java.util.List<Component> lore = new java.util.ArrayList<>();
         for (String l : lines) lore.add(Component.text(l, NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
-        return Items.button(m, Component.text(title, NamedTextColor.AQUA), lore);
+        return Items.button(m, plugin.messages().plain(nameKey), lore);
     }
 
     @Override

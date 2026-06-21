@@ -3,11 +3,13 @@ package de.derfakegamer.sentinel.gui;
 import de.derfakegamer.sentinel.Sentinel;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Material;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.junit.jupiter.api.*;
 import org.mockbukkit.mockbukkit.MockBukkit;
 import org.mockbukkit.mockbukkit.ServerMock;
 import org.mockbukkit.mockbukkit.entity.PlayerMock;
+import java.io.File;
 import static org.junit.jupiter.api.Assertions.*;
 
 class AdminPanelGuiTest {
@@ -85,6 +87,26 @@ class AdminPanelGuiTest {
         assertTrue(ev.isCancelled());
         assertNotEquals(before, plugin.staffChat().isToggled(p.getUniqueId()),
             "Staff-chat state must flip after clicking slot 30");
+    }
+
+    @Test void playerManagerLabelSourcedFromMessagesYml() throws Exception {
+        // Load the messages config that the plugin wrote to its data folder,
+        // override the key, reload Messages, rebuild the GUI and verify the label.
+        File messagesFile = new File(plugin.getDataFolder(), "messages.yml");
+        YamlConfiguration cfg = YamlConfiguration.loadConfiguration(messagesFile);
+        cfg.set("gui.panel.player-manager", "<gold>SENTINEL_PROOF");
+        plugin.messages().reload(cfg);
+
+        try {
+            AdminPanelGui gui = new AdminPanelGui(plugin);
+            String name = PlainTextComponentSerializer.plainText()
+                .serialize(gui.getInventory().getItem(28).getItemMeta().displayName());
+            assertTrue(name.contains("SENTINEL_PROOF"),
+                "slot-28 display name must reflect the overridden messages.yml key, got: " + name);
+        } finally {
+            // Restore defaults so other tests are unaffected.
+            plugin.messages().reload(YamlConfiguration.loadConfiguration(messagesFile));
+        }
     }
 
     @Test void hubHasAuditAndModStatsButtons() {
