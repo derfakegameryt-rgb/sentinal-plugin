@@ -57,12 +57,14 @@ public final class WhitelistGui extends Gui {
         if (slot == NAV_BACK) { new AdminPanelGui(plugin).open(p); return; }
         if (slot == NAV_CLOSE) { p.closeInventory(); return; }
         if (slot == NAV_ACT_L2) {
+            if (!plugin.staffPerms().canUse(p, "sentinel.use")) { p.sendMessage(plugin.messages().prefixed("no-permission")); return; }
             Bukkit.setWhitelist(!Bukkit.hasWhitelist());
             p.sendMessage(plugin.messages().prefixed(Bukkit.hasWhitelist() ? "whitelist-on" : "whitelist-off"));
             new WhitelistGui(plugin, page).open(p);
             return;
         }
         if (slot == NAV_ACT_L1) {
+            if (!plugin.staffPerms().canUse(p, "sentinel.use")) { p.sendMessage(plugin.messages().prefixed("no-permission")); return; }
             p.closeInventory();
             p.sendMessage(plugin.messages().prefixed("whitelist-enter"));
             plugin.chatInput().await(p.getUniqueId(), name -> {
@@ -78,6 +80,7 @@ public final class WhitelistGui extends Gui {
         }
         int index = page * PAGE_SIZE + slot;
         if (slot >= 0 && slot < PAGE_SIZE && index < list.size()) {
+            if (!plugin.staffPerms().canUse(p, "sentinel.use")) { p.sendMessage(plugin.messages().prefixed("no-permission")); return; }
             OfflinePlayer t = list.get(index);
             t.setWhitelisted(false);
             p.sendMessage(plugin.messages().prefixed("whitelist-removed", "player",

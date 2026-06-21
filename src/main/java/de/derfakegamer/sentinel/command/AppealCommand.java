@@ -17,6 +17,14 @@ public final class AppealCommand implements CommandExecutor, TabCompleter {
         if (!(sender instanceof Player p)) { sender.sendMessage(plugin.messages().prefixed("players-only")); return true; }
         if (args.length == 0) { sender.sendMessage(plugin.messages().prefixed("appeal-usage")); return true; }
         long now = System.currentTimeMillis();
+        long cdMs = plugin.getConfig().getInt("appeals.cooldown-seconds", 60) * 1000L;
+        if (!plugin.staffPerms().canUse(p, "sentinel.use")
+                && !plugin.cooldowns().tryUse(p.getUniqueId(), "appeal", cdMs, now)) {
+            long secs = (plugin.cooldowns().remainingMillis(p.getUniqueId(), "appeal", cdMs, now) + 999) / 1000;
+            plugin.debug("appeal cooldown hit: " + p.getName() + " (" + secs + "s left)");
+            p.sendMessage(plugin.messages().prefixed("cooldown", "seconds", String.valueOf(secs)));
+            return true;
+        }
         String text = String.join(" ", args);
         plugin.db().callbackOrError(p, plugin.punishments().activeMute(p.getUniqueId(), now), mute -> {
             if (mute == null) { p.sendMessage(plugin.messages().prefixed("appeal-nothing")); return; }

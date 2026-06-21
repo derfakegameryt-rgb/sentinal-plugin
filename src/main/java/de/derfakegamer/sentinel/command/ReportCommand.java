@@ -22,6 +22,15 @@ public final class ReportCommand implements CommandExecutor, TabCompleter {
                              @NotNull String label, @NotNull String[] args) {
         if (!(sender instanceof org.bukkit.entity.Player p)) { sender.sendMessage(plugin.messages().prefixed("report-usage")); return true; }
         if (args.length < 2) { sender.sendMessage(plugin.messages().prefixed("report-usage")); return true; }
+        long cdMs = plugin.getConfig().getInt("report.cooldown-seconds", 30) * 1000L;
+        long now = System.currentTimeMillis();
+        if (!plugin.staffPerms().canUse(p, "sentinel.use")
+                && !plugin.cooldowns().tryUse(p.getUniqueId(), "report", cdMs, now)) {
+            long secs = (plugin.cooldowns().remainingMillis(p.getUniqueId(), "report", cdMs, now) + 999) / 1000;
+            plugin.debug("report cooldown hit: " + p.getName() + " (" + secs + "s left)");
+            p.sendMessage(plugin.messages().prefixed("cooldown", "seconds", String.valueOf(secs)));
+            return true;
+        }
         OfflinePlayer target = Bukkit.getOfflinePlayer(args[0]);
         String reason = String.join(" ", java.util.Arrays.copyOfRange(args, 1, args.length));
         plugin.db().callbackOrError(p, plugin.reports().file(sender, target.getUniqueId(), args[0], reason),

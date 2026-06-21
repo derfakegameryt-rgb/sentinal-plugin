@@ -39,7 +39,9 @@ public final class AuditManager {
 
     /** Flushes the batch writer immediately (call before db.shutdown()). */
     public void flush() {
+        int pending = batchWriter.pendingCount();
         batchWriter.flush();
+        if (pending > 0) plugin.debug("flushed " + pending + " audit rows");
     }
 
     // -----------------------------------------------------------------------

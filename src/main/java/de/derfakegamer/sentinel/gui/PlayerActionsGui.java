@@ -233,6 +233,7 @@ public final class PlayerActionsGui extends Gui {
             case NOTES -> NotesGui.open(plugin, target, mod);
             case ALTS -> AltsGui.open(plugin, target, mod);
             case OPTOGGLE -> {
+                if (!plugin.staffPerms().canUse(mod, "sentinel.use")) { mod.sendMessage(plugin.messages().prefixed("no-permission")); return; }
                 // Protected players (config `exempt`, e.g. the owner) cannot be de-opped via the panel.
                 if (target.isOp() && plugin.punishments().isExempt(target.getUniqueId())) {
                     mod.sendMessage(plugin.messages().prefixed("exempt"));

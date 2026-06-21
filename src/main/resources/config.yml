@@ -1,5 +1,8 @@
 # Sentinel configuration
+debug: false        # set true to enable [DEBUG] log lines for diagnostics
 exempt: []          # list of UUIDs that can never be punished
+report:
+  cooldown-seconds: 30  # how long a non-staff player must wait between /report uses (0 = disabled)
 reasons:            # the 5 presets shown in the Reason GUI
   - Hacking
   - Spam
@@ -102,6 +105,7 @@ backup:
 # (banned players cannot run commands). Leave blank to show no appeal line.
 appeals:
   url: ""
+  cooldown-seconds: 60  # how long a non-staff player must wait between /appeal uses (0 = disabled)
 
 # Scheduled console commands. Each entry needs a "do" plus either "every" (interval) or "at" (daily HH:mm).
 scheduled-tasks: []
