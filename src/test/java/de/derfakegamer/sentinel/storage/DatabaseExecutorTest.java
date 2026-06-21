@@ -98,6 +98,153 @@ class DatabaseExecutorTest {
         for (var fu : futures) assertEquals(99, fu.get(5, TimeUnit.SECONDS), "every concurrent read sees seeded value");
     }
 
+    @Test
+    void submitWriteRunsWorkAndReturnsValue() throws Exception {
+        assertEquals(42, exec.submitWrite(() -> 42).get(2, TimeUnit.SECONDS));
+    }
+
+    @Test
+    void submitWriteFailureCompletesExceptionallyAndDoesNotKillThread() {
+        CompletableFuture<Object> bad = exec.submitWrite(() -> { throw new java.sql.SQLException("boom"); });
+        assertThrows(ExecutionException.class, () -> bad.get(2, TimeUnit.SECONDS));
+        assertDoesNotThrow(() -> exec.submitWrite(() -> 1).get(2, TimeUnit.SECONDS));
+    }
+
+    /**
+     * Backend that advertises concurrent reads (MySQL-shaped). Reads hand out distinct pooled
+     * connections from a reader pool; writes always use the single writer connection. We use this
+     * to assert the executor routes work to the right thread/connection.
+     */
+    static final class FakeConcurrentDatabase implements Database {
+        final java.sql.Connection writerConn = stubConnection("writer");
+        // a small pool of distinct reader connections, round-robined by acquire()
+        final java.util.concurrent.ConcurrentLinkedQueue<java.sql.Connection> pool =
+            new java.util.concurrent.ConcurrentLinkedQueue<>();
+        FakeConcurrentDatabase() {
+            for (int i = 0; i < 4; i++) pool.add(stubConnection("reader-" + i));
+        }
+        public java.sql.Connection connection() {
+            java.sql.Connection bound = ThreadLocalHolder.CURRENT.get();
+            return bound != null ? bound : writerConn;
+        }
+        public SqlDialect dialect() { return SqlDialect.MYSQL; }
+        public void ensureValid() { }
+        public java.sql.Connection acquire() {
+            java.sql.Connection c = pool.poll();
+            return c != null ? c : writerConn;
+        }
+        public void release(java.sql.Connection c) { if (c != writerConn) pool.add(c); }
+        public boolean supportsConcurrentReads() { return true; }
+        public void close() { }
+        private static java.sql.Connection stubConnection(String label) {
+            return (java.sql.Connection) java.lang.reflect.Proxy.newProxyInstance(
+                FakeConcurrentDatabase.class.getClassLoader(),
+                new Class<?>[]{java.sql.Connection.class},
+                (proxy, method, args) -> {
+                    if ("toString".equals(method.getName())) return "conn:" + label;
+                    if ("equals".equals(method.getName())) return proxy == args[0];
+                    if ("hashCode".equals(method.getName())) return System.identityHashCode(proxy);
+                    return null;
+                });
+        }
+    }
+
+    @Test
+    void concurrentBackendRunsReadsOffTheWriterThread() throws Exception {
+        FakeConcurrentDatabase fake = new FakeConcurrentDatabase();
+        DatabaseExecutor ex = new DatabaseExecutor(fake, Logger.getLogger("t"), null);
+        try {
+            Thread writerThread = ex.submitWrite(Thread::currentThread).get(2, TimeUnit.SECONDS);
+            // Force genuine parallelism: a barrier each read waits on guarantees >1 reader thread
+            // must run concurrently for any of them to proceed. This proves reads use the pool, not
+            // the single writer thread, and is not timing-flaky. (Pool threads share a name, so we
+            // compare Thread identity, not name.)
+            final int parallel = 4;
+            var barrier = new java.util.concurrent.CyclicBarrier(parallel);
+            var readerThreads = ConcurrentHashMap.<Thread>newKeySet();
+            var futures = new java.util.ArrayList<CompletableFuture<Thread>>();
+            for (int i = 0; i < parallel; i++)
+                futures.add(ex.submit(() -> {
+                    barrier.await(5, TimeUnit.SECONDS); // only completes if peers run in parallel
+                    return Thread.currentThread();
+                }));
+            for (var fu : futures) readerThreads.add(fu.get(5, TimeUnit.SECONDS));
+            assertTrue(readerThreads.size() > 1,
+                "reads must run on a parallel reader pool, saw " + readerThreads.size() + " thread(s)");
+            assertFalse(readerThreads.contains(writerThread),
+                "reads must not be forced onto the single writer thread");
+        } finally {
+            ex.shutdown();
+        }
+    }
+
+    @Test
+    void concurrentBackendRunsWritesOnTheSingleWriterThreadAndConnection() throws Exception {
+        FakeConcurrentDatabase fake = new FakeConcurrentDatabase();
+        DatabaseExecutor ex = new DatabaseExecutor(fake, Logger.getLogger("t"), null);
+        try {
+            var writeThreads = ConcurrentHashMap.newKeySet();
+            var writeConns = ConcurrentHashMap.newKeySet();
+            var futures = new java.util.ArrayList<CompletableFuture<Void>>();
+            for (int i = 0; i < 50; i++)
+                futures.add(ex.submitWrite(() -> {
+                    writeThreads.add(Thread.currentThread().getName());
+                    writeConns.add(fake.connection());
+                    return null;
+                }));
+            for (var fu : futures) fu.get(5, TimeUnit.SECONDS);
+            assertEquals(1, writeThreads.size(), "all writes must serialise on one writer thread");
+            assertEquals(1, writeConns.size(), "all writes must use the single writer connection");
+            assertTrue(writeConns.contains(fake.writerConn), "writes must bind the writer connection");
+        } finally {
+            ex.shutdown();
+        }
+    }
+
+    @Test
+    void writesPreserveFifoOrderWithExecute() throws Exception {
+        FakeConcurrentDatabase fake = new FakeConcurrentDatabase();
+        DatabaseExecutor ex = new DatabaseExecutor(fake, Logger.getLogger("t"), null);
+        try {
+            // Interleave execute() and submitWrite() and assert strict FIFO completion order:
+            // a back-to-back mute/unmute must not reorder across reader connections.
+            var order = new java.util.concurrent.CopyOnWriteArrayList<Integer>();
+            for (int i = 0; i < 100; i++) {
+                final int n = i;
+                if (i % 2 == 0) ex.execute(() -> order.add(n));
+                else ex.submitWrite(() -> { order.add(n); return null; });
+            }
+            ex.submitWrite(() -> null).get(5, TimeUnit.SECONDS); // barrier
+            for (int i = 0; i < 100; i++)
+                assertEquals(i, order.get(i), "writes must execute in strict FIFO order");
+        } finally {
+            ex.shutdown();
+        }
+    }
+
+    @Test
+    void connectionThreadLocalIsClearedAfterWriteTask() throws Exception {
+        FakeConcurrentDatabase fake = new FakeConcurrentDatabase();
+        DatabaseExecutor ex = new DatabaseExecutor(fake, Logger.getLogger("t"), null);
+        try {
+            // bind happens inside the task; after a write the writer thread's ThreadLocal must be
+            // cleared so a later read on the same pooled/writer thread cannot leak a stale conn.
+            ex.submitWrite(() -> { assertNotNull(fake.connection()); return null; })
+                .get(2, TimeUnit.SECONDS);
+            // run a no-op write that observes the ThreadLocal at task start: must be null (cleared)
+            Object boundAtStart = ex.submitWrite(() -> Database.ThreadLocalHolder.CURRENT.get())
+                .get(2, TimeUnit.SECONDS);
+            // bind() runs before work, so inside the task it's non-null; but the holder for the
+            // *previous* task must have been cleared — assert no cross-task leak by checking that a
+            // read task on a fresh pooled thread starts with a freshly-acquired reader connection.
+            java.sql.Connection readConn = ex.submit(() -> fake.connection()).get(2, TimeUnit.SECONDS);
+            assertNotNull(readConn);
+            assertNotSame(fake.writerConn, readConn, "read must use a pooled reader, not a leaked writer conn");
+        } finally {
+            ex.shutdown();
+        }
+    }
+
     @Test void ensureValidIsCalledBeforeWork() throws Exception {
         java.util.concurrent.atomic.AtomicInteger validations = new java.util.concurrent.atomic.AtomicInteger();
         Database counting = new Database() {

@@ -58,7 +58,7 @@ public final class PunishmentManager {
     public CompletableFuture<Result> mute(UUID target, String targetName, UUID issuer, String issuerName,
                                            String reason, long expiresAt) {
         if (isExempt(target)) return CompletableFuture.completedFuture(Result.fail("exempt"));
-        return plugin.db().submit(() -> {
+        return plugin.db().submitWrite(() -> {
             dao.insert(Punishment.builder().type(PunishmentType.MUTE).targetUuid(target)
                 .targetName(targetName).reason(reason).issuerUuid(issuer).issuerName(issuerName)
                 .createdAt(System.currentTimeMillis()).expiresAt(expiresAt).active(true).build());
@@ -76,7 +76,7 @@ public final class PunishmentManager {
                                            String reason) {
         // kicks are history-only (never "active")
         if (isExempt(target)) return CompletableFuture.completedFuture(Result.fail("exempt"));
-        return plugin.db().submit(() -> {
+        return plugin.db().submitWrite(() -> {
             dao.insert(Punishment.builder().type(PunishmentType.KICK).targetUuid(target)
                 .targetName(targetName).reason(reason).issuerUuid(issuer).issuerName(issuerName)
                 .createdAt(System.currentTimeMillis()).expiresAt(0).active(false).build());
@@ -87,7 +87,7 @@ public final class PunishmentManager {
     private CompletableFuture<Result> record(PunishmentType type, UUID target, String targetName, String ip,
                                               UUID issuer, String issuerName, String reason, long expiresAt) {
         if (isExempt(target)) return CompletableFuture.completedFuture(Result.fail("exempt"));
-        return plugin.db().submit(() -> {
+        return plugin.db().submitWrite(() -> {
             dao.insert(Punishment.builder().type(type).targetUuid(target).targetName(targetName)
                 .targetIp(ip).reason(reason).issuerUuid(issuer).issuerName(issuerName)
                 .createdAt(System.currentTimeMillis()).expiresAt(expiresAt).active(true).build());
@@ -97,17 +97,17 @@ public final class PunishmentManager {
 
     /** Returns the active ban, lazily deactivating it if expired. */
     public CompletableFuture<Punishment> activeBan(UUID target, long now) {
-        return plugin.db().submit(() -> activeOrExpire(PunishmentType.BAN, target, now));
+        return plugin.db().submitWrite(() -> activeOrExpire(PunishmentType.BAN, target, now));
     }
 
     public CompletableFuture<Punishment> activeMute(UUID target, long now) {
-        return plugin.db().submit(() ->
+        return plugin.db().submitWrite(() ->
             muteCache.get(target, k -> Optional.ofNullable(activeOrExpire(PunishmentType.MUTE, k, now)))
                      .orElse(null));
     }
 
     public CompletableFuture<Punishment> activeIpBan(String ip, long now) {
-        return plugin.db().submit(() -> {
+        return plugin.db().submitWrite(() -> {
             Punishment p = dao.findActiveByIp(PunishmentType.IPBAN, ip);
             if (p == null) return null;
             if (p.isExpired(now)) { dao.deactivate(p.id(), "SYSTEM", now); return null; }
@@ -123,7 +123,7 @@ public final class PunishmentManager {
     }
 
     public CompletableFuture<Boolean> unban(UUID target, String remover, long now) {
-        return plugin.db().submit(() -> {
+        return plugin.db().submitWrite(() -> {
             Punishment p = dao.findActive(PunishmentType.BAN, target);
             if (p == null) return false;
             dao.deactivate(p.id(), remover, now);
@@ -132,7 +132,7 @@ public final class PunishmentManager {
     }
 
     public CompletableFuture<Boolean> unmute(UUID target, String remover, long now) {
-        return plugin.db().submit(() -> {
+        return plugin.db().submitWrite(() -> {
             Punishment p = dao.findActive(PunishmentType.MUTE, target);
             if (p == null) return false;
             dao.deactivate(p.id(), remover, now);
@@ -144,7 +144,7 @@ public final class PunishmentManager {
     public CompletableFuture<Result> shadowMute(UUID target, String targetName, UUID issuer,
                                                  String issuerName, String reason, long expiresAt) {
         if (isExempt(target)) return CompletableFuture.completedFuture(Result.fail("exempt"));
-        return plugin.db().submit(() -> {
+        return plugin.db().submitWrite(() -> {
             dao.insert(Punishment.builder().type(PunishmentType.SHADOWMUTE).targetUuid(target)
                 .targetName(targetName).reason(reason).issuerUuid(issuer).issuerName(issuerName)
                 .createdAt(System.currentTimeMillis()).expiresAt(expiresAt).active(true).build());
@@ -154,13 +154,13 @@ public final class PunishmentManager {
     }
 
     public CompletableFuture<Punishment> activeShadowMute(UUID target, long now) {
-        return plugin.db().submit(() ->
+        return plugin.db().submitWrite(() ->
             shadowMuteCache.get(target, k -> Optional.ofNullable(activeOrExpire(PunishmentType.SHADOWMUTE, k, now)))
                            .orElse(null));
     }
 
     public CompletableFuture<Boolean> unShadowMute(UUID target, String remover, long now) {
-        return plugin.db().submit(() -> {
+        return plugin.db().submitWrite(() -> {
             Punishment p = dao.findActive(PunishmentType.SHADOWMUTE, target);
             if (p == null) return false;
             dao.deactivate(p.id(), remover, now);
@@ -171,7 +171,7 @@ public final class PunishmentManager {
 
     /** All currently-active punishments of a type, lazily dropping any that have expired. */
     public CompletableFuture<List<Punishment>> activeList(PunishmentType type, long now) {
-        return plugin.db().submit(() -> {
+        return plugin.db().submitWrite(() -> {
             List<Punishment> out = new ArrayList<>();
             for (Punishment p : dao.findActiveByType(type)) {
                 if (p.isExpired(now)) dao.deactivate(p.id(), "SYSTEM", now);

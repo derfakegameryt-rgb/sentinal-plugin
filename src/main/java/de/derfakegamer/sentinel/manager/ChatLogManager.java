@@ -52,7 +52,7 @@ public final class ChatLogManager {
     public CompletableFuture<Integer> prune(int retentionDays) {
         if (retentionDays <= 0) return CompletableFuture.completedFuture(0);
         long cutoff = System.currentTimeMillis() - retentionDays * 86_400_000L;
-        return plugin.db().submit(() -> dao.deleteOlderThan(cutoff));
+        return plugin.db().submitWrite(() -> dao.deleteOlderThan(cutoff));
     }
 
     /** Flushes the batch writer immediately (call before db.shutdown()). */

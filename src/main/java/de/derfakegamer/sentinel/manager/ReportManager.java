@@ -22,7 +22,7 @@ public final class ReportManager {
         UUID reporterId = (reporter instanceof Player p) ? p.getUniqueId() : new UUID(0, 0);
         if (reporterId.equals(targetId)) return CompletableFuture.completedFuture(false);
         long now = System.currentTimeMillis();
-        CompletableFuture<Boolean> future = plugin.db().submit(() -> {
+        CompletableFuture<Boolean> future = plugin.db().submitWrite(() -> {
             dao.insert(new Report(0, reporterId, reporter.getName(), targetId, targetName,
                 reason, now, false, null));
             return true;

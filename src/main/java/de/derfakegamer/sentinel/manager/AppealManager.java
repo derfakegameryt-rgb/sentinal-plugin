@@ -28,7 +28,7 @@ public final class AppealManager {
      * The hasOpen check and insert run atomically on the DB thread.
      */
     public CompletableFuture<Boolean> submit(UUID uuid, String name, long punishmentId, PunishmentType type, String text, long now) {
-        return plugin.db().submit(() -> {
+        return plugin.db().submitWrite(() -> {
             if (dao.hasOpenForTarget(uuid)) return false;
             dao.insert(new Appeal(0, punishmentId, uuid, name, type, text, "OPEN", now, null, 0));
             return true;
@@ -44,7 +44,7 @@ public final class AppealManager {
             ? plugin.punishments().unmute(a.targetUuid(), staff, now)
             : plugin.punishments().unban(a.targetUuid(), staff, now);
         return liftFuture.thenCompose(ok ->
-            plugin.db().<Void>submit(() -> { dao.setStatus(a.id(), "ACCEPTED", staff, now); return null; }));
+            plugin.db().<Void>submitWrite(() -> { dao.setStatus(a.id(), "ACCEPTED", staff, now); return null; }));
     }
 
     /** Denies an appeal (fire-and-forget). */

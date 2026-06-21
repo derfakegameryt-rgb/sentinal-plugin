@@ -95,6 +95,32 @@ public final class DatabaseExecutor {
         });
     }
 
+    /**
+     * A value-returning write. Runs on the SAME single writer thread/connection as {@link #execute},
+     * so writes never land on the reader pool and stay strictly FIFO-ordered with each other and with
+     * {@code execute} writes. This is the path for any operation that writes (INSERT/UPDATE/DELETE/
+     * deactivate) but must return a value via a {@link CompletableFuture} — including
+     * "lazy-expiry reads" that conditionally write. Pure reads use {@link #submit}.
+     *
+     * <p>On SQLite this is observably identical to {@code submit} (one thread, one connection).
+     */
+    public <T> CompletableFuture<T> submitWrite(Callable<T> work) {
+        CompletableFuture<T> f = new CompletableFuture<>();
+        writer.execute(() -> {
+            try {
+                database.ensureValid();
+                database.bind(database.connection());
+                f.complete(work.call());
+            } catch (Throwable t) {
+                logger.log(Level.SEVERE, "DB write failed", t);
+                f.completeExceptionally(t);
+            } finally {
+                database.bind(null);
+            }
+        });
+        return f;
+    }
+
     public <T> void callback(CompletableFuture<T> future, Consumer<T> onMain) {
         future.whenComplete((value, error) -> {
             T delivered = error == null ? value : null;
