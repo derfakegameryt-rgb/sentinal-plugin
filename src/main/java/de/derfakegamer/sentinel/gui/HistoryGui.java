@@ -20,7 +20,6 @@ import java.util.List;
 
 public final class HistoryGui extends Gui {
     private static final int PAGE_SIZE = 45;
-    private static final int PREV = 45, BACK = 49, NEXT = 53;
     private static final DateTimeFormatter DATE =
         DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").withZone(ZoneOffset.UTC);
 
@@ -52,13 +51,7 @@ public final class HistoryGui extends Gui {
                 p.active() ? Component.text("Active", NamedTextColor.RED).decoration(TextDecoration.ITALIC, false)
                            : Component.text("Removed/expired", NamedTextColor.GREEN).decoration(TextDecoration.ITALIC, false))));
         }
-        if (page > 0) inventory.setItem(PREV, Items.button(Material.ARROW, Component.text("Previous", NamedTextColor.GRAY),
-            List.of(line("Go to the previous page"))));
-        inventory.setItem(BACK, Items.button(Material.BARRIER, Component.text("Back", NamedTextColor.RED),
-            List.of(line("Return to player actions"))));
-        if (from + PAGE_SIZE < total) inventory.setItem(NEXT, Items.button(Material.ARROW, Component.text("Next", NamedTextColor.GRAY),
-            List.of(line("Go to the next page"))));
-        fillEmpty();
+        navBar(page > 0, from + PAGE_SIZE < total, true);
     }
 
     private static Component line(String text) {
@@ -82,9 +75,10 @@ public final class HistoryGui extends Gui {
         event.setCancelled(true);
         Player mod = (Player) event.getWhoClicked();
         switch (event.getRawSlot()) {
-            case PREV -> open(plugin, target, mod, page - 1);
-            case NEXT -> open(plugin, target, mod, page + 1);
-            case BACK -> PlayerActionsGui.open(plugin, target, mod);
+            case Gui.NAV_PREV -> open(plugin, target, mod, page - 1);
+            case Gui.NAV_NEXT -> open(plugin, target, mod, page + 1);
+            case Gui.NAV_BACK -> PlayerActionsGui.open(plugin, target, mod);
+            case Gui.NAV_CLOSE -> mod.closeInventory();
             default -> {}
         }
     }

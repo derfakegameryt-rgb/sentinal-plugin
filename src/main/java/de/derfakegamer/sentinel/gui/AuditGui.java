@@ -15,7 +15,6 @@ import java.util.List;
 
 public final class AuditGui extends Gui {
     private static final int PAGE_SIZE = 45;
-    private static final int PREV = 45, BACK = 49, CLOSE = 52, NEXT = 53;
     private final List<AuditEntry> entries;
     private final int page;
 
@@ -38,11 +37,7 @@ public final class AuditGui extends Gui {
                         line(e.details() == null || e.details().isBlank() ? "—" : e.details()),
                         line(de.derfakegamer.sentinel.util.TimeFormat.ago(e.createdAt())))));
         }
-        if (page > 0) inventory.setItem(PREV, Items.button(Material.ARROW, Component.text("Previous", NamedTextColor.GRAY), List.of()));
-        if (entries.size() == PAGE_SIZE) inventory.setItem(NEXT, Items.button(Material.ARROW, Component.text("Next", NamedTextColor.GRAY), List.of()));
-        inventory.setItem(BACK, Items.button(Material.COMPARATOR, Component.text("Back", NamedTextColor.GRAY), List.of()));
-        inventory.setItem(CLOSE, Items.button(Material.BARRIER, Component.text("Close", NamedTextColor.RED), List.of()));
-        fillEmpty();
+        navBar(page > 0, entries.size() == PAGE_SIZE, true);
     }
 
     private static Component line(String s) {
@@ -54,10 +49,10 @@ public final class AuditGui extends Gui {
         event.setCancelled(true);
         Player p = (Player) event.getWhoClicked();
         switch (event.getRawSlot()) {
-            case PREV -> AuditGui.open(plugin, p, page - 1);
-            case NEXT -> AuditGui.open(plugin, p, page + 1);
-            case BACK -> new AdminPanelGui(plugin).open(p);
-            case CLOSE -> p.closeInventory();
+            case Gui.NAV_PREV -> AuditGui.open(plugin, p, page - 1);
+            case Gui.NAV_NEXT -> AuditGui.open(plugin, p, page + 1);
+            case Gui.NAV_BACK -> new AdminPanelGui(plugin).open(p);
+            case Gui.NAV_CLOSE -> p.closeInventory();
         }
     }
 }

@@ -19,7 +19,6 @@ import java.util.List;
 
 public final class ReportsGui extends Gui {
     private static final int PAGE_SIZE = 45;
-    private static final int PREV = 45, CLOSE = 49, NEXT = 53;
     private static final DateTimeFormatter DATE =
         DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").withZone(ZoneOffset.UTC);
 
@@ -47,13 +46,7 @@ public final class ReportsGui extends Gui {
                 line("At: " + DATE.format(Instant.ofEpochMilli(r.createdAt()))),
                 line("Left: teleport  Right: actions  Shift: handled"))));
         }
-        if (page > 0) inventory.setItem(PREV, Items.button(Material.ARROW, Component.text("Previous", NamedTextColor.GRAY),
-            List.of(line("Go to the previous page"))));
-        inventory.setItem(CLOSE, Items.button(Material.BARRIER, Component.text("Close", NamedTextColor.RED),
-            List.of(line("Close this menu"))));
-        if (from + PAGE_SIZE < reports.size()) inventory.setItem(NEXT, Items.button(Material.ARROW, Component.text("Next", NamedTextColor.GRAY),
-            List.of(line("Go to the next page"))));
-        fillEmpty();
+        navBar(page > 0, from + PAGE_SIZE < reports.size(), true);
     }
 
     private static Component line(String text) {
@@ -65,9 +58,10 @@ public final class ReportsGui extends Gui {
         event.setCancelled(true);
         Player mod = (Player) event.getWhoClicked();
         int slot = event.getRawSlot();
-        if (slot == PREV) { ReportsGui.open(plugin, page - 1, mod); return; }
-        if (slot == NEXT) { ReportsGui.open(plugin, page + 1, mod); return; }
-        if (slot == CLOSE) { mod.closeInventory(); return; }
+        if (slot == Gui.NAV_PREV) { ReportsGui.open(plugin, page - 1, mod); return; }
+        if (slot == Gui.NAV_NEXT) { ReportsGui.open(plugin, page + 1, mod); return; }
+        if (slot == Gui.NAV_BACK) { new AdminPanelGui(plugin).open(mod); return; }
+        if (slot == Gui.NAV_CLOSE) { mod.closeInventory(); return; }
 
         int index = page * PAGE_SIZE + slot;
         if (slot < 0 || slot >= PAGE_SIZE || index >= reports.size()) return;

@@ -8,7 +8,6 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -21,7 +20,6 @@ import java.util.List;
 
 public final class AppealsGui extends Gui {
     private static final int PAGE_SIZE = 45;
-    private static final int PREV = 45, BACK = 48, CLOSE = 49, NEXT = 53;
     private static final DateTimeFormatter DATE =
         DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").withZone(ZoneOffset.UTC);
 
@@ -50,15 +48,7 @@ public final class AppealsGui extends Gui {
             lore.add(line("Left-click: Accept · Right-click: Deny"));
             inventory.setItem(i, Items.head(target, Component.text(a.targetName(), NamedTextColor.AQUA), lore));
         }
-        if (page > 0) inventory.setItem(PREV, Items.button(Material.ARROW, Component.text("Previous", NamedTextColor.GRAY),
-            List.of(line("Go to the previous page"))));
-        inventory.setItem(BACK, Items.button(Material.ARROW, Component.text("Back", NamedTextColor.GRAY),
-            List.of(line("Return to the Admin Panel"))));
-        inventory.setItem(CLOSE, Items.button(Material.BARRIER, Component.text("Close", NamedTextColor.RED),
-            List.of(line("Close this menu"))));
-        if (from + PAGE_SIZE < appeals.size()) inventory.setItem(NEXT, Items.button(Material.ARROW, Component.text("Next", NamedTextColor.GRAY),
-            List.of(line("Go to the next page"))));
-        fillEmpty();
+        navBar(page > 0, from + PAGE_SIZE < appeals.size(), true);
     }
 
     private static Component line(String text) {
@@ -86,10 +76,10 @@ public final class AppealsGui extends Gui {
         Player p = (Player) event.getWhoClicked();
         if (!plugin.staffPerms().canUse(p, "sentinel.use")) return;
         int slot = event.getRawSlot();
-        if (slot == PREV) { AppealsGui.open(plugin, p, page - 1); return; }
-        if (slot == NEXT) { AppealsGui.open(plugin, p, page + 1); return; }
-        if (slot == BACK) { new AdminPanelGui(plugin).open(p); return; }
-        if (slot == CLOSE) { p.closeInventory(); return; }
+        if (slot == Gui.NAV_PREV) { AppealsGui.open(plugin, p, page - 1); return; }
+        if (slot == Gui.NAV_NEXT) { AppealsGui.open(plugin, p, page + 1); return; }
+        if (slot == Gui.NAV_BACK) { new AdminPanelGui(plugin).open(p); return; }
+        if (slot == Gui.NAV_CLOSE) { p.closeInventory(); return; }
 
         int index = page * PAGE_SIZE + slot;
         if (slot < 0 || slot >= PAGE_SIZE || index >= appeals.size()) return;

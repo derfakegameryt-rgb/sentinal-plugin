@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public final class ModStatsGui extends Gui {
-    private static final int BACK = 45, CLOSE = 53;
     private static final long WINDOW_MS = 30L * 24 * 3600 * 1000;
     private final List<ActorCount> actors;
     private final List<ActionCount> actions;
@@ -48,8 +47,7 @@ public final class ModStatsGui extends Gui {
             inventory.setItem(18 + i, Items.button(Material.BOOK,
                 Component.text(c.action(), NamedTextColor.AQUA), List.of(line(c.count() + " (30d)"))));
         }
-        inventory.setItem(BACK, Items.button(Material.COMPARATOR, Component.text("Back", NamedTextColor.GRAY), List.of()));
-        inventory.setItem(CLOSE, Items.button(Material.BARRIER, Component.text("Close", NamedTextColor.RED), List.of()));
+        navBar(false, false, true);
         fillEmpty();
     }
 
@@ -61,7 +59,7 @@ public final class ModStatsGui extends Gui {
     public void onClick(InventoryClickEvent event) {
         event.setCancelled(true);
         Player p = (Player) event.getWhoClicked();
-        if (event.getRawSlot() == BACK) new AdminPanelGui(plugin).open(p);
-        else if (event.getRawSlot() == CLOSE) p.closeInventory();
+        if (event.getRawSlot() == Gui.NAV_BACK) new AdminPanelGui(plugin).open(p);
+        else if (event.getRawSlot() == Gui.NAV_CLOSE) p.closeInventory();
     }
 }

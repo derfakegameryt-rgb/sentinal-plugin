@@ -16,7 +16,6 @@ import java.util.List;
 
 public final class WhitelistGui extends Gui {
     private static final int PAGE_SIZE = 45;
-    private static final int PREV = 45, ADD = 47, TOGGLE = 49, BACK = 50, NEXT = 53;
 
     private final int page;
     private final List<OfflinePlayer> list;
@@ -39,22 +38,17 @@ public final class WhitelistGui extends Gui {
                     .decoration(TextDecoration.ITALIC, false))));
         }
 
-        if (page > 0) inventory.setItem(PREV, Items.button(Material.ARROW,
-            Component.text("Previous", NamedTextColor.GRAY), List.of()));
-        inventory.setItem(ADD, Items.button(Material.LIME_DYE,
+        boolean hasNext = from + PAGE_SIZE < list.size();
+        navBar(page > 0, hasNext, true);
+        inventory.setItem(NAV_ACT_L1, Items.button(Material.LIME_DYE,
             Component.text("Add Player", NamedTextColor.GREEN),
             List.of(Component.text("Type a name in chat", NamedTextColor.GRAY)
                 .decoration(TextDecoration.ITALIC, false))));
         boolean on = Bukkit.hasWhitelist();
-        inventory.setItem(TOGGLE, Items.button(Material.LEVER,
+        inventory.setItem(NAV_ACT_L2, Items.button(Material.LEVER,
             Component.text(on ? "Whitelist: ON" : "Whitelist: OFF", on ? NamedTextColor.GREEN : NamedTextColor.RED),
             List.of(Component.text("Click to toggle", NamedTextColor.GRAY)
                 .decoration(TextDecoration.ITALIC, false))));
-        inventory.setItem(BACK, Items.button(Material.BARRIER,
-            Component.text("Back", NamedTextColor.RED), List.of()));
-        if (from + PAGE_SIZE < list.size()) inventory.setItem(NEXT, Items.button(Material.ARROW,
-            Component.text("Next", NamedTextColor.GRAY), List.of()));
-        fillEmpty();
     }
 
     @Override
@@ -62,16 +56,17 @@ public final class WhitelistGui extends Gui {
         event.setCancelled(true);
         Player p = (Player) event.getWhoClicked();
         int slot = event.getRawSlot();
-        if (slot == PREV) { new WhitelistGui(plugin, page - 1).open(p); return; }
-        if (slot == NEXT) { new WhitelistGui(plugin, page + 1).open(p); return; }
-        if (slot == BACK) { new AdminPanelGui(plugin).open(p); return; }
-        if (slot == TOGGLE) {
+        if (slot == NAV_PREV) { new WhitelistGui(plugin, page - 1).open(p); return; }
+        if (slot == NAV_NEXT) { new WhitelistGui(plugin, page + 1).open(p); return; }
+        if (slot == NAV_BACK) { new AdminPanelGui(plugin).open(p); return; }
+        if (slot == NAV_CLOSE) { p.closeInventory(); return; }
+        if (slot == NAV_ACT_L2) {
             Bukkit.setWhitelist(!Bukkit.hasWhitelist());
             p.sendMessage(plugin.messages().prefixed(Bukkit.hasWhitelist() ? "whitelist-on" : "whitelist-off"));
             new WhitelistGui(plugin, page).open(p);
             return;
         }
-        if (slot == ADD) {
+        if (slot == NAV_ACT_L1) {
             p.closeInventory();
             p.sendMessage(plugin.messages().prefixed("whitelist-enter"));
             plugin.chatInput().await(p.getUniqueId(), name -> {

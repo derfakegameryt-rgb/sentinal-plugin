@@ -17,7 +17,6 @@ import java.util.List;
 
 public final class TemplatesGui extends Gui {
     private static final int PAGE_SIZE = 45;
-    private static final int BACK = 45, CLOSE = 53;
 
     private final OfflinePlayer target;
     private final List<String> templates;
@@ -32,8 +31,7 @@ public final class TemplatesGui extends Gui {
                 Component.text(templates.get(i), NamedTextColor.AQUA),
                 List.of(Component.text("Click to apply", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false))));
         }
-        inventory.setItem(BACK, Items.button(Material.ARROW, Component.text("Back", NamedTextColor.GRAY), List.of()));
-        inventory.setItem(CLOSE, Items.button(Material.BARRIER, Component.text("Close", NamedTextColor.RED), List.of()));
+        navBar(false, false, true);
         fillEmpty();
     }
 
@@ -42,8 +40,8 @@ public final class TemplatesGui extends Gui {
         event.setCancelled(true);
         Player mod = (Player) event.getWhoClicked();
         int slot = event.getRawSlot();
-        if (slot == BACK) { PlayerActionsGui.open(plugin, target, mod); return; }
-        if (slot == CLOSE) { mod.closeInventory(); return; }
+        if (slot == Gui.NAV_BACK) { PlayerActionsGui.open(plugin, target, mod); return; }
+        if (slot == Gui.NAV_CLOSE) { mod.closeInventory(); return; }
         if (slot < 0 || slot >= PAGE_SIZE || slot >= templates.size()) return;
         apply(mod, templates.get(slot));
         mod.closeInventory();

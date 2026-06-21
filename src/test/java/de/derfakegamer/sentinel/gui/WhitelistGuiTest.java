@@ -18,10 +18,11 @@ class WhitelistGuiTest {
         WhitelistGui gui = new WhitelistGui(plugin, 0);
         assertNotNull(gui.getInventory());
         assertEquals(54, gui.getInventory().getSize());
-        // Add button (slot 47), toggle (49), back (50) present.
-        assertEquals(Material.LIME_DYE, gui.getInventory().getItem(47).getType());
-        assertEquals(Material.LEVER, gui.getInventory().getItem(49).getType());
-        assertEquals(Material.BARRIER, gui.getInventory().getItem(50).getType());
+        // Add button at NAV_ACT_L1(46), toggle at NAV_ACT_L2(47), back at NAV_BACK(48), close at NAV_CLOSE(50).
+        assertEquals(Material.LIME_DYE, gui.getInventory().getItem(Gui.NAV_ACT_L1).getType());
+        assertEquals(Material.LEVER, gui.getInventory().getItem(Gui.NAV_ACT_L2).getType());
+        assertEquals(Material.OAK_DOOR, gui.getInventory().getItem(Gui.NAV_BACK).getType());
+        assertEquals(Material.BARRIER, gui.getInventory().getItem(Gui.NAV_CLOSE).getType());
     }
 
     @Test void whitelistedPlayerShowsAsHead() {

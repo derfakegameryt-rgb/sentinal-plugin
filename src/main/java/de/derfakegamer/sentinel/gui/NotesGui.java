@@ -19,7 +19,6 @@ import java.util.List;
 
 public final class NotesGui extends Gui {
     private static final int PAGE_SIZE = 45;
-    private static final int ADD = 49, BACK = 45, CLOSE = 53;
     private static final DateTimeFormatter DATE =
         DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").withZone(ZoneOffset.UTC);
 
@@ -46,11 +45,9 @@ public final class NotesGui extends Gui {
         if (notes.isEmpty())
             inventory.setItem(22, Items.button(Material.BOOK,
                 plugin.messages().plain("notes-empty"), List.of()));
-        inventory.setItem(BACK, Items.button(Material.ARROW, Component.text("Back", NamedTextColor.GRAY), List.of()));
-        inventory.setItem(ADD, Items.button(Material.WRITABLE_BOOK,
+        navBar(false, false, true);
+        inventory.setItem(NAV_ACT_L1, Items.button(Material.WRITABLE_BOOK,
             Component.text("Add note", NamedTextColor.AQUA), List.of(grey("Type the note in chat"))));
-        inventory.setItem(CLOSE, Items.button(Material.BARRIER, Component.text("Close", NamedTextColor.RED), List.of()));
-        fillEmpty();
     }
 
     private Component grey(String s) {
@@ -64,7 +61,7 @@ public final class NotesGui extends Gui {
         event.setCancelled(true);
         Player mod = (Player) event.getWhoClicked();
         switch (event.getRawSlot()) {
-            case ADD -> {
+            case NAV_ACT_L1 -> {
                 mod.closeInventory();
                 mod.sendMessage(plugin.messages().prefixed("enter-note"));
                 plugin.chatInput().await(mod.getUniqueId(), text -> {
@@ -73,8 +70,8 @@ public final class NotesGui extends Gui {
                     NotesGui.open(plugin, target, mod);
                 });
             }
-            case BACK -> PlayerActionsGui.open(plugin, target, mod);
-            case CLOSE -> mod.closeInventory();
+            case NAV_BACK -> PlayerActionsGui.open(plugin, target, mod);
+            case NAV_CLOSE -> mod.closeInventory();
         }
     }
 }

@@ -42,8 +42,8 @@ class NotesGuiTest {
             plugin.notes().list(target.getUniqueId()).get(2, TimeUnit.SECONDS);
         NotesGui gui = new NotesGui(plugin, target, notes);
         gui.open(mod);
-        // the add-note button is at slot 49
-        org.bukkit.event.inventory.InventoryClickEvent ev = ConfirmGuiTest.clickSlot(mod, gui, 49);
+        // the add-note button is at NAV_ACT_L1 (slot 46)
+        org.bukkit.event.inventory.InventoryClickEvent ev = ConfirmGuiTest.clickSlot(mod, gui, Gui.NAV_ACT_L1);
         gui.onClick(ev);
         assertTrue(ev.isCancelled());
         assertTrue(plugin.chatInput().has(mod.getUniqueId()), "clicking add awaits a chat note");

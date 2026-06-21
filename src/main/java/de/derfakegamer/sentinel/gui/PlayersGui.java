@@ -16,7 +16,6 @@ import java.util.concurrent.CompletableFuture;
 
 public final class PlayersGui extends Gui {
     private static final int PAGE_SIZE = 45;
-    private static final int PREV = 45, SEARCH = 46, REPORTS = 47, PANEL = 50, CLOSE = 52, NEXT = 53;
 
     private final int page;
     private final List<Player> players;
@@ -97,21 +96,13 @@ public final class PlayersGui extends Gui {
                 line(muted[i] ? "Muted" : "Not muted", muted[i] ? NamedTextColor.RED : NamedTextColor.GREEN),
                 line("Warns: " + warns[i], NamedTextColor.GRAY))));
         }
-        if (page > 0) inventory.setItem(PREV, Items.button(Material.ARROW, Component.text("Previous", NamedTextColor.GRAY),
-            List.of(hint("Go to the previous page"))));
-        inventory.setItem(SEARCH, Items.button(Material.OAK_SIGN, Component.text("Search", NamedTextColor.AQUA),
+        boolean hasNext = from + PAGE_SIZE < players.size();
+        navBar(page > 0, hasNext, true);
+        inventory.setItem(NAV_ACT_L1, Items.button(Material.OAK_SIGN, Component.text("Search", NamedTextColor.AQUA),
             List.of(hint("Find a player by name"))));
-        inventory.setItem(REPORTS, Items.button(Material.BOOK, Component.text("Reports", NamedTextColor.AQUA),
+        inventory.setItem(NAV_ACT_L2, Items.button(Material.BOOK, Component.text("Reports", NamedTextColor.AQUA),
             List.of(hint("View open player reports"),
                     line("Open: " + reportCount, NamedTextColor.GRAY))));
-        inventory.setItem(PANEL, Items.button(Material.COMPARATOR,
-            Component.text("Back to menu", NamedTextColor.AQUA),
-            List.of(hint("Return to the main menu"))));
-        inventory.setItem(CLOSE, Items.button(Material.BARRIER, Component.text("Close", NamedTextColor.RED),
-            List.of(hint("Close this menu"))));
-        if (from + PAGE_SIZE < players.size()) inventory.setItem(NEXT, Items.button(Material.ARROW, Component.text("Next", NamedTextColor.GRAY),
-            List.of(hint("Go to the next page"))));
-        fillEmpty();
     }
 
     private static Component hint(String text) {
@@ -127,17 +118,17 @@ public final class PlayersGui extends Gui {
         event.setCancelled(true);
         Player mod = (Player) event.getWhoClicked();
         int slot = event.getRawSlot();
-        if (slot == PREV) { PlayersGui.open(plugin, page - 1, mod); return; }
-        if (slot == NEXT) { PlayersGui.open(plugin, page + 1, mod); return; }
-        if (slot == CLOSE) { mod.closeInventory(); return; }
-        if (slot == SEARCH) {
+        if (slot == NAV_PREV) { PlayersGui.open(plugin, page - 1, mod); return; }
+        if (slot == NAV_NEXT) { PlayersGui.open(plugin, page + 1, mod); return; }
+        if (slot == NAV_CLOSE) { mod.closeInventory(); return; }
+        if (slot == NAV_BACK) { new AdminPanelGui(plugin).open(mod); return; }
+        if (slot == NAV_ACT_L1) {
             mod.closeInventory();
             mod.sendMessage(plugin.messages().prefixed("enter-search"));
             plugin.chatInput().await(mod.getUniqueId(), q -> SearchResultsGui.open(plugin, q, mod));
             return;
         }
-        if (slot == REPORTS) { ReportsGui.open(plugin, 0, mod); return; }
-        if (slot == PANEL) { new AdminPanelGui(plugin).open(mod); return; }
+        if (slot == NAV_ACT_L2) { ReportsGui.open(plugin, 0, mod); return; }
         int index = page * PAGE_SIZE + slot;
         if (slot >= 0 && slot < PAGE_SIZE && index < players.size()) {
             PlayerActionsGui.open(plugin, players.get(index), mod);

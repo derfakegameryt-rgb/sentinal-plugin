@@ -18,7 +18,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public final class ChatLogGui extends Gui {
-    private static final int BACK = 45, CLOSE = 53;
     private static final DateTimeFormatter DATE =
         DateTimeFormatter.ofPattern("MM-dd HH:mm").withZone(ZoneOffset.UTC);
 
@@ -41,8 +40,7 @@ public final class ChatLogGui extends Gui {
                 Component.text(e.text(), cmd ? NamedTextColor.YELLOW : NamedTextColor.WHITE),
                 List.of(grey(e.kind() + " · " + DATE.format(Instant.ofEpochMilli(e.createdAt()))))));
         }
-        inventory.setItem(BACK, Items.button(Material.ARROW, Component.text("Back", NamedTextColor.GRAY), List.of()));
-        inventory.setItem(CLOSE, Items.button(Material.BARRIER, Component.text("Close", NamedTextColor.RED), List.of()));
+        navBar(false, false, true);
         fillEmpty();
     }
 
@@ -53,7 +51,7 @@ public final class ChatLogGui extends Gui {
     public void onClick(InventoryClickEvent event) {
         event.setCancelled(true);
         Player p = (Player) event.getWhoClicked();
-        if (event.getRawSlot() == BACK) PlayerActionsGui.open(plugin, target, p);
-        else if (event.getRawSlot() == CLOSE) p.closeInventory();
+        if (event.getRawSlot() == Gui.NAV_BACK) PlayerActionsGui.open(plugin, target, p);
+        else if (event.getRawSlot() == Gui.NAV_CLOSE) p.closeInventory();
     }
 }

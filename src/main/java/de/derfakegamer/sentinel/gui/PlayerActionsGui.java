@@ -139,7 +139,7 @@ public final class PlayerActionsGui extends Gui {
                                : net.kyori.adventure.text.format.NamedTextColor.GREEN),
             List.of(net.kyori.adventure.text.Component.text("Toggle operator status", net.kyori.adventure.text.format.NamedTextColor.GRAY)
                 .decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false))));
-        inventory.setItem(BACK, Items.button(Material.ARROW, Component.text("Back", NamedTextColor.GRAY),
+        inventory.setItem(BACK, Items.button(Material.OAK_DOOR, Component.text("Back", NamedTextColor.GRAY),
             List.of(hint("Return to the player list"))));
         inventory.setItem(CLOSE, Items.button(Material.BARRIER, Component.text("Close", NamedTextColor.RED),
             List.of(hint("Close this menu"))));

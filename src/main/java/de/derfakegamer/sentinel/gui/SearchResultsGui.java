@@ -7,7 +7,6 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -20,7 +19,6 @@ import java.util.UUID;
 
 public final class SearchResultsGui extends Gui {
     private static final int PAGE_SIZE = 45;
-    private static final int BACK = 45, CLOSE = 53;
 
     private final List<OfflinePlayer> results = new ArrayList<>();
 
@@ -58,8 +56,7 @@ public final class SearchResultsGui extends Gui {
                 List.of(Component.text("Click to open actions", NamedTextColor.GRAY)
                     .decoration(TextDecoration.ITALIC, false))));
         }
-        inventory.setItem(BACK, Items.button(Material.ARROW, Component.text("Back", NamedTextColor.GRAY), List.of()));
-        inventory.setItem(CLOSE, Items.button(Material.BARRIER, Component.text("Close", NamedTextColor.RED), List.of()));
+        navBar(false, false, true);
         fillEmpty();
     }
 
@@ -68,8 +65,8 @@ public final class SearchResultsGui extends Gui {
         event.setCancelled(true);
         Player mod = (Player) event.getWhoClicked();
         int slot = event.getRawSlot();
-        if (slot == BACK) { PlayersGui.open(plugin, 0, mod); return; }
-        if (slot == CLOSE) { mod.closeInventory(); return; }
+        if (slot == Gui.NAV_BACK) { PlayersGui.open(plugin, 0, mod); return; }
+        if (slot == Gui.NAV_CLOSE) { mod.closeInventory(); return; }
         if (slot >= 0 && slot < PAGE_SIZE && slot < results.size())
             PlayerActionsGui.open(plugin, results.get(slot), mod);
     }
