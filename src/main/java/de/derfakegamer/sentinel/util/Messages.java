@@ -25,6 +25,17 @@ public final class Messages {
         return deserialize(raw(key), placeholders);
     }
 
+    /** Reads a YAML string-list at {@code key} as multi-line lore: one Component per line, italic off. */
+    public java.util.List<net.kyori.adventure.text.Component> list(String key, String... placeholders) {
+        java.util.List<String> lines = config.getStringList(key);
+        java.util.List<net.kyori.adventure.text.Component> out = new java.util.ArrayList<>(lines.size());
+        for (String line : lines) {
+            out.add(deserialize(line, placeholders)
+                .decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false));
+        }
+        return out;
+    }
+
     /**
      * Deserializes a MiniMessage template, but never throws: a single bad tag in a config
      * value must not blow up a command or listener. On any parse failure we fall back to the
