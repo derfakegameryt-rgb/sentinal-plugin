@@ -25,7 +25,7 @@ public final class ChatLogGui extends Gui {
 
     /** Async opener: fetches recent entries off the main thread, then constructs and opens the GUI on the main thread. */
     public static void open(Sentinel plugin, OfflinePlayer target, Player viewer) {
-        plugin.db().callback(plugin.chatLog().recent(target.getUniqueId(), 45),
+        plugin.db().callbackOrError(viewer, plugin.chatLog().recent(target.getUniqueId(), 45),
             entries -> new ChatLogGui(plugin, target, entries).open(viewer));
     }
 

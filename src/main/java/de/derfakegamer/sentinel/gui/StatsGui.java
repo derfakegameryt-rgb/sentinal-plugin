@@ -21,7 +21,7 @@ public final class StatsGui extends Gui {
      * Use this instead of {@code new StatsGui(...).open(viewer)}.
      */
     public static void open(Sentinel plugin, Player viewer) {
-        plugin.db().callback(plugin.players().topByPlaytime(45),
+        plugin.db().callbackOrError(viewer, plugin.players().topByPlaytime(45),
             top -> new StatsGui(plugin, top).open(viewer));
     }
 

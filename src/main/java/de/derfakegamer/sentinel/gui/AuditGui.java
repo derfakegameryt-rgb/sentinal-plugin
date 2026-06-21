@@ -20,7 +20,7 @@ public final class AuditGui extends Gui {
 
     public static void open(Sentinel plugin, Player viewer, int page) {
         int p = Math.max(0, page);
-        plugin.db().callback(plugin.audit().recent(PAGE_SIZE, p * PAGE_SIZE),
+        plugin.db().callbackOrError(viewer, plugin.audit().recent(PAGE_SIZE, p * PAGE_SIZE),
             list -> new AuditGui(plugin, list == null ? List.of() : list, p).open(viewer));
     }
 

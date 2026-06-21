@@ -28,7 +28,7 @@ public final class AppealsGui extends Gui {
 
     /** Fetches the open appeals list asynchronously and opens the GUI on the main thread. */
     public static void open(Sentinel plugin, Player viewer, int page) {
-        plugin.db().callback(plugin.appeals().open(), appeals -> new AppealsGui(plugin, page, appeals).open(viewer));
+        plugin.db().callbackOrError(viewer, plugin.appeals().open(), appeals -> new AppealsGui(plugin, page, appeals).open(viewer));
     }
 
     public AppealsGui(Sentinel plugin, int page, List<Appeal> appeals) {

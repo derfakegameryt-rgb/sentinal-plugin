@@ -55,7 +55,7 @@ public final class PlayerActionsGui extends Gui {
 
         CompletableFuture<Void> all = CompletableFuture.allOf(banFut, muteFut, shadowFut, warnFut, ipFut);
         // thenAccept runs on the DB executor thread (futures are already done, so join() is safe)
-        plugin.db().callback(all, ignored -> {
+        plugin.db().callbackOrError(viewer, all, ignored -> {
             boolean banned      = banFut.join() != null;
             boolean muted       = muteFut.join() != null;
             boolean shadowMuted = shadowFut.join() != null;

@@ -24,7 +24,7 @@ public final class ModStatsGui extends Gui {
         long since = System.currentTimeMillis() - WINDOW_MS;
         CompletableFuture<List<ActorCount>> topFuture = plugin.audit().topActors(since, 10);
         CompletableFuture<List<ActionCount>> byActFuture = plugin.audit().countsByAction(since);
-        plugin.db().callback(CompletableFuture.allOf(topFuture, byActFuture), ignored -> {
+        plugin.db().callbackOrError(viewer, CompletableFuture.allOf(topFuture, byActFuture), ignored -> {
             List<ActorCount> top = topFuture.getNow(List.of());
             List<ActionCount> byAct = byActFuture.getNow(List.of());
             new ModStatsGui(plugin, top, byAct).open(viewer);
