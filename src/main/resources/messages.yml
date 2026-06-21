@@ -248,3 +248,57 @@ gui:
     close: "<red>Close"
     close-lore:
       - "<gray>Close this menu"
+  bans:
+    entry-perm-lore:
+      - "<gray>Reason: <reason>"
+      - "<gray>By: <issuer>"
+      - "<gray>Permanent"
+      - "<gray>Click to manage / unban"
+    entry-temp-lore:
+      - "<gray>Reason: <reason>"
+      - "<gray>By: <issuer>"
+      - "<gray>Temporary"
+      - "<gray>Click to manage / unban"
+  mutes:
+    entry-perm-lore:
+      - "<gray>Reason: <reason>"
+      - "<gray>By: <issuer>"
+      - "<gray>Permanent"
+      - "<gray>Click to manage / unmute"
+    entry-temp-lore:
+      - "<gray>Reason: <reason>"
+      - "<gray>By: <issuer>"
+      - "<gray>Temporary"
+      - "<gray>Click to manage / unmute"
+  history:
+    reason-lore:
+      - "<gray>Reason: <reason>"
+      - "<gray>By: <issuer>"
+      - "<gray>Date: <date>"
+    active: "<red>Active"
+    expired: "<green>Removed/expired"
+  operators:
+    status-online: "<gray>Online"
+    status-offline: "<gray>Offline"
+    manage-lore:
+      - "<gray>Click to manage"
+  reports:
+    entry-lore:
+      - "<gray>Reported by: <reporter>"
+      - "<gray>Reason: <reason>"
+      - "<gray>At: <date>"
+      - "<gray>Left: teleport  Right: actions  Shift: handled"
+  appeals:
+    type-lore:
+      - "<gray>Type: <type>"
+    at-lore:
+      - "<gray>At: <date>"
+    actions-lore:
+      - "<gray>Left-click: Accept · Right-click: Deny"
+  audit:
+    by-lore:
+      - "<gray>By: <actor>"
+    details-lore:
+      - "<gray><details>"
+    time-lore:
+      - "<gray><ago>"

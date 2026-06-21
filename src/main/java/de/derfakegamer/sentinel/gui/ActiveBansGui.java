@@ -6,7 +6,6 @@ import de.derfakegamer.sentinel.model.PunishmentType;
 import de.derfakegamer.sentinel.util.Items;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -33,17 +32,15 @@ public final class ActiveBansGui extends Gui {
         int from = page * PAGE_SIZE;
         for (int i = 0; i < PAGE_SIZE && from + i < bans.size(); i++) {
             Punishment b = bans.get(from + i);
+            String loreKey = b.isPermanent() ? "gui.bans.entry-perm-lore" : "gui.bans.entry-temp-lore";
             inventory.setItem(i, Items.head(Bukkit.getOfflinePlayer(b.targetUuid()),
                 Component.text(b.targetName(), NamedTextColor.AQUA),
-                List.of(grey("Reason: " + b.reason()),
-                        grey("By: " + b.issuerName()),
-                        grey(b.isPermanent() ? "Permanent" : "Temporary"),
-                        grey("Click to manage / unban"))));
+                plugin.messages().list(loreKey,
+                    "reason", b.reason(),
+                    "issuer", b.issuerName())));
         }
         navBar(page > 0, from + PAGE_SIZE < bans.size(), true);
     }
-
-    private Component grey(String s) { return Component.text(s, NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false); }
 
     @Override
     public void onClick(InventoryClickEvent event) {

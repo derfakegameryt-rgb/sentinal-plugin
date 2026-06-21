@@ -31,11 +31,11 @@ public final class OperatorsGui extends Gui {
         for (int i = 0; i < PAGE_SIZE && from + i < ops.size(); i++) {
             OfflinePlayer op = ops.get(from + i);
             String name = op.getName() != null ? op.getName() : op.getUniqueId().toString();
-            inventory.setItem(i, Items.head(op, Component.text(name, NamedTextColor.AQUA),
-                List.of(Component.text(op.isOnline() ? "Online" : "Offline", NamedTextColor.GRAY)
-                            .decoration(TextDecoration.ITALIC, false),
-                        Component.text("Click to manage", NamedTextColor.GRAY)
-                            .decoration(TextDecoration.ITALIC, false))));
+            String statusKey = op.isOnline() ? "gui.operators.status-online" : "gui.operators.status-offline";
+            List<Component> lore = new ArrayList<>();
+            lore.add(plugin.messages().plain(statusKey).decoration(TextDecoration.ITALIC, false));
+            lore.addAll(plugin.messages().list("gui.operators.manage-lore"));
+            inventory.setItem(i, Items.head(op, Component.text(name, NamedTextColor.AQUA), lore));
         }
         navBar(page > 0, from + PAGE_SIZE < ops.size(), true);
     }

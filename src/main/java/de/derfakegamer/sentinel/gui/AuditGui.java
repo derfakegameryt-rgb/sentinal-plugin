@@ -5,12 +5,12 @@ import de.derfakegamer.sentinel.model.AuditEntry;
 import de.derfakegamer.sentinel.util.Items;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public final class AuditGui extends Gui {
@@ -31,17 +31,17 @@ public final class AuditGui extends Gui {
         this.inventory = Bukkit.createInventory(this, 54, plugin.messages().plain("gui-audit-title"));
         for (int i = 0; i < entries.size() && i < PAGE_SIZE; i++) {
             AuditEntry e = entries.get(i);
+            String details = e.details() == null || e.details().isBlank() ? "—" : e.details();
+            List<Component> lore = new ArrayList<>();
+            lore.addAll(plugin.messages().list("gui.audit.by-lore", "actor", e.actor()));
+            lore.addAll(plugin.messages().list("gui.audit.details-lore", "details", details));
+            lore.addAll(plugin.messages().list("gui.audit.time-lore",
+                "ago", de.derfakegamer.sentinel.util.TimeFormat.ago(e.createdAt())));
             inventory.setItem(i, Items.button(Material.PAPER,
                 Component.text(e.action() + (e.target() == null ? "" : " · " + e.target()), NamedTextColor.AQUA),
-                List.of(line("By: " + e.actor()),
-                        line(e.details() == null || e.details().isBlank() ? "—" : e.details()),
-                        line(de.derfakegamer.sentinel.util.TimeFormat.ago(e.createdAt())))));
+                lore));
         }
         navBar(page > 0, entries.size() == PAGE_SIZE, true);
-    }
-
-    private static Component line(String s) {
-        return Component.text(s, NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false);
     }
 
     @Override
