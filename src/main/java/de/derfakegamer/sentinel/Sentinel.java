@@ -149,6 +149,14 @@ public class Sentinel extends JavaPlugin {
         if (playerDirectory != null) {
             try { playerDirectory.flushSessions(); } catch (Exception ignored) {}
         }
+        // Flush batch writers before shutting down the DB executor so that
+        // any buffered chat-log and audit rows are written before the connection closes.
+        if (chatLogManager != null) {
+            try { chatLogManager.flush(); } catch (Exception ignored) {}
+        }
+        if (auditManager != null) {
+            try { auditManager.flush(); } catch (Exception ignored) {}
+        }
         if (discordService != null) {
             try { discordService.shutdown(); } catch (Exception ignored) {}
         }

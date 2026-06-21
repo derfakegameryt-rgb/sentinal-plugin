@@ -18,9 +18,16 @@ public final class SqliteDatabase implements Database {
         createSchema();
     }
 
-    @Override public Connection connection() { return connection; }
+    @Override public Connection connection() {
+        Connection bound = Database.ThreadLocalHolder.CURRENT.get();
+        return bound != null ? bound : connection;
+    }
     @Override public SqlDialect dialect() { return SqlDialect.SQLITE; }
     @Override public void ensureValid() { /* local file connection: always valid */ }
+
+    @Override public Connection acquire() { return connection; }
+    @Override public void release(Connection c) { /* single connection: nothing to return */ }
+    @Override public boolean supportsConcurrentReads() { return false; }
 
     private void createSchema() throws SQLException {
         try (Statement st = connection.createStatement()) {

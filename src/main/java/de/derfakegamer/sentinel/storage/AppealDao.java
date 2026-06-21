@@ -14,7 +14,7 @@ public final class AppealDao {
     public AppealDao(Database db) { this.db = db; }
 
     public long insert(Appeal a) {
-        synchronized (db) {
+        {
             String sql = """
                 INSERT INTO appeals (punishment_id,target_uuid,target_name,type,text,status,created_at,handled_by,handled_at)
                 VALUES (?,?,?,?,?,'OPEN',?,?,0)""";
@@ -33,7 +33,7 @@ public final class AppealDao {
     }
 
     public List<Appeal> findOpen() {
-        synchronized (db) {
+        {
             String sql = "SELECT * FROM appeals WHERE status='OPEN' ORDER BY created_at ASC";
             List<Appeal> out = new ArrayList<>();
             try (PreparedStatement ps = db.connection().prepareStatement(sql);
@@ -45,7 +45,7 @@ public final class AppealDao {
     }
 
     public Appeal byId(long id) {
-        synchronized (db) {
+        {
             String sql = "SELECT * FROM appeals WHERE id=?";
             try (PreparedStatement ps = db.connection().prepareStatement(sql)) {
                 ps.setLong(1, id);
@@ -57,7 +57,7 @@ public final class AppealDao {
     }
 
     public boolean hasOpenForTarget(UUID uuid) {
-        synchronized (db) {
+        {
             String sql = "SELECT 1 FROM appeals WHERE target_uuid=? AND status='OPEN' LIMIT 1";
             try (PreparedStatement ps = db.connection().prepareStatement(sql)) {
                 ps.setString(1, uuid.toString());
@@ -67,7 +67,7 @@ public final class AppealDao {
     }
 
     public void setStatus(long id, String status, String handledBy, long handledAt) {
-        synchronized (db) {
+        {
             String sql = "UPDATE appeals SET status=?, handled_by=?, handled_at=? WHERE id=?";
             try (PreparedStatement ps = db.connection().prepareStatement(sql)) {
                 ps.setString(1, status);

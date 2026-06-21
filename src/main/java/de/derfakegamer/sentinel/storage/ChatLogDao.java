@@ -13,7 +13,7 @@ public final class ChatLogDao {
     public ChatLogDao(Database db) { this.db = db; }
 
     public void log(UUID uuid, String name, String kind, String text, long now) {
-        synchronized (db) {
+        {
             String sql = "INSERT INTO chatlog (uuid,name,kind,text,created_at) VALUES (?,?,?,?,?)";
             try (PreparedStatement ps = db.connection().prepareStatement(sql)) {
                 ps.setString(1, uuid.toString());
@@ -28,7 +28,7 @@ public final class ChatLogDao {
 
     /** Deletes log rows created before {@code cutoff} (epoch millis). Returns rows removed. */
     public int deleteOlderThan(long cutoff) {
-        synchronized (db) {
+        {
             try (PreparedStatement ps = db.connection().prepareStatement("DELETE FROM chatlog WHERE created_at < ?")) {
                 ps.setLong(1, cutoff);
                 return ps.executeUpdate();
@@ -36,8 +36,30 @@ public final class ChatLogDao {
         }
     }
 
+    /**
+     * Inserts multiple chat-log rows in a single batched statement.
+     * Each entry carries its own (uuid, name, kind, text, createdAt) values.
+     */
+    public void insertBatch(List<ChatLogEntry> entries) {
+        if (entries == null || entries.isEmpty()) return;
+        {
+            String sql = "INSERT INTO chatlog (uuid,name,kind,text,created_at) VALUES (?,?,?,?,?)";
+            try (PreparedStatement ps = db.connection().prepareStatement(sql)) {
+                for (ChatLogEntry e : entries) {
+                    ps.setString(1, e.uuid().toString());
+                    ps.setString(2, e.name());
+                    ps.setString(3, e.kind());
+                    ps.setString(4, e.text());
+                    ps.setLong(5, e.createdAt());
+                    ps.addBatch();
+                }
+                ps.executeBatch();
+            } catch (SQLException e) { throw new RuntimeException(e); }
+        }
+    }
+
     public List<ChatLogEntry> recent(UUID uuid, int limit) {
-        synchronized (db) {
+        {
             List<ChatLogEntry> out = new ArrayList<>();
             String sql = "SELECT * FROM chatlog WHERE uuid=? ORDER BY created_at DESC, id DESC LIMIT ?";
             try (PreparedStatement ps = db.connection().prepareStatement(sql)) {

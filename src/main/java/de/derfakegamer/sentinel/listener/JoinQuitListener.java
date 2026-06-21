@@ -1,6 +1,8 @@
 package de.derfakegamer.sentinel.listener;
 
 import de.derfakegamer.sentinel.Sentinel;
+import de.derfakegamer.sentinel.model.PlayerRecord;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -13,8 +15,20 @@ public final class JoinQuitListener implements Listener {
 
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
-        plugin.vanish().applyOnJoin(event.getPlayer());
-        plugin.players().startSession(event.getPlayer().getUniqueId());
+        Player player = event.getPlayer();
+        plugin.vanish().applyOnJoin(player);
+        plugin.players().startSession(player.getUniqueId());
+
+        // Populate the online-player cache now that the player has been fully admitted
+        // (past ban/maintenance checks).  playtime is 0 intentionally — the live session
+        // playtime is not committed until quit; callers needing accurate playtime must
+        // use PlayerDirectory#playtime(UUID).
+        long now = System.currentTimeMillis();
+        String ip = player.getAddress() != null
+                ? player.getAddress().getAddress().getHostAddress()
+                : null;
+        PlayerRecord rec = new PlayerRecord(player.getUniqueId(), player.getName(), ip, now, now, 0);
+        plugin.players().cacheOnline(rec);
     }
 
     /** Drop staff-chat mode when a player disconnects so it can't linger if the UUID is de-op'd offline. */
@@ -23,5 +37,6 @@ public final class JoinQuitListener implements Listener {
         plugin.staffChat().clear(event.getPlayer().getUniqueId());
         plugin.chatModeration().forget(event.getPlayer().getUniqueId());
         plugin.players().endSession(event.getPlayer().getUniqueId());
+        plugin.players().evict(event.getPlayer().getUniqueId(), event.getPlayer().getName());
     }
 }

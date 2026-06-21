@@ -59,4 +59,30 @@ class PunishmentManagerTest {
         mgr.warn(target, "Notch", issuer, "Admin", "spam").get(2, TimeUnit.SECONDS);
         assertEquals(2, mgr.warnCount(target).get(2, TimeUnit.SECONDS));
     }
+
+    // ---- mute-cache behaviour ----
+
+    @Test void activeMuteCachedWithinTtlAndInvalidatedOnUnmute() throws Exception {
+        long now = System.currentTimeMillis();
+        // mute the target → populates muteCache on first activeMute call
+        assertTrue(mgr.mute(target, "Notch", issuer, "Admin", "spam", 0).get(2, TimeUnit.SECONDS).isSuccess());
+        assertNotNull(mgr.activeMute(target, now).get(2, TimeUnit.SECONDS)); // populates cache
+        // second call within TTL must still return the muted value (proves cache is consulted)
+        assertNotNull(mgr.activeMute(target, now).get(2, TimeUnit.SECONDS));
+        // unmute → must invalidate the cache so the next activeMute reflects the fresh DB state
+        assertTrue(mgr.unmute(target, "Admin", now).get(2, TimeUnit.SECONDS));
+        assertNull(mgr.activeMute(target, now).get(2, TimeUnit.SECONDS)); // fresh read → not muted
+    }
+
+    @Test void activeMuteCacheNotSharedWithShadowMute() throws Exception {
+        long now = System.currentTimeMillis();
+        // shadow-mute the target
+        assertTrue(mgr.shadowMute(target, "Notch", issuer, "Admin", "test", 0).get(2, TimeUnit.SECONDS).isSuccess());
+        // shadow-mute must NOT pollute the regular mute cache
+        assertNull(mgr.activeMute(target, now).get(2, TimeUnit.SECONDS));
+        assertNotNull(mgr.activeShadowMute(target, now).get(2, TimeUnit.SECONDS));
+        // unShadowMute must invalidate the shadow cache so the next check returns null
+        assertTrue(mgr.unShadowMute(target, "Admin", now).get(2, TimeUnit.SECONDS));
+        assertNull(mgr.activeShadowMute(target, now).get(2, TimeUnit.SECONDS));
+    }
 }

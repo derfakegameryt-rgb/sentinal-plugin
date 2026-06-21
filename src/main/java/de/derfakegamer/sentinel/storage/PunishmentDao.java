@@ -14,7 +14,7 @@ public final class PunishmentDao {
     public PunishmentDao(Database db) { this.db = db; }
 
     public long insert(Punishment p) {
-      synchronized (db) {
+      {
         String sql = """
             INSERT INTO punishments
               (type,target_uuid,target_name,target_ip,reason,issuer_uuid,issuer_name,
@@ -42,8 +42,8 @@ public final class PunishmentDao {
     }
 
     public Punishment findActive(PunishmentType type, UUID target) {
-      synchronized (db) {
-        String sql = "SELECT * FROM punishments WHERE type=? AND target_uuid=? AND active=1 LIMIT 1";
+      {
+        String sql = "SELECT id,type,target_uuid,target_name,target_ip,reason,issuer_uuid,issuer_name,created_at,expires_at,active,removed_by,removed_at FROM punishments WHERE type=? AND target_uuid=? AND active=1 LIMIT 1";
         try (PreparedStatement ps = db.connection().prepareStatement(sql)) {
             ps.setString(1, type.name());
             ps.setString(2, target.toString());
@@ -53,7 +53,7 @@ public final class PunishmentDao {
     }
 
     public Punishment findActiveByIp(PunishmentType type, String ip) {
-      synchronized (db) {
+      {
         String sql = "SELECT * FROM punishments WHERE type=? AND target_ip=? AND active=1 LIMIT 1";
         try (PreparedStatement ps = db.connection().prepareStatement(sql)) {
             ps.setString(1, type.name());
@@ -64,7 +64,7 @@ public final class PunishmentDao {
     }
 
     public void deactivate(long id, String removedBy, long removedAt) {
-      synchronized (db) {
+      {
         String sql = "UPDATE punishments SET active=0, removed_by=?, removed_at=? WHERE id=?";
         try (PreparedStatement ps = db.connection().prepareStatement(sql)) {
             ps.setString(1, removedBy);
@@ -76,7 +76,7 @@ public final class PunishmentDao {
     }
 
     public List<Punishment> findHistory(UUID target) {
-      synchronized (db) {
+      {
         String sql = "SELECT * FROM punishments WHERE target_uuid=? ORDER BY created_at DESC";
         List<Punishment> out = new ArrayList<>();
         try (PreparedStatement ps = db.connection().prepareStatement(sql)) {
@@ -89,9 +89,9 @@ public final class PunishmentDao {
 
     public java.util.List<de.derfakegamer.sentinel.model.Punishment> findActiveByType(
             de.derfakegamer.sentinel.model.PunishmentType type) {
-        synchronized (db) {
+        {
             java.util.List<de.derfakegamer.sentinel.model.Punishment> out = new java.util.ArrayList<>();
-            String sql = "SELECT * FROM punishments WHERE type=? AND active=1 ORDER BY created_at DESC";
+            String sql = "SELECT id,type,target_uuid,target_name,target_ip,reason,issuer_uuid,issuer_name,created_at,expires_at,active,removed_by,removed_at FROM punishments WHERE type=? AND active=1 ORDER BY created_at DESC";
             try (java.sql.PreparedStatement ps = db.connection().prepareStatement(sql)) {
                 ps.setString(1, type.name());
                 try (java.sql.ResultSet rs = ps.executeQuery()) { while (rs.next()) out.add(map(rs)); }
@@ -101,7 +101,7 @@ public final class PunishmentDao {
     }
 
     public int countWarns(UUID target) {
-      synchronized (db) {
+      {
         String sql = "SELECT COUNT(*) FROM punishments WHERE type='WARN' AND target_uuid=? AND active=1";
         try (PreparedStatement ps = db.connection().prepareStatement(sql)) {
             ps.setString(1, target.toString());
