@@ -6,7 +6,9 @@ import org.bukkit.command.*;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
-public final class AppealCommand implements CommandExecutor {
+import java.util.List;
+
+public final class AppealCommand implements CommandExecutor, TabCompleter {
     private final Sentinel plugin;
     public AppealCommand(Sentinel plugin) { this.plugin = plugin; }
 
@@ -29,5 +31,12 @@ public final class AppealCommand implements CommandExecutor {
             });
         });
         return true;
+    }
+
+    @Override
+    public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command,
+                                      @NotNull String label, @NotNull String[] args) {
+        // /appeal <reason text> — no structured completion useful here
+        return List.of();
     }
 }

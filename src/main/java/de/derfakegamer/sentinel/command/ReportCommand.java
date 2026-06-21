@@ -1,14 +1,18 @@
 package de.derfakegamer.sentinel.command;
 
 import de.derfakegamer.sentinel.Sentinel;
+import de.derfakegamer.sentinel.util.Completions;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
 import org.jetbrains.annotations.NotNull;
 
-public final class ReportCommand implements CommandExecutor {
+import java.util.List;
+
+public final class ReportCommand implements CommandExecutor, TabCompleter {
     private final Sentinel plugin;
 
     public ReportCommand(Sentinel plugin) { this.plugin = plugin; }
@@ -25,5 +29,14 @@ public final class ReportCommand implements CommandExecutor {
                 ? plugin.messages().prefixed("report-filed")
                 : plugin.messages().prefixed("report-self")));
         return true;
+    }
+
+    @Override
+    public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command,
+                                      @NotNull String label, @NotNull String[] args) {
+        if (args.length == 1) return Completions.players(args[0]);
+        if (args.length >= 2) return Completions.reasons(args[args.length - 1],
+            plugin.getConfig().getStringList("reasons"));
+        return List.of();
     }
 }

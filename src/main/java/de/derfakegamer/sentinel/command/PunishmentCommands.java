@@ -3,6 +3,7 @@ package de.derfakegamer.sentinel.command;
 import de.derfakegamer.sentinel.Sentinel;
 import de.derfakegamer.sentinel.manager.PunishmentManager;
 import de.derfakegamer.sentinel.model.Punishment;
+import de.derfakegamer.sentinel.util.Completions;
 import de.derfakegamer.sentinel.util.DurationParser;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -138,29 +139,17 @@ public final class PunishmentCommands implements CommandExecutor, TabCompleter {
         return true;
     }
 
-    private static final java.util.List<String> DURATIONS =
-        java.util.List.of("30m", "1h", "6h", "12h", "1d", "3d", "7d", "30d");
-
     @Override
     public java.util.List<String> onTabComplete(org.bukkit.command.CommandSender sender,
             org.bukkit.command.Command command, String label, String[] args) {
         if (!sender.hasPermission("sentinel.use")) return java.util.List.of();
         boolean temp = command.getName().equalsIgnoreCase("tempban")
             || command.getName().equalsIgnoreCase("tempmute");
-        if (args.length == 1) {
-            java.util.List<String> names = new java.util.ArrayList<>();
-            for (org.bukkit.entity.Player p : org.bukkit.Bukkit.getOnlinePlayers()) names.add(p.getName());
-            return filter(names, args[0]);
-        }
-        if (args.length == 2 && temp) return filter(DURATIONS, args[1]);
+        if (args.length == 1) return Completions.players(args[0]);
+        if (args.length == 2 && temp) return Completions.durations(args[1]);
+        if (args.length >= 2 && !temp) return Completions.reasons(args[args.length - 1],
+            plugin.getConfig().getStringList("reasons"));
         return java.util.List.of();
-    }
-
-    private static java.util.List<String> filter(java.util.List<String> options, String prefix) {
-        String low = prefix.toLowerCase();
-        java.util.List<String> out = new java.util.ArrayList<>();
-        for (String o : options) if (o.toLowerCase().startsWith(low)) out.add(o);
-        return out;
     }
 
     private record Target(UUID id, String name, String ip) {}

@@ -4,10 +4,13 @@ import de.derfakegamer.sentinel.Sentinel;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
-public final class StaffChatCommand implements CommandExecutor {
+import java.util.List;
+
+public final class StaffChatCommand implements CommandExecutor, TabCompleter {
     private final Sentinel plugin;
 
     public StaffChatCommand(Sentinel plugin) { this.plugin = plugin; }
@@ -24,5 +27,12 @@ public final class StaffChatCommand implements CommandExecutor {
         }
         plugin.staffChat().send(sender.getName(), String.join(" ", args));
         return true;
+    }
+
+    @Override
+    public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command,
+                                      @NotNull String label, @NotNull String[] args) {
+        // /sc [message] — free-text staff message, no structured completion
+        return List.of();
     }
 }
