@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.logging.Logger;
 
 public final class MysqlDatabase implements Database {
     /** Size of the in-house reader pool. Small on purpose: lean, no HikariCP. */
@@ -104,6 +105,7 @@ public final class MysqlDatabase implements Database {
                 }
             }
         }
+        SchemaMigrator.migrate(this, Logger.getLogger("Sentinel"));
     }
 
     @Override public void close() {

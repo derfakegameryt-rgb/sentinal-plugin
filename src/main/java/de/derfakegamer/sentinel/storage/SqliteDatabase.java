@@ -5,6 +5,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.logging.Logger;
 
 public final class SqliteDatabase implements Database {
     private final Connection connection;
@@ -33,10 +34,7 @@ public final class SqliteDatabase implements Database {
         try (Statement st = connection.createStatement()) {
             for (String sql : SqlDialect.SQLITE.schemaStatements()) st.executeUpdate(sql);
         }
-        // Back-compat: older DBs created before the playtime column existed.
-        try (Statement alter = connection.createStatement()) {
-            alter.executeUpdate("ALTER TABLE players ADD COLUMN playtime INTEGER NOT NULL DEFAULT 0");
-        } catch (SQLException ignored) { /* column already exists */ }
+        SchemaMigrator.migrate(this, Logger.getLogger("Sentinel"));
     }
 
     @Override public void close() {
