@@ -47,8 +47,8 @@ public class Sentinel extends JavaPlugin {
         saveDefaultConfig();
         getConfig().options().copyDefaults(true);
         saveConfig();
-        saveResource("messages.yml", false);
-        saveResource("rules.txt", false);
+        saveResourceIfMissing("messages.yml");
+        saveResourceIfMissing("rules.txt");
         mergeMessagesDefaults();
         de.derfakegamer.sentinel.util.ConfigValidator.validate(getConfig(), getLogger());
         this.messages = new Messages(loadMessages());
@@ -238,5 +238,14 @@ public class Sentinel extends JavaPlugin {
         } catch (java.io.IOException e) {
             getLogger().warning("Could not migrate messages.yml: " + e.getMessage());
         }
+    }
+
+    /**
+     * Copies a bundled default resource to the data folder only when it is not already there.
+     * Avoids Bukkit's noisy "already exists" warning from {@code saveResource(name, false)} on
+     * every restart once the admin has their own copy.
+     */
+    private void saveResourceIfMissing(String name) {
+        if (!new File(getDataFolder(), name).exists()) saveResource(name, false);
     }
 }
