@@ -329,8 +329,8 @@ class DatabaseExecutorTest {
             net.kyori.adventure.text.Component msg = viewer.nextComponentMessage();
             assertNotNull(msg, "viewer must receive an error message");
             String text = PlainTextComponentSerializer.plainText().serialize(msg);
-            assertTrue(text.contains("went wrong") || text.contains("db-error"),
-                "error message must describe the failure, got: " + text);
+            assertTrue(text.contains("went wrong"),
+                "viewer must get the rendered db-error message (not the raw key), got: " + text);
         }
 
         @Test
