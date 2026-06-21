@@ -50,6 +50,11 @@ public final class Items {
     }
 
     public static ItemStack filler() {
-        return button(Material.GRAY_STAINED_GLASS_PANE, Component.text(" "), null);
+        return button(Material.BLACK_STAINED_GLASS_PANE, Component.text(" "), null);
+    }
+
+    /** The theme accent pane (closest stock glass to the plugin blue #3B82F6). */
+    public static ItemStack accent() {
+        return button(Material.LIGHT_BLUE_STAINED_GLASS_PANE, Component.text(" "), null);
     }
 }

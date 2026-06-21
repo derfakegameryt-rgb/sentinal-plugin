@@ -31,7 +31,7 @@ class ReportsGuiTest {
         int items = 0;
         for (int i = 0; i <= 44; i++) {
             var item = gui.getInventory().getItem(i);
-            if (item != null && item.getType() != Material.GRAY_STAINED_GLASS_PANE) items++;
+            if (item != null && item.getType() != Material.BLACK_STAINED_GLASS_PANE) items++;
         }
         assertEquals(1, items);
     }

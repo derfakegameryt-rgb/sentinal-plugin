@@ -37,7 +37,7 @@ public abstract class Gui implements InventoryHolder {
         }
     }
 
-    /** Fills the outer border (top row, bottom row, left+right columns) with gray-glass filler. */
+    /** Fills the outer border (top row, bottom row, left+right columns) with the accent glass. */
     protected void border() {
         int size = inventory.getSize();
         int rows = size / 9;
@@ -45,7 +45,7 @@ public abstract class Gui implements InventoryHolder {
         for (int r = 0; r < rows; r++) { set(r * 9); set(r * 9 + 8); }          // left + right columns
     }
 
-    private void set(int slot) { if (inventory.getItem(slot) == null) inventory.setItem(slot, Items.filler()); }
+    private void set(int slot) { if (inventory.getItem(slot) == null) inventory.setItem(slot, Items.accent()); }
 
     // ---- Standard bottom control row (row 6 of a 54-slot GUI) -------------------
     // Single layout for every list GUI: Previous (45) and Next (53) page arrows on
@@ -66,7 +66,7 @@ public abstract class Gui implements InventoryHolder {
      * buttons set AFTER this call still overwrite the glass at their slots.
      */
     protected void navBar(boolean hasPrev, boolean hasNext, boolean hasBack) {
-        for (int i = 45; i <= 53; i++) if (inventory.getItem(i) == null) inventory.setItem(i, Items.filler());
+        for (int i = 45; i <= 53; i++) if (inventory.getItem(i) == null) inventory.setItem(i, Items.accent());
         if (hasPrev) inventory.setItem(NAV_PREV, navIcon(Material.ARROW, "Previous"));
         if (hasBack) inventory.setItem(NAV_BACK, navIcon(Material.OAK_DOOR, "Back"));
         inventory.setItem(NAV_CLOSE, Items.button(Material.BARRIER,

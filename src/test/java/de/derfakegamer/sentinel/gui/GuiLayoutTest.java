@@ -39,11 +39,20 @@ class GuiLayoutTest {
         return new PlayersGui(plugin, page, players, muted, warns, reportCount);
     }
 
-    @Test void menuGuiHasGrayBorder() {
+    @Test void menuGuiHasAccentBorder() {
         AdminPanelGui gui = new AdminPanelGui(plugin);
-        // corners of the 54-slot (double-chest) menu are gray-glass border
+        // corners of the 54-slot menu are the blue accent border
         for (int slot : new int[]{0, 8, 45, 53})
-            assertEquals(Material.GRAY_STAINED_GLASS_PANE, gui.getInventory().getItem(slot).getType());
+            assertEquals(Material.LIGHT_BLUE_STAINED_GLASS_PANE, gui.getInventory().getItem(slot).getType());
+    }
+
+    @Test void listGuiHasAccentControlBarAndBlackContentFiller() throws Exception {
+        server.addPlayer("Solo");                 // few players -> content slots beyond the head are empty
+        PlayersGui gui = buildPlayersGui(0);
+        // empty control-row slot (49, between Back@48 and Close@50) = accent
+        assertEquals(Material.LIGHT_BLUE_STAINED_GLASS_PANE, gui.getInventory().getItem(49).getType());
+        // empty content slot (44, high in the 0-44 content area) = black filler
+        assertEquals(Material.BLACK_STAINED_GLASS_PANE, gui.getInventory().getItem(44).getType());
     }
 
     @Test void playersListIsSorted() throws Exception {
