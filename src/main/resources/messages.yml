@@ -302,3 +302,47 @@ gui:
       - "<gray><details>"
     time-lore:
       - "<gray><ago>"
+  players:
+    search: "<aqua>Search"
+    search-lore:
+      - "<gray>Find a player by name"
+    reports: "<aqua>Reports"
+    reports-lore:
+      - "<gray>View open player reports"
+      - "<gray>Open: <count>"
+    muted: "<red>Muted"
+    not-muted: "<green>Not muted"
+    warns: "<gray>Warns: <count>"
+  whitelist:
+    entry-lore:
+      - "<gray>Click to remove from whitelist"
+    add: "<green>Add Player"
+    add-lore:
+      - "<gray>Type a name in chat"
+    toggle-on: "<green>Whitelist: ON"
+    toggle-off: "<red>Whitelist: OFF"
+    toggle-lore:
+      - "<gray>Click to toggle"
+  notes:
+    add: "<aqua>Add note"
+    add-lore:
+      - "<gray>Type the note in chat"
+  alts:
+    entry-lore:
+      - "<gray>Shared IP: <ip>"
+      - "<gray>Last seen: <date>"
+      - "<gray>Click to open their actions"
+    ban-all: "<red>Ban all alts"
+    ban-all-lore:
+      - "<gray><count> accounts + the target"
+  search:
+    entry-lore:
+      - "<gray>Click to open actions"
+  templates:
+    entry-lore:
+      - "<gray>Click to apply"
+  invsee:
+    armor-label: "<aqua>Armor"
+    armor-lore:
+      - "<dark_gray>Armor / off-hand slot"
+    offhand-label: "<aqua>Off-hand"

@@ -5,7 +5,6 @@ import de.derfakegamer.sentinel.model.PlayerRecord;
 import de.derfakegamer.sentinel.util.Items;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
@@ -48,21 +47,17 @@ public final class AltsGui extends Gui {
             PlayerRecord r = alts.get(i);
             inventory.setItem(i, Items.head(Bukkit.getOfflinePlayer(r.uuid()),
                 Component.text(r.name(), NamedTextColor.AQUA),
-                List.of(grey("Shared IP: " + r.lastIp()),
-                        grey("Last seen: " + DATE.format(Instant.ofEpochMilli(r.lastSeen()))),
-                        grey("Click to open their actions"))));
+                plugin.messages().list("gui.alts.entry-lore",
+                    "ip", r.lastIp(),
+                    "date", DATE.format(Instant.ofEpochMilli(r.lastSeen())))));
         }
         if (alts.isEmpty())
             inventory.setItem(22, Items.button(Material.BARRIER,
                 plugin.messages().plain("alts-empty"), List.of()));
         navBar(false, false, true);
         inventory.setItem(NAV_ACT_R2, Items.button(Material.TNT,
-            Component.text("Ban all alts", NamedTextColor.RED),
-            List.of(grey(alts.size() + " accounts + the target"))));
-    }
-
-    private Component grey(String s) {
-        return Component.text(s, NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false);
+            plugin.messages().plain("gui.alts.ban-all"),
+            plugin.messages().list("gui.alts.ban-all-lore", "count", String.valueOf(alts.size()))));
     }
 
     private String name() { return target.getName() == null ? "?" : target.getName(); }

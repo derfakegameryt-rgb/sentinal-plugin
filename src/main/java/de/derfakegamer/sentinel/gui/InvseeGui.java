@@ -2,9 +2,6 @@ package de.derfakegamer.sentinel.gui;
 
 import de.derfakegamer.sentinel.Sentinel;
 import de.derfakegamer.sentinel.util.Items;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -13,7 +10,6 @@ import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -41,22 +37,20 @@ public final class InvseeGui extends Gui {
         // separator row
         for (int i = 36; i <= 44; i++) inventory.setItem(i, Items.filler());
         // armor + off-hand, set off in their own labelled area
-        inventory.setItem(ARMOR_LABEL, label(Material.ARMOR_STAND, "Armor"));
+        inventory.setItem(ARMOR_LABEL, Items.button(Material.ARMOR_STAND,
+            plugin.messages().plain("gui.invsee.armor-label"),
+            plugin.messages().list("gui.invsee.armor-lore")));
         inventory.setItem(HELMET, inv.getHelmet());
         inventory.setItem(CHEST, inv.getChestplate());
         inventory.setItem(LEGS, inv.getLeggings());
         inventory.setItem(BOOTS, inv.getBoots());
-        inventory.setItem(OFFHAND_LABEL, label(Material.SHIELD, "Off-hand"));
+        inventory.setItem(OFFHAND_LABEL, Items.button(Material.SHIELD,
+            plugin.messages().plain("gui.invsee.offhand-label"),
+            plugin.messages().list("gui.invsee.armor-lore")));
         ItemStack off = inv.getItemInOffHand();
         inventory.setItem(OFFHAND, (off == null || off.getType().isAir()) ? null : off);
         inventory.setItem(52, Items.filler());
         inventory.setItem(53, Items.filler());
-    }
-
-    private ItemStack label(Material m, String text) {
-        return Items.button(m, Component.text(text, NamedTextColor.AQUA),
-            List.of(Component.text("Armor / off-hand slot", NamedTextColor.DARK_GRAY)
-                .decoration(TextDecoration.ITALIC, false)));
     }
 
     private boolean isEditable(int slot) {

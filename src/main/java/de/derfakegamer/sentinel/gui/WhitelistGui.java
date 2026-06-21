@@ -4,7 +4,6 @@ import de.derfakegamer.sentinel.Sentinel;
 import de.derfakegamer.sentinel.util.Items;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
@@ -34,21 +33,18 @@ public final class WhitelistGui extends Gui {
             OfflinePlayer op = list.get(from + i);
             String name = op.getName() != null ? op.getName() : op.getUniqueId().toString();
             inventory.setItem(i, Items.head(op, Component.text(name, NamedTextColor.AQUA),
-                List.of(Component.text("Click to remove from whitelist", NamedTextColor.GRAY)
-                    .decoration(TextDecoration.ITALIC, false))));
+                plugin.messages().list("gui.whitelist.entry-lore")));
         }
 
         boolean hasNext = from + PAGE_SIZE < list.size();
         navBar(page > 0, hasNext, true);
         inventory.setItem(NAV_ACT_L1, Items.button(Material.LIME_DYE,
-            Component.text("Add Player", NamedTextColor.GREEN),
-            List.of(Component.text("Type a name in chat", NamedTextColor.GRAY)
-                .decoration(TextDecoration.ITALIC, false))));
+            plugin.messages().plain("gui.whitelist.add"),
+            plugin.messages().list("gui.whitelist.add-lore")));
         boolean on = Bukkit.hasWhitelist();
         inventory.setItem(NAV_ACT_L2, Items.button(Material.LEVER,
-            Component.text(on ? "Whitelist: ON" : "Whitelist: OFF", on ? NamedTextColor.GREEN : NamedTextColor.RED),
-            List.of(Component.text("Click to toggle", NamedTextColor.GRAY)
-                .decoration(TextDecoration.ITALIC, false))));
+            plugin.messages().plain(on ? "gui.whitelist.toggle-on" : "gui.whitelist.toggle-off"),
+            plugin.messages().list("gui.whitelist.toggle-lore")));
     }
 
     @Override

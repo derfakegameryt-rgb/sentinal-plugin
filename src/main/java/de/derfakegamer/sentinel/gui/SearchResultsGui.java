@@ -5,7 +5,6 @@ import de.derfakegamer.sentinel.model.PlayerRecord;
 import de.derfakegamer.sentinel.util.Items;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
@@ -53,8 +52,7 @@ public final class SearchResultsGui extends Gui {
             OfflinePlayer op = results.get(i);
             String name = op.getName() != null ? op.getName() : query;
             inventory.setItem(i, Items.head(op, Component.text(name, NamedTextColor.AQUA),
-                List.of(Component.text("Click to open actions", NamedTextColor.GRAY)
-                    .decoration(TextDecoration.ITALIC, false))));
+                plugin.messages().list("gui.search.entry-lore")));
         }
         navBar(false, false, true);
         fillEmpty();

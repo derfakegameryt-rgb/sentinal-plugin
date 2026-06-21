@@ -4,7 +4,6 @@ import de.derfakegamer.sentinel.Sentinel;
 import de.derfakegamer.sentinel.util.Items;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -93,24 +92,17 @@ public final class PlayersGui extends Gui {
         for (int i = 0; i < PAGE_SIZE && from + i < players.size() && i < muted.length; i++) {
             Player p = players.get(from + i);
             inventory.setItem(i, Items.head(p, Component.text(p.getName(), NamedTextColor.AQUA), List.of(
-                line(muted[i] ? "Muted" : "Not muted", muted[i] ? NamedTextColor.RED : NamedTextColor.GREEN),
-                line("Warns: " + warns[i], NamedTextColor.GRAY))));
+                plugin.messages().plain(muted[i] ? "gui.players.muted" : "gui.players.not-muted"),
+                plugin.messages().plain("gui.players.warns", "count", String.valueOf(warns[i])))));
         }
         boolean hasNext = from + PAGE_SIZE < players.size();
         navBar(page > 0, hasNext, true);
-        inventory.setItem(NAV_ACT_L1, Items.button(Material.OAK_SIGN, Component.text("Search", NamedTextColor.AQUA),
-            List.of(hint("Find a player by name"))));
-        inventory.setItem(NAV_ACT_L2, Items.button(Material.BOOK, Component.text("Reports", NamedTextColor.AQUA),
-            List.of(hint("View open player reports"),
-                    line("Open: " + reportCount, NamedTextColor.GRAY))));
-    }
-
-    private static Component hint(String text) {
-        return Component.text(text, NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false);
-    }
-
-    private static Component line(String text, NamedTextColor color) {
-        return Component.text(text, color).decoration(TextDecoration.ITALIC, false);
+        inventory.setItem(NAV_ACT_L1, Items.button(Material.OAK_SIGN,
+            plugin.messages().plain("gui.players.search"),
+            plugin.messages().list("gui.players.search-lore")));
+        inventory.setItem(NAV_ACT_L2, Items.button(Material.BOOK,
+            plugin.messages().plain("gui.players.reports"),
+            plugin.messages().list("gui.players.reports-lore", "count", String.valueOf(reportCount))));
     }
 
     @Override

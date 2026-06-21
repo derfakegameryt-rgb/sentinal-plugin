@@ -47,7 +47,8 @@ public final class NotesGui extends Gui {
                 plugin.messages().plain("notes-empty"), List.of()));
         navBar(false, false, true);
         inventory.setItem(NAV_ACT_L1, Items.button(Material.WRITABLE_BOOK,
-            Component.text("Add note", NamedTextColor.AQUA), List.of(grey("Type the note in chat"))));
+            plugin.messages().plain("gui.notes.add"),
+            plugin.messages().list("gui.notes.add-lore")));
     }
 
     private Component grey(String s) {

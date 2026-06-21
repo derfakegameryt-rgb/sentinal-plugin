@@ -6,7 +6,6 @@ import de.derfakegamer.sentinel.util.DurationParser;
 import de.derfakegamer.sentinel.util.Items;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
@@ -29,7 +28,7 @@ public final class TemplatesGui extends Gui {
         for (int i = 0; i < PAGE_SIZE && i < templates.size(); i++) {
             inventory.setItem(i, Items.button(Material.WRITABLE_BOOK,
                 Component.text(templates.get(i), NamedTextColor.AQUA),
-                List.of(Component.text("Click to apply", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false))));
+                plugin.messages().list("gui.templates.entry-lore")));
         }
         navBar(false, false, true);
         fillEmpty();
