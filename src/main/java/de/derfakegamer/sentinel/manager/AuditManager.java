@@ -44,8 +44,12 @@ public final class AuditManager {
 
     // -----------------------------------------------------------------------
     // Read methods — each flushes first so just-buffered rows are visible.
-    // The flush enqueues the insert on the DB executor's FIFO queue; the
-    // subsequent submit() is enqueued after it, guaranteeing ordering.
+    // The flush enqueues the insert on the single writer thread (execute); the
+    // read runs via submit(). On SQLite both share one FIFO thread, so the read
+    // always observes the flushed rows. On MySQL the flush (writer connection)
+    // and the read (a reader-pool connection) run concurrently, so a read may
+    // not yet see the just-flushed batch until it commits — a sub-second,
+    // self-healing gap, acceptable for these log/stat views.
     // -----------------------------------------------------------------------
 
     public CompletableFuture<List<AuditEntry>> recent(int limit, int offset) {

@@ -39,9 +39,13 @@ public final class ChatLogManager {
     }
 
     /**
-     * Flushes any buffered entries to the DB then reads. Because {@link BatchWriter#flush()}
-     * enqueues the batch insert on the single-threaded DB executor before the subsequent
-     * read is enqueued, the ordering guarantee is provided by the executor's FIFO queue.
+     * Flushes any buffered entries to the DB then reads. The flush enqueues the batch insert
+     * on the single writer thread (via {@code execute}); the read runs via {@code submit}.
+     * <p>On SQLite both share one FIFO thread, so the read always observes the flushed rows.
+     * On MySQL the flush (writer connection) and the read (a reader-pool connection) run
+     * concurrently, so a read may not yet observe the just-flushed batch until it commits —
+     * a sub-second, self-healing visibility gap (the next read returns the rows). Acceptable
+     * for log views; route through {@code submitWrite} if strict read-your-writes is ever needed.
      */
     public CompletableFuture<List<ChatLogEntry>> recent(UUID uuid, int limit) {
         batchWriter.flush();
