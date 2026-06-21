@@ -81,7 +81,7 @@ public final class PlayerActionsGui extends Gui {
         this.inventory = Bukkit.createInventory(this, 45,
             plugin.messages().plain("gui-actions-title", "player", name()));
 
-        inventory.setItem(HEAD, Items.head(target, plugin.messages().plain("gui-actions-title", "player", name()),
+        inventory.setItem(HEAD, Items.head(target, plugin.messages().plain("gui.actions.head-name", "player", name()),
             List.of(plugin.messages().plain(banned ? "gui.actions.banned-status" : "gui.actions.not-banned-status")
                         .decoration(TextDecoration.ITALIC, false),
                     plugin.messages().plain(muted  ? "gui.actions.muted-status"  : "gui.actions.not-muted-status")

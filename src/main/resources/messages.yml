@@ -158,6 +158,8 @@ gui:
     memory: "<aqua>Memory"
     players: "<aqua>Players"
     uptime: "<aqua>Uptime"
+    back: "<gray>Back"
+    close: "<red>Close"
   confirm:
     confirm: "<green>Confirm"
     confirm-lore:
@@ -175,6 +177,7 @@ gui:
     close-lore:
       - "<gray>Close this menu"
   actions:
+    head-name: "<aqua><player>"
     head-lore: "<gray>Warns: <count>"
     banned-status: "<red>Banned"
     not-banned-status: "<green>Not banned"
@@ -327,6 +330,9 @@ gui:
     add: "<aqua>Add note"
     add-lore:
       - "<gray>Type the note in chat"
+    entry-lore:
+      - "<gray>By: <author>"
+      - "<gray>At: <date>"
   alts:
     entry-lore:
       - "<gray>Shared IP: <ip>"
@@ -346,3 +352,5 @@ gui:
     armor-lore:
       - "<dark_gray>Armor / off-hand slot"
     offhand-label: "<aqua>Off-hand"
+    offhand-lore:
+      - "<dark_gray>Off-hand / shield slot"

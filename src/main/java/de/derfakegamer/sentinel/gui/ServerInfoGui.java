@@ -34,8 +34,8 @@ public final class ServerInfoGui extends Gui {
 
         update();
 
-        inventory.setItem(BACK, Items.button(Material.OAK_DOOR, Component.text("Back", NamedTextColor.GRAY), List.of()));
-        inventory.setItem(CLOSE, Items.button(Material.BARRIER, Component.text("Close", NamedTextColor.RED), List.of()));
+        inventory.setItem(BACK, Items.button(Material.OAK_DOOR, plugin.messages().plain("gui.serverinfo.back"), List.of()));
+        inventory.setItem(CLOSE, Items.button(Material.BARRIER, plugin.messages().plain("gui.serverinfo.close"), List.of()));
         border();
         fillEmpty();
     }

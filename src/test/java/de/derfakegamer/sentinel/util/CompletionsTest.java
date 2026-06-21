@@ -19,6 +19,15 @@ class CompletionsTest {
         assertTrue(Completions.durations("1").containsAll(List.of("1h", "1d")));
         assertEquals(List.of("perm"), Completions.durations("p"));
     }
+    @Test void tempDurationsExcludesPerm() {
+        assertTrue(Completions.tempDurations("").containsAll(List.of("30m", "1h", "3d", "7d", "30d")));
+        assertTrue(Completions.tempDurations("p").isEmpty(), "perm must not appear in temp durations");
+    }
+    @Test void tempDurationsFiltersCorrectly() {
+        var result = Completions.tempDurations("3");
+        assertTrue(result.contains("3d"), "3d must be in temp durations");
+        assertFalse(result.contains("30d") && !result.contains("3d"), "3d and 30d both start with 3");
+    }
     @Test void reasonsFiltered() {
         assertEquals(List.of("Spam"), Completions.reasons("sp", List.of("Spam", "Cheating")));
     }

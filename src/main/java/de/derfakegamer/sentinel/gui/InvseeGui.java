@@ -46,7 +46,7 @@ public final class InvseeGui extends Gui {
         inventory.setItem(BOOTS, inv.getBoots());
         inventory.setItem(OFFHAND_LABEL, Items.button(Material.SHIELD,
             plugin.messages().plain("gui.invsee.offhand-label"),
-            plugin.messages().list("gui.invsee.armor-lore")));
+            plugin.messages().list("gui.invsee.offhand-lore")));
         ItemStack off = inv.getItemInOffHand();
         inventory.setItem(OFFHAND, (off == null || off.getType().isAir()) ? null : off);
         inventory.setItem(52, Items.filler());

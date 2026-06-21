@@ -146,7 +146,7 @@ public final class PunishmentCommands implements CommandExecutor, TabCompleter {
         boolean temp = command.getName().equalsIgnoreCase("tempban")
             || command.getName().equalsIgnoreCase("tempmute");
         if (args.length == 1) return Completions.players(args[0]);
-        if (args.length == 2 && temp) return Completions.durations(args[1]);
+        if (args.length == 2 && temp) return Completions.tempDurations(args[1]);
         if (args.length >= 2 && !temp) return Completions.reasons(args[args.length - 1],
             plugin.getConfig().getStringList("reasons"));
         return java.util.List.of();
