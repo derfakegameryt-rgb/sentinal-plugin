@@ -65,6 +65,7 @@ public final class ReportsGui extends Gui {
         Report r = reports.get(index);
 
         if (event.isShiftClick()) {
+            if (!plugin.staffPerms().canUse(mod, "sentinel.use")) { mod.sendMessage(plugin.messages().prefixed("no-permission")); return; }
             plugin.reports().handle(r.id(), mod.getName());
             mod.sendMessage(plugin.messages().prefixed("report-handled"));
             ReportsGui.open(plugin, page, mod);
