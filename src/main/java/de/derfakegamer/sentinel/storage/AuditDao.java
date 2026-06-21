@@ -26,6 +26,27 @@ public final class AuditDao {
         }
     }
 
+    /**
+     * Inserts multiple audit rows in a single batched statement.
+     */
+    public void insertBatch(List<AuditEntry> entries) {
+        if (entries == null || entries.isEmpty()) return;
+        synchronized (db) {
+            String sql = "INSERT INTO audit (actor,action,target,details,created_at) VALUES (?,?,?,?,?)";
+            try (PreparedStatement ps = db.connection().prepareStatement(sql)) {
+                for (AuditEntry e : entries) {
+                    ps.setString(1, e.actor());
+                    ps.setString(2, e.action());
+                    ps.setString(3, e.target());
+                    ps.setString(4, e.details());
+                    ps.setLong(5, e.createdAt());
+                    ps.addBatch();
+                }
+                ps.executeBatch();
+            } catch (SQLException e) { throw new RuntimeException(e); }
+        }
+    }
+
     public List<AuditEntry> recent(int limit, int offset) {
         synchronized (db) {
             String sql = "SELECT * FROM audit ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?";

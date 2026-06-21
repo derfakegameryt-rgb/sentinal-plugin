@@ -36,6 +36,28 @@ public final class ChatLogDao {
         }
     }
 
+    /**
+     * Inserts multiple chat-log rows in a single batched statement.
+     * Each entry carries its own (uuid, name, kind, text, createdAt) values.
+     */
+    public void insertBatch(List<ChatLogEntry> entries) {
+        if (entries == null || entries.isEmpty()) return;
+        synchronized (db) {
+            String sql = "INSERT INTO chatlog (uuid,name,kind,text,created_at) VALUES (?,?,?,?,?)";
+            try (PreparedStatement ps = db.connection().prepareStatement(sql)) {
+                for (ChatLogEntry e : entries) {
+                    ps.setString(1, e.uuid().toString());
+                    ps.setString(2, e.name());
+                    ps.setString(3, e.kind());
+                    ps.setString(4, e.text());
+                    ps.setLong(5, e.createdAt());
+                    ps.addBatch();
+                }
+                ps.executeBatch();
+            } catch (SQLException e) { throw new RuntimeException(e); }
+        }
+    }
+
     public List<ChatLogEntry> recent(UUID uuid, int limit) {
         synchronized (db) {
             List<ChatLogEntry> out = new ArrayList<>();
