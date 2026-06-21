@@ -18,10 +18,10 @@ public final class AppealCommand implements CommandExecutor, TabCompleter {
         if (args.length == 0) { sender.sendMessage(plugin.messages().prefixed("appeal-usage")); return true; }
         long now = System.currentTimeMillis();
         String text = String.join(" ", args);
-        plugin.db().callback(plugin.punishments().activeMute(p.getUniqueId(), now), mute -> {
+        plugin.db().callbackOrError(p, plugin.punishments().activeMute(p.getUniqueId(), now), mute -> {
             if (mute == null) { p.sendMessage(plugin.messages().prefixed("appeal-nothing")); return; }
             // submit() atomically re-checks hasOpen + inserts on the DB thread
-            plugin.db().callback(plugin.appeals().submit(p.getUniqueId(), p.getName(), mute.id(), PunishmentType.MUTE, text, now), submitted -> {
+            plugin.db().callbackOrError(p, plugin.appeals().submit(p.getUniqueId(), p.getName(), mute.id(), PunishmentType.MUTE, text, now), submitted -> {
                 if (!submitted) { p.sendMessage(plugin.messages().prefixed("appeal-exists")); return; }
                 p.sendMessage(plugin.messages().prefixed("appeal-submitted"));
                 // notify online staff

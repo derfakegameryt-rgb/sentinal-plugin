@@ -37,7 +37,7 @@ public final class PlayersGui extends Gui {
 
         if (count <= 0) {
             // No players on this page — only wait for report count
-            plugin.db().callback(reportsFuture, reports ->
+            plugin.db().callbackOrError(viewer, reportsFuture, reports ->
                 new PlayersGui(plugin, page, players, new boolean[0], new int[0],
                     reports != null ? reports.size() : 0).open(viewer));
             return;
@@ -62,7 +62,7 @@ public final class PlayersGui extends Gui {
             CompletableFuture.allOf(warnFutures),
             reportsFuture);
 
-        plugin.db().callback(all, ignored -> {
+        plugin.db().callbackOrError(viewer, all, ignored -> {
             boolean[] muted = new boolean[count];
             int[] warns = new int[count];
             for (int i = 0; i < count; i++) {

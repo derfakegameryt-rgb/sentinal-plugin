@@ -29,7 +29,7 @@ public final class AltsGui extends Gui {
      * the main thread. Use this instead of {@code new AltsGui(...).open(viewer)}.
      */
     public static void open(Sentinel plugin, OfflinePlayer target, Player viewer) {
-        plugin.db().callback(plugin.players().alts(target.getUniqueId()),
+        plugin.db().callbackOrError(viewer, plugin.players().alts(target.getUniqueId()),
             alts -> new AltsGui(plugin, target, alts).open(viewer));
     }
 

@@ -20,7 +20,7 @@ public final class ActiveBansGui extends Gui {
 
     /** Async opener: fetches active bans then constructs and opens the GUI on the main thread. */
     public static void open(Sentinel plugin, Player viewer, int page) {
-        plugin.db().callback(plugin.punishments().activeList(PunishmentType.BAN, System.currentTimeMillis()),
+        plugin.db().callbackOrError(viewer, plugin.punishments().activeList(PunishmentType.BAN, System.currentTimeMillis()),
             bans -> new ActiveBansGui(plugin, bans != null ? bans : List.of(), page).open(viewer));
     }
 

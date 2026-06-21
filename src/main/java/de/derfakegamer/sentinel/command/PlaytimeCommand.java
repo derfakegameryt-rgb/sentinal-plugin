@@ -25,9 +25,16 @@ public final class PlaytimeCommand implements CommandExecutor, TabCompleter {
             : (sender instanceof Player p ? p : null);
         if (target == null) { sender.sendMessage(plugin.messages().prefixed("usage", "usage", "/playtime <player>")); return true; }
         final String displayName = args.length >= 1 ? args[0] : sender.getName();
-        plugin.db().callback(plugin.players().playtime(target.getUniqueId()),
-            ms -> sender.sendMessage(plugin.messages().prefixed("playtime", "player",
-                displayName, "time", format(ms))));
+        if (sender instanceof Player p) {
+            plugin.db().callbackOrError(p, plugin.players().playtime(target.getUniqueId()),
+                ms -> sender.sendMessage(plugin.messages().prefixed("playtime", "player",
+                    displayName, "time", format(ms))));
+        } else {
+            plugin.db().callback(plugin.players().playtime(target.getUniqueId()),
+                ms -> sender.sendMessage(plugin.messages().prefixed("playtime", "player",
+                    displayName, "time", format(ms))),
+                error -> plugin.getLogger().log(java.util.logging.Level.SEVERE, "Failed to fetch playtime", error));
+        }
         return true;
     }
 

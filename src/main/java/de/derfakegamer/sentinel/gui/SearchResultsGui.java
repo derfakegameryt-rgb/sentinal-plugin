@@ -26,7 +26,7 @@ public final class SearchResultsGui extends Gui {
      * GUI on the main thread. Use this instead of {@code new SearchResultsGui(...).open(viewer)}.
      */
     public static void open(Sentinel plugin, String query, Player viewer) {
-        plugin.db().callback(plugin.players().byName(query),
+        plugin.db().callbackOrError(viewer, plugin.players().byName(query),
             stored -> new SearchResultsGui(plugin, query, stored).open(viewer));
     }
 

@@ -26,7 +26,7 @@ public final class ReportsGui extends Gui {
 
     /** Async opener: fetches open reports then constructs and opens the GUI on the main thread. */
     public static void open(Sentinel plugin, int page, Player viewer) {
-        plugin.db().callback(plugin.reports().open(),
+        plugin.db().callbackOrError(viewer, plugin.reports().open(),
             reports -> new ReportsGui(plugin, page, reports != null ? reports : List.of()).open(viewer));
     }
 

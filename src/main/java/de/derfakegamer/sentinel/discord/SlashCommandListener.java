@@ -79,11 +79,13 @@ public final class SlashCommandListener extends ListenerAdapter {
                 case "unban" -> plugin.db().callback(
                     plugin.moderation().removeBan(DISCORD_ISSUER, issuer, target, rec.name()),
                     ok -> e.getHook().sendMessage(
-                        Boolean.TRUE.equals(ok) ? "Unbanned " + rec.name() : rec.name() + " was not banned.").queue());
+                        Boolean.TRUE.equals(ok) ? "Unbanned " + rec.name() : rec.name() + " was not banned.").queue(),
+                    error -> { plugin.getLogger().log(java.util.logging.Level.SEVERE, "Discord unban failed", error); e.getHook().sendMessage("Database error, please try again.").queue(); });
                 case "unmute" -> plugin.db().callback(
                     plugin.moderation().removeMute(DISCORD_ISSUER, issuer, target, rec.name()),
                     ok -> e.getHook().sendMessage(
-                        Boolean.TRUE.equals(ok) ? "Unmuted " + rec.name() : rec.name() + " was not muted.").queue());
+                        Boolean.TRUE.equals(ok) ? "Unmuted " + rec.name() : rec.name() + " was not muted.").queue(),
+                    error -> { plugin.getLogger().log(java.util.logging.Level.SEVERE, "Discord unmute failed", error); e.getHook().sendMessage("Database error, please try again.").queue(); });
                 default -> e.getHook().sendMessage("Unknown command.").queue();
             }
         });
@@ -102,6 +104,7 @@ public final class SlashCommandListener extends ListenerAdapter {
             plugin.moderation().apply(DISCORD_ISSUER, issuer, target, targetName, ip, type, expiresAt, reason),
             ok -> e.getHook().sendMessage(Boolean.TRUE.equals(ok)
                 ? type.name().toLowerCase() + " applied to " + targetName
-                : targetName + " is exempt or the action did nothing.").queue());
+                : targetName + " is exempt or the action did nothing.").queue(),
+            error -> { plugin.getLogger().log(java.util.logging.Level.SEVERE, "Discord moderation action failed", error); e.getHook().sendMessage("Database error, please try again.").queue(); });
     }
 }

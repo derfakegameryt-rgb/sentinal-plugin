@@ -25,7 +25,7 @@ public final class NotesGui extends Gui {
 
     /** Async opener: fetches notes then constructs and opens the GUI on the main thread. */
     public static void open(Sentinel plugin, OfflinePlayer target, Player viewer) {
-        plugin.db().callback(plugin.notes().list(target.getUniqueId()),
+        plugin.db().callbackOrError(viewer, plugin.notes().list(target.getUniqueId()),
             notes -> new NotesGui(plugin, target, notes != null ? notes : List.of()).open(viewer));
     }
 

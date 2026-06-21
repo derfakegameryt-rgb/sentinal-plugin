@@ -30,7 +30,7 @@ public final class HistoryGui extends Gui {
 
     /** Async opener: fetches history then constructs and opens the GUI on the main thread. */
     public static void open(Sentinel plugin, OfflinePlayer target, Player viewer, int page) {
-        plugin.db().callback(plugin.punishments().history(target.getUniqueId()),
+        plugin.db().callbackOrError(viewer, plugin.punishments().history(target.getUniqueId()),
             all -> new HistoryGui(plugin, target, all != null ? all : List.of(), page).open(viewer));
     }
 

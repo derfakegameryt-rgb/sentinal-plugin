@@ -20,7 +20,7 @@ public final class ActiveMutesGui extends Gui {
 
     /** Async opener: fetches active mutes then constructs and opens the GUI on the main thread. */
     public static void open(Sentinel plugin, Player viewer, int page) {
-        plugin.db().callback(plugin.punishments().activeList(PunishmentType.MUTE, System.currentTimeMillis()),
+        plugin.db().callbackOrError(viewer, plugin.punishments().activeList(PunishmentType.MUTE, System.currentTimeMillis()),
             mutes -> new ActiveMutesGui(plugin, mutes != null ? mutes : List.of(), page).open(viewer));
     }
 
