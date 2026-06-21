@@ -104,6 +104,8 @@ public final class ConfigValidator {
         checkNonNegativeInt(cfg, log, "afk.minutes", 5);
         checkNonNegativeInt(cfg, log, "backup.keep", 5);
         checkNonNegativeInt(cfg, log, "logging.retention-days", 30);
+        checkNonNegativeInt(cfg, log, "report.cooldown-seconds", 30);
+        checkNonNegativeInt(cfg, log, "appeals.cooldown-seconds", 60);
     }
 
     private static void checkNonNegativeInt(FileConfiguration cfg, Logger log, String key, int defaultVal) {
