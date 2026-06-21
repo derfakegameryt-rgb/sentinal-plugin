@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.UUID;
 
 public class Sentinel extends JavaPlugin {
+    private volatile boolean debug;
     private de.derfakegamer.sentinel.storage.DatabaseExecutor db;
     private volatile PunishmentManager punishmentManager;
     private volatile Messages messages;
@@ -47,6 +48,7 @@ public class Sentinel extends JavaPlugin {
         saveDefaultConfig();
         getConfig().options().copyDefaults(true);
         saveConfig();
+        this.debug = getConfig().getBoolean("debug", false);
         saveResourceIfMissing("messages.yml");
         saveResourceIfMissing("rules.txt");
         mergeMessagesDefaults();
@@ -220,12 +222,22 @@ public class Sentinel extends JavaPlugin {
 
     public void reloadAll() {
         reloadConfig();
+        reloadDebugFlag();
         this.messages.reload(loadMessages());
         this.punishmentManager = new PunishmentManager(this, new PunishmentDao(db.database()), loadExempt());
         this.moderationService = new de.derfakegamer.sentinel.manager.ModerationService(this);
         this.chatModeration = new de.derfakegamer.sentinel.manager.ChatModeration(this);
         this.warnEscalation = new de.derfakegamer.sentinel.manager.WarnEscalation(this);
     }
+
+    /** Returns true if debug logging is currently enabled. */
+    public boolean debug() { return debug; }
+
+    /** Re-reads the debug flag from config (called automatically on reload). */
+    public void reloadDebugFlag() { this.debug = getConfig().getBoolean("debug", false); }
+
+    /** Logs {@code "[DEBUG] " + msg} at INFO level, only when debug mode is on. Never throws. */
+    public void debug(String msg) { if (debug) getLogger().info("[DEBUG] " + msg); }
 
     private Set<UUID> loadExempt() {
         Set<UUID> out = new HashSet<>();

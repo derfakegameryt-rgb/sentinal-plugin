@@ -1,4 +1,5 @@
 # Sentinel configuration
+debug: false        # set true to enable [DEBUG] log lines for diagnostics
 exempt: []          # list of UUIDs that can never be punished
 reasons:            # the 5 presets shown in the Reason GUI
   - Hacking

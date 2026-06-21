@@ -27,9 +27,11 @@ public final class BotDiscordService implements DiscordService {
     /** Connects to Discord. Call from an async task — awaitReady briefly blocks. Fail-soft. */
     public void start() {
         try {
+            plugin.debug("Discord bot connecting");
             this.jda = JDABuilder.createLight(token, EnumSet.noneOf(GatewayIntent.class)).build();
             jda.awaitReady();
             plugin.getLogger().info("Sentinel: Discord bot connected as " + jda.getSelfUser().getAsTag());
+            plugin.debug("Discord bot ready as " + jda.getSelfUser().getAsTag());
             jda.addEventListener(new SlashCommandListener(plugin));
             net.dv8tion.jda.api.entities.Guild guild = jda.getGuildById(guildId);
             if (guild != null) {
@@ -106,6 +108,9 @@ public final class BotDiscordService implements DiscordService {
     }
     @Override public void shutdown() {
         JDA j = jda;
-        if (j != null) try { j.shutdownNow(); } catch (Throwable ignored) {}
+        if (j != null) {
+            plugin.debug("Discord bot shutting down");
+            try { j.shutdownNow(); } catch (Throwable ignored) {}
+        }
     }
 }

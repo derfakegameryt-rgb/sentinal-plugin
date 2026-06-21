@@ -64,6 +64,9 @@ public final class BatchWriter<T> {
         }
     }
 
+    /** Returns the number of items currently buffered (snapshot; may change immediately after). */
+    public synchronized int pendingCount() { return buffer.size(); }
+
     /**
      * Snapshots the current buffer, clears it, then calls the flusher with the snapshot.
      * Any flusher exception is caught, logged, and the snapshot is discarded — the buffer
