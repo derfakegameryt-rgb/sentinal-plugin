@@ -1,5 +1,7 @@
 package de.derfakegamer.sentinel.storage;
 
+import de.derfakegamer.sentinel.util.Messages;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
 import java.sql.Connection;
@@ -31,6 +33,8 @@ public final class DatabaseExecutor {
     private final Database database;
     private final Logger logger;
     private final Plugin plugin;
+    /** May be null in tests that never call {@link #callbackOrError}. */
+    private final Messages messages;
 
     /** Always present: serial writer thread (also runs reads on single-connection backends). */
     private final ExecutorService writer;
@@ -38,9 +42,14 @@ public final class DatabaseExecutor {
     private final ExecutorService readers;
 
     public DatabaseExecutor(Database database, Logger logger, Plugin plugin) {
+        this(database, logger, plugin, null);
+    }
+
+    public DatabaseExecutor(Database database, Logger logger, Plugin plugin, Messages messages) {
         this.database = database;
         this.logger = logger;
         this.plugin = plugin;
+        this.messages = messages;
         this.writer = Executors.newSingleThreadExecutor(namedFactory("Sentinel-DB"));
         this.readers = database.supportsConcurrentReads()
             ? Executors.newFixedThreadPool(READER_THREADS, namedFactory("Sentinel-DB-Reader"))
@@ -126,6 +135,37 @@ public final class DatabaseExecutor {
             T delivered = error == null ? value : null;
             if (plugin == null) { onMain.accept(delivered); return; }
             plugin.getServer().getScheduler().runTask(plugin, () -> onMain.accept(delivered));
+        });
+    }
+
+    /**
+     * Like {@link #callback(CompletableFuture, Consumer)} but routes failures to a separate
+     * {@code onError} consumer instead of silently passing {@code null} to {@code onMain}.
+     * Both paths always run on the main thread (or inline when {@code plugin == null} in tests).
+     * The error path also logs at SEVERE so failures are never silent.
+     */
+    public <T> void callback(CompletableFuture<T> future, Consumer<T> onMain, Consumer<Throwable> onError) {
+        future.whenComplete((value, error) -> {
+            Runnable task = (error == null)
+                ? () -> onMain.accept(value)
+                : () -> {
+                    logger.log(Level.SEVERE, "DB operation failed", error);
+                    onError.accept(error);
+                };
+            if (plugin == null) { task.run(); return; }
+            plugin.getServer().getScheduler().runTask(plugin, task);
+        });
+    }
+
+    /**
+     * Convenience wrapper: on success runs {@code onSuccess} on the main thread; on failure logs
+     * SEVERE and sends the {@code db-error} prefixed message to {@code viewer} (if online).
+     */
+    public <T> void callbackOrError(Player viewer, CompletableFuture<T> future, Consumer<T> onSuccess) {
+        callback(future, onSuccess, error -> {
+            if (viewer != null && viewer.isOnline() && messages != null) {
+                viewer.sendMessage(messages.prefixed("db-error"));
+            }
         });
     }
 

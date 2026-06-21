@@ -1,9 +1,15 @@
 package de.derfakegamer.sentinel.storage;
 
+import de.derfakegamer.sentinel.Sentinel;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.junit.jupiter.api.*;
+import org.mockbukkit.mockbukkit.MockBukkit;
+import org.mockbukkit.mockbukkit.ServerMock;
+import org.mockbukkit.mockbukkit.entity.PlayerMock;
 import java.io.File;
 import java.nio.file.Files;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
 import java.util.logging.Logger;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -262,5 +268,81 @@ class DatabaseExecutorTest {
         ex.submit(() -> 2).get(2, java.util.concurrent.TimeUnit.SECONDS);
         assertTrue(validations.get() >= 3, "ensureValid must run before tasks");
         ex.shutdown();
+    }
+
+    // -------------------------------------------------------------------------
+    // 3-arg callback overload tests (error path + success path)
+    // -------------------------------------------------------------------------
+
+    @Test void callbackErrorPathRunsOnErrorNotOnMain() throws Exception {
+        CompletableFuture<String> failed = new CompletableFuture<>();
+        failed.completeExceptionally(new RuntimeException("boom"));
+        AtomicBoolean success = new AtomicBoolean(false);
+        AtomicReference<Throwable> err = new AtomicReference<>();
+        // plugin == null: task.run() is called inline (no scheduler hop needed)
+        exec.callback(failed, v -> success.set(true), err::set);
+        // give whenComplete a moment to fire on the completing thread
+        Thread.sleep(100);
+        assertFalse(success.get(), "onMain must not run on failure");
+        assertNotNull(err.get(), "onError must receive the throwable");
+    }
+
+    @Test void callbackSuccessPathRunsOnMain() throws Exception {
+        AtomicReference<String> got = new AtomicReference<>();
+        exec.callback(CompletableFuture.completedFuture("ok"), got::set, t -> {});
+        Thread.sleep(100);
+        assertEquals("ok", got.get());
+    }
+
+    // -------------------------------------------------------------------------
+    // callbackOrError tests — require MockBukkit for scheduler + messages()
+    // -------------------------------------------------------------------------
+
+    @Nested
+    class CallbackOrErrorTests {
+        ServerMock server;
+        Sentinel plugin;
+
+        @BeforeEach
+        void setup() {
+            server = MockBukkit.mock();
+            plugin = MockBukkit.load(Sentinel.class);
+        }
+
+        @AfterEach
+        void teardown() {
+            MockBukkit.unmock();
+        }
+
+        @Test
+        void callbackOrErrorMessagesViewerOnFailureAndDoesNotRunOnSuccess() throws Exception {
+            PlayerMock viewer = server.addPlayer("Viewer");
+            CompletableFuture<String> failed = new CompletableFuture<>();
+            failed.completeExceptionally(new RuntimeException("db-boom"));
+            AtomicBoolean successRan = new AtomicBoolean(false);
+
+            plugin.db().callbackOrError(viewer, failed, v -> successRan.set(true));
+            // pump the scheduler so the main-thread hop executes
+            server.getScheduler().performTicks(2);
+
+            assertFalse(successRan.get(), "onSuccess must not run on failure");
+            net.kyori.adventure.text.Component msg = viewer.nextComponentMessage();
+            assertNotNull(msg, "viewer must receive an error message");
+            String text = PlainTextComponentSerializer.plainText().serialize(msg);
+            assertTrue(text.contains("went wrong") || text.contains("db-error"),
+                "error message must describe the failure, got: " + text);
+        }
+
+        @Test
+        void callbackOrErrorRunsOnSuccessWhenFutureSucceeds() throws Exception {
+            PlayerMock viewer = server.addPlayer("Viewer2");
+            AtomicReference<String> got = new AtomicReference<>();
+
+            plugin.db().callbackOrError(viewer, CompletableFuture.completedFuture("hello"), got::set);
+            server.getScheduler().performTicks(2);
+
+            assertEquals("hello", got.get(), "onSuccess must run with the value on success");
+            assertNull(viewer.nextComponentMessage(), "viewer must not receive any message on success");
+        }
     }
 }

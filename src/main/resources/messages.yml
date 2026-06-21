@@ -97,6 +97,7 @@ playtime: "<#60A5FA><player></#60A5FA> <gray>has played <white><time></white>."
 gui-stats-title: "<#3B82F6>Sentinel · Playtime"
 gui-audit-title: "<#3B82F6>Sentinel · Audit Log"
 gui-modstats-title: "<#3B82F6>Sentinel · Mod Stats"
+db-error: "<red>Something went wrong — please try again in a moment."
 
 afk-now: "<#60A5FA><player></#60A5FA> <gray>is now AFK."
 afk-back: "<#60A5FA><player></#60A5FA> <gray>is no longer AFK."
