@@ -66,10 +66,8 @@ class ServerInfoGuiTest {
         assertTrue(entries.stream().anyMatch(e -> "OPTIMIZE".equals(e.action())),
             "An OPTIMIZE audit entry must exist");
 
-        String msg = p.nextMessage() == null ? "" : PlainTextComponentSerializer.plainText()
-            .serialize(p.nextComponentMessage() != null ? p.nextComponentMessage() : Component.empty());
-        // Check that any message was sent (the player received the optimize-applied message)
-        // We just verify via audit since message assertion is secondary
+        assertNotNull(p.nextComponentMessage(), "optimize-applied message must be sent to op");
+
         assertTrue(entries.stream().anyMatch(e -> "OPTIMIZE".equals(e.action()) && "OpMod".equals(e.actor())),
             "Audit entry must record actor OpMod");
     }
