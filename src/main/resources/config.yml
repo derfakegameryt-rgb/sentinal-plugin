@@ -9,12 +9,6 @@ reasons:            # the 5 presets shown in the Reason GUI
   - Toxicity
   - Advertising
   - Griefing
-update:
-  # Auto-update is always on and checks every 5 minutes; this cannot be disabled.
-  # The plugin repo is public, so NO token is needed. Leave this blank.
-  # (Optional: a GitHub Personal Access Token here only raises the API rate
-  # limit from 60/h to 5000/h. Keep it secret and never commit it.)
-  github-token: ''
 database:
   type: sqlite            # sqlite | mysql
   mysql:                  # only used when type is mysql
@@ -87,12 +81,12 @@ logging:
     - w
     - tell
     - whisper
-templates:        # quick punishments: "<type> [duration] <reason>"
-  - "ban Cheating / hacked client"
-  - "tempban 7d Severe griefing"
-  - "mute 1d Spam"
-  - "kick Please read the rules"
-  - "warn Inappropriate language"
+templates:        # quick punishments: "<type> [duration] <reason>" — the 5 most common offences
+  - "ban Hacking / cheating"                       # cheat clients — permanent
+  - "tempban 30d Advertising"                      # promoting other servers — 30 days
+  - "tempban 14d Griefing"                         # destroying/stealing builds — 14 days
+  - "tempmute 7d Hate speech / discrimination"     # serious chat abuse — 7 day mute
+  - "tempmute 1h Spamming"                         # chat flooding — 1 hour mute
 
 afk:
   enabled: true
