@@ -51,11 +51,18 @@ class OwnerLoginProtectionTest {
 
     @Test void autoWhitelistMarksOwnerWhitelisted() throws Exception {
         plugin.ownerProtection().setAutoWhitelist(true);
+        // Undo the immediate side-effect so we can verify the LoginListener path actually whitelists
+        org.bukkit.Bukkit.getOfflinePlayer(plugin.owner().uuid()).setWhitelisted(false);
+
+        // Build and fire an owner prelogin event through the listener
+        AsyncPlayerPreLoginEvent e = prelogin(plugin.owner().uuid(), "DerFakeGamer");
+        listener.onPreLogin(e);
+
+        // Flush the scheduled main-thread task
         server.getScheduler().performTicks(3);
+
+        // Assert the owner is whitelisted via the whitelist set
         UUID ownerUuid = plugin.owner().uuid();
-        // MockBukkit's getOfflinePlayer(UUID) returns a fresh OfflinePlayerMock with identity-based
-        // equals for unregistered UUIDs, so isWhitelisted() on the new instance would always be false.
-        // We assert via the whitelist set directly, which is the same backing data.
         assertTrue(server.getWhitelistedPlayers().stream()
                 .anyMatch(p -> ownerUuid.equals(p.getUniqueId())),
                 "owner UUID must be in the whitelisted players set");
