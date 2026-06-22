@@ -43,6 +43,7 @@ public class Sentinel extends JavaPlugin {
     private de.derfakegamer.sentinel.manager.AppealManager appealManager;
     private de.derfakegamer.sentinel.manager.AuditManager auditManager;
     private de.derfakegamer.sentinel.util.CooldownManager cooldowns;
+    private de.derfakegamer.sentinel.manager.WebhookManager webhookManager;
 
     @Override
     public void onEnable() {
@@ -65,6 +66,7 @@ public class Sentinel extends JavaPlugin {
             return;
         }
         this.cooldowns = new de.derfakegamer.sentinel.util.CooldownManager();
+        this.webhookManager = new de.derfakegamer.sentinel.manager.WebhookManager(this);
         this.ownerManager = new de.derfakegamer.sentinel.manager.OwnerManager();
         this.ownerProtection = new de.derfakegamer.sentinel.manager.OwnerProtectionManager(this);
         this.ownerProtection.load();
@@ -210,6 +212,7 @@ public class Sentinel extends JavaPlugin {
     public de.derfakegamer.sentinel.manager.CronManager cron() { return cronManager; }
     public de.derfakegamer.sentinel.manager.BackupManager backup() { return backupManager; }
     public de.derfakegamer.sentinel.util.CooldownManager cooldowns() { return cooldowns; }
+    public de.derfakegamer.sentinel.manager.WebhookManager webhook() { return webhookManager; }
 
     public java.io.File pluginJar() { return getFile(); }
 

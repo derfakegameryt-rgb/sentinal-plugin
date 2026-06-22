@@ -33,6 +33,7 @@ public final class ReportManager {
                     if (staff.isOp()) staff.sendMessage(plugin.messages().plain("report-alert",
                         "reporter", reporter.getName(), "player", targetName, "reason", reason));
                 }
+                if (plugin.webhook() != null) plugin.webhook().notifyReport(reporter.getName(), targetName, reason);
             }
         }, error -> plugin.getLogger().log(java.util.logging.Level.SEVERE, "Failed to file report", error));
         return future;

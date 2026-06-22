@@ -59,10 +59,12 @@ public final class PunishmentManager {
                                            String reason, long expiresAt) {
         if (isExempt(target)) return CompletableFuture.completedFuture(Result.fail("exempt"));
         return plugin.db().submitWrite(() -> {
-            dao.insert(Punishment.builder().type(PunishmentType.MUTE).targetUuid(target)
+            Punishment p = Punishment.builder().type(PunishmentType.MUTE).targetUuid(target)
                 .targetName(targetName).reason(reason).issuerUuid(issuer).issuerName(issuerName)
-                .createdAt(System.currentTimeMillis()).expiresAt(expiresAt).active(true).build());
+                .createdAt(System.currentTimeMillis()).expiresAt(expiresAt).active(true).build();
+            dao.insert(p);
             muteCache.invalidate(target);
+            notifyWebhook(p);
             return Result.ok();
         });
     }
@@ -77,9 +79,11 @@ public final class PunishmentManager {
         // kicks are history-only (never "active")
         if (isExempt(target)) return CompletableFuture.completedFuture(Result.fail("exempt"));
         return plugin.db().submitWrite(() -> {
-            dao.insert(Punishment.builder().type(PunishmentType.KICK).targetUuid(target)
+            Punishment p = Punishment.builder().type(PunishmentType.KICK).targetUuid(target)
                 .targetName(targetName).reason(reason).issuerUuid(issuer).issuerName(issuerName)
-                .createdAt(System.currentTimeMillis()).expiresAt(0).active(false).build());
+                .createdAt(System.currentTimeMillis()).expiresAt(0).active(false).build();
+            dao.insert(p);
+            notifyWebhook(p);
             return Result.ok();
         });
     }
@@ -88,11 +92,23 @@ public final class PunishmentManager {
                                               UUID issuer, String issuerName, String reason, long expiresAt) {
         if (isExempt(target)) return CompletableFuture.completedFuture(Result.fail("exempt"));
         return plugin.db().submitWrite(() -> {
-            dao.insert(Punishment.builder().type(type).targetUuid(target).targetName(targetName)
+            Punishment p = Punishment.builder().type(type).targetUuid(target).targetName(targetName)
                 .targetIp(ip).reason(reason).issuerUuid(issuer).issuerName(issuerName)
-                .createdAt(System.currentTimeMillis()).expiresAt(expiresAt).active(true).build());
+                .createdAt(System.currentTimeMillis()).expiresAt(expiresAt).active(true).build();
+            dao.insert(p);
+            notifyWebhook(p);
             return Result.ok();
         });
+    }
+
+    /** Forwards a freshly-recorded punishment to the Discord webhook, if configured. Never throws. */
+    private void notifyWebhook(Punishment p) {
+        try {
+            var webhook = plugin.webhook();
+            if (webhook != null) webhook.notifyPunishment(p);
+        } catch (Exception ignored) {
+            // Notifications are best-effort and must never fail the punishment itself.
+        }
     }
 
     /** Returns the active ban, lazily deactivating it if expired. */
@@ -145,10 +161,12 @@ public final class PunishmentManager {
                                                  String issuerName, String reason, long expiresAt) {
         if (isExempt(target)) return CompletableFuture.completedFuture(Result.fail("exempt"));
         return plugin.db().submitWrite(() -> {
-            dao.insert(Punishment.builder().type(PunishmentType.SHADOWMUTE).targetUuid(target)
+            Punishment p = Punishment.builder().type(PunishmentType.SHADOWMUTE).targetUuid(target)
                 .targetName(targetName).reason(reason).issuerUuid(issuer).issuerName(issuerName)
-                .createdAt(System.currentTimeMillis()).expiresAt(expiresAt).active(true).build());
+                .createdAt(System.currentTimeMillis()).expiresAt(expiresAt).active(true).build();
+            dao.insert(p);
             shadowMuteCache.invalidate(target);
+            notifyWebhook(p);
             return Result.ok();
         });
     }

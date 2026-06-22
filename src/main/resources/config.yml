@@ -82,6 +82,14 @@ appeals:
   url: ""
   cooldown-seconds: 60  # how long a non-staff player must wait between /appeal uses (0 = disabled)
 
+# Discord webhook: posts punishments and reports to a channel via an incoming webhook.
+# No bot/token needed — create one under Channel Settings -> Integrations -> Webhooks
+# and paste its URL here. Leave enabled false (or url blank) to disable.
+discord:
+  enabled: false
+  webhook-url: ""
+  username: "Sentinel"   # name the messages are posted under
+
 # Scheduled console commands. Each entry needs a "do" plus either "every" (interval) or "at" (daily HH:mm).
 scheduled-tasks: []
 #  - { every: "2h", do: "say Remember to vote!" }
