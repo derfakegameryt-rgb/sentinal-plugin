@@ -1,6 +1,7 @@
 plugins {
     java
     id("com.gradleup.shadow") version "9.0.2"
+    id("com.diffplug.spotless") version "7.0.2"
 }
 
 group = "de.derfakegamer"
@@ -30,6 +31,19 @@ dependencies {
 }
 
 tasks.test { useJUnitPlatform() }
+
+// Conservative hygiene only — deliberately no full reformatter, so the existing
+// hand-tuned style (4-space indent, inline fully-qualified names) is preserved.
+// Runs as part of `check`/`build`; use `./gradlew spotlessApply` to auto-fix.
+spotless {
+    java {
+        target("src/**/*.java")
+        removeUnusedImports()
+        trimTrailingWhitespace()
+        leadingTabsToSpaces(4)
+        endWithNewline()
+    }
+}
 
 tasks.shadowJar {
     archiveClassifier.set("")

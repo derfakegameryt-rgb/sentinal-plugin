@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Test & build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Install both runtimes the universal jar targets. The Gradle toolchain pins
+      # compilation to Java 21; having 25 present also verifies it resolves cleanly.
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: |
+            21
+            25
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Test
+        run: ./gradlew --no-daemon test
+
+      - name: Build shaded jar
+        run: ./gradlew --no-daemon build
+
+      - name: Upload jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: sentinel-jar
+          path: build/libs/*.jar
+          if-no-files-found: error

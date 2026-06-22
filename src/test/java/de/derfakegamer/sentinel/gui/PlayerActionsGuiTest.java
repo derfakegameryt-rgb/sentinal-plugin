@@ -1,7 +1,6 @@
 package de.derfakegamer.sentinel.gui;
 
 import de.derfakegamer.sentinel.Sentinel;
-import de.derfakegamer.sentinel.model.PunishmentType;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.junit.jupiter.api.*;
