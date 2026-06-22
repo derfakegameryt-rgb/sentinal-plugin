@@ -9,15 +9,6 @@ reasons:            # the 5 presets shown in the Reason GUI
   - Toxicity
   - Advertising
   - Griefing
-database:
-  type: sqlite            # sqlite | mysql
-  mysql:                  # only used when type is mysql
-    host: localhost
-    port: 3306
-    database: sentinel
-    user: sentinel
-    password: ""
-    properties: "useUnicode=true&characterEncoding=utf8mb4"   # optional JDBC params
 
 maintenance:
   enabled: false
@@ -56,16 +47,6 @@ warn-actions:            # warns count -> action: "<kick|ban|tempban|mute|tempmu
 gui:
   sound: true
   sound-name: UI_BUTTON_CLICK
-discord:
-  webhook-url: ''   # plain-text fallback used only when the bot is off
-  bot:
-    enabled: false
-    token: ''            # bot token — server-side only, never commit
-    guild-id: ''         # Discord server (guild) ID for slash-command registration
-    log-channel-id: ''   # channel ID for punishment/report/appeal embeds
-    staff-role-ids: []   # Discord role IDs allowed to use moderation slash commands
-    status: "{online}/{max} online"   # presence text; {online} and {max} are substituted
-    status-seconds: 60   # presence refresh interval (seconds)
 logging:
   retention-days: 30          # delete chat/command log entries older than this (0 = keep forever)
   ignore-commands:            # never log these commands (they carry passwords)

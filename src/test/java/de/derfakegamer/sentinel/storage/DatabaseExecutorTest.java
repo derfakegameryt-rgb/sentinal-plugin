@@ -133,7 +133,7 @@ class DatabaseExecutorTest {
             java.sql.Connection bound = ThreadLocalHolder.CURRENT.get();
             return bound != null ? bound : writerConn;
         }
-        public SqlDialect dialect() { return SqlDialect.MYSQL; }
+        public SqlDialect dialect() { return SqlDialect.SQLITE; }
         public void ensureValid() { }
         public java.sql.Connection acquire() {
             java.sql.Connection c = pool.poll();

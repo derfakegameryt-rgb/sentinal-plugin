@@ -72,7 +72,6 @@ public final class ModerationService {
             // All Bukkit side-effects (broadcast, kick, sendMessage) must run on the main thread.
             return onMain(() -> {
                 Bukkit.broadcast(plugin.messages().prefixed(key, "player", targetName, "reason", reason));
-                plugin.discord().logPunishment(type, targetName, issuerName, reason, expiresAt);
 
                 Player online = Bukkit.getPlayer(targetId);
                 if (online != null) {

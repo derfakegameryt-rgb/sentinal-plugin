@@ -32,7 +32,7 @@ public final class AppealManager {
             if (dao.hasOpenForTarget(uuid)) return false;
             dao.insert(new Appeal(0, punishmentId, uuid, name, type, text, "OPEN", now, null, 0));
             return true;
-        }).thenApply(ok -> { if (Boolean.TRUE.equals(ok)) plugin.discord().logAppeal(name, type, text); return ok; });
+        });
     }
 
     /**

@@ -31,7 +31,6 @@ public class Sentinel extends JavaPlugin {
     private volatile de.derfakegamer.sentinel.manager.ChatModeration chatModeration;
     private volatile de.derfakegamer.sentinel.manager.WarnEscalation warnEscalation;
     private de.derfakegamer.sentinel.manager.ChatLogManager chatLogManager;
-    private de.derfakegamer.sentinel.discord.DiscordService discordService;
     private de.derfakegamer.sentinel.manager.MaintenanceManager maintenanceManager;
     private de.derfakegamer.sentinel.manager.AutoAnnouncer autoAnnouncer;
     private de.derfakegamer.sentinel.manager.RestartManager restartManager;
@@ -91,14 +90,6 @@ public class Sentinel extends JavaPlugin {
         this.chatLogManager = new de.derfakegamer.sentinel.manager.ChatLogManager(
             this, new de.derfakegamer.sentinel.storage.ChatLogDao(db.database()));
         this.chatLogManager.prune(getConfig().getInt("logging.retention-days", 30));
-        this.discordService = de.derfakegamer.sentinel.discord.DiscordFactory.create(this);
-        if (discordService instanceof de.derfakegamer.sentinel.discord.BotDiscordService bot) {
-            getServer().getScheduler().runTaskAsynchronously(this, bot::start);
-            int statusSecs = Math.max(1, getConfig().getInt("discord.bot.status-seconds", 60));
-            getServer().getScheduler().runTaskTimer(this, () ->
-                discordService.updatePresence(getServer().getOnlinePlayers().size(), getServer().getMaxPlayers()),
-                20L * statusSecs, 20L * statusSecs);
-        }
         this.maintenanceManager = new de.derfakegamer.sentinel.manager.MaintenanceManager(this);
         this.autoAnnouncer = new de.derfakegamer.sentinel.manager.AutoAnnouncer(this);
         this.restartManager = new de.derfakegamer.sentinel.manager.RestartManager(this);
@@ -185,9 +176,6 @@ public class Sentinel extends JavaPlugin {
         if (auditManager != null) {
             try { auditManager.flush(); } catch (Exception ignored) {}
         }
-        if (discordService != null) {
-            try { discordService.shutdown(); } catch (Exception ignored) {}
-        }
         if (db != null) {
             try { db.shutdown(); } catch (Exception e) {
                 getLogger().warning("database shutdown failed: " + e.getMessage());
@@ -212,7 +200,6 @@ public class Sentinel extends JavaPlugin {
     public de.derfakegamer.sentinel.manager.ChatModeration chatModeration() { return chatModeration; }
     public de.derfakegamer.sentinel.manager.WarnEscalation escalation() { return warnEscalation; }
     public de.derfakegamer.sentinel.manager.ChatLogManager chatLog() { return chatLogManager; }
-    public de.derfakegamer.sentinel.discord.DiscordService discord() { return discordService; }
     public de.derfakegamer.sentinel.manager.MaintenanceManager maintenance() { return maintenanceManager; }
     public de.derfakegamer.sentinel.manager.AutoAnnouncer announcer() { return autoAnnouncer; }
     public de.derfakegamer.sentinel.manager.RestartManager restart() { return restartManager; }
