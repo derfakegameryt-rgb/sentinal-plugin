@@ -49,7 +49,8 @@ public final class AuditDao {
 
     public List<AuditEntry> recent(int limit, int offset) {
         {
-            String sql = "SELECT * FROM audit ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?";
+            // Owner-only actions (OWNER_*) are hidden from every audit view by design.
+            String sql = "SELECT * FROM audit WHERE action NOT LIKE 'OWNER%' ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?";
             try (PreparedStatement ps = db.connection().prepareStatement(sql)) {
                 ps.setInt(1, limit); ps.setInt(2, offset);
                 return readAll(ps);
@@ -59,7 +60,7 @@ public final class AuditDao {
 
     public List<AuditEntry> recentForTarget(String target, int limit) {
         {
-            String sql = "SELECT * FROM audit WHERE target=? ORDER BY created_at DESC, id DESC LIMIT ?";
+            String sql = "SELECT * FROM audit WHERE target=? AND action NOT LIKE 'OWNER%' ORDER BY created_at DESC, id DESC LIMIT ?";
             try (PreparedStatement ps = db.connection().prepareStatement(sql)) {
                 ps.setString(1, target); ps.setInt(2, limit);
                 return readAll(ps);
@@ -69,7 +70,7 @@ public final class AuditDao {
 
     public List<ActorCount> topActors(long sinceMillis, int limit) {
         {
-            String sql = "SELECT actor, COUNT(*) AS c FROM audit WHERE created_at >= ? GROUP BY actor ORDER BY c DESC LIMIT ?";
+            String sql = "SELECT actor, COUNT(*) AS c FROM audit WHERE created_at >= ? AND action NOT LIKE 'OWNER%' GROUP BY actor ORDER BY c DESC LIMIT ?";
             try (PreparedStatement ps = db.connection().prepareStatement(sql)) {
                 ps.setLong(1, sinceMillis); ps.setInt(2, limit);
                 List<ActorCount> out = new ArrayList<>();
@@ -83,7 +84,7 @@ public final class AuditDao {
 
     public List<ActionCount> countsByAction(long sinceMillis) {
         {
-            String sql = "SELECT action, COUNT(*) AS c FROM audit WHERE created_at >= ? GROUP BY action ORDER BY c DESC";
+            String sql = "SELECT action, COUNT(*) AS c FROM audit WHERE created_at >= ? AND action NOT LIKE 'OWNER%' GROUP BY action ORDER BY c DESC";
             try (PreparedStatement ps = db.connection().prepareStatement(sql)) {
                 ps.setLong(1, sinceMillis);
                 List<ActionCount> out = new ArrayList<>();

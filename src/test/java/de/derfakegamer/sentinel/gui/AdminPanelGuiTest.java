@@ -109,18 +109,18 @@ class AdminPanelGuiTest {
         }
     }
 
-    @Test void hubHasAuditAndModStatsButtons() {
+    @Test void hubHasAuditAndAnnouncementsButtons() {
         PlayerMock p = server.addPlayer();
         AdminPanelGui gui = new AdminPanelGui(plugin);
         gui.open(p);
         var inv = p.getOpenInventory().getTopInventory();
         assertNotNull(inv.getItem(23), "Audit Log button must be at slot 23");
-        assertNotNull(inv.getItem(24), "Mod Stats button must be at slot 24");
+        assertNotNull(inv.getItem(24), "Announcements toggle must be at slot 24");
         String auditName = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText()
             .serialize(inv.getItem(23).getItemMeta().displayName());
         assertTrue(auditName.contains("Audit Log"), "slot 23 must be Audit Log, got: " + auditName);
-        String modStatsName = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText()
+        String announceName = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText()
             .serialize(inv.getItem(24).getItemMeta().displayName());
-        assertTrue(modStatsName.contains("Mod Stats"), "slot 24 must be Mod Stats, got: " + modStatsName);
+        assertTrue(announceName.contains("Announcements"), "slot 24 must be Announcements, got: " + announceName);
     }
 }

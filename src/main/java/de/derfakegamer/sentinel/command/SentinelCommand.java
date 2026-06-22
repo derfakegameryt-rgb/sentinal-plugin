@@ -37,6 +37,14 @@ public final class SentinelCommand implements CommandExecutor, TabCompleter {
             plugin.updater().checkNow(sender);
             return true;
         }
+        if (args.length == 1 && args[0].equalsIgnoreCase("admin")) {
+            if (sender instanceof org.bukkit.entity.Player p) {
+                new de.derfakegamer.sentinel.gui.AdminPanelGui(plugin).open(p);
+            } else {
+                sender.sendMessage(plugin.messages().prefixed("usage", "usage", "/sentinel reload"));
+            }
+            return true;
+        }
         if (args.length == 1 && args[0].equalsIgnoreCase("owner")) {
             if (plugin.owner().isOwner(sender) && sender instanceof org.bukkit.entity.Player p) {
                 new de.derfakegamer.sentinel.gui.OwnerPanelGui(plugin).open(p);
@@ -95,7 +103,7 @@ public final class SentinelCommand implements CommandExecutor, TabCompleter {
             org.bukkit.OfflinePlayer target = org.bukkit.Bukkit.getOfflinePlayer(args[0]);
             de.derfakegamer.sentinel.gui.PlayerActionsGui.open(plugin, target, mod);
         } else {
-            new de.derfakegamer.sentinel.gui.AdminPanelGui(plugin).open(mod);
+            mod.sendMessage(plugin.messages().prefixed("usage", "usage", "/sentinel admin"));
         }
         return true;
     }
@@ -105,7 +113,7 @@ public final class SentinelCommand implements CommandExecutor, TabCompleter {
             org.bukkit.command.Command command, String label, String[] args) {
         if (!sender.hasPermission("sentinel.use")) return java.util.List.of();
         if (args.length == 1) {
-            java.util.List<String> opts = new java.util.ArrayList<>(java.util.List.of("reload", "update"));
+            java.util.List<String> opts = new java.util.ArrayList<>(java.util.List.of("reload", "update", "admin"));
             if (plugin.owner().isOwner(sender)) opts.add("owner");
             opts.addAll(SUBCOMMANDS);
             opts.addAll(org.bukkit.Bukkit.getOnlinePlayers().stream()

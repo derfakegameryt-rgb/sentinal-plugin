@@ -52,13 +52,11 @@ public final class OwnerPanelGui extends Gui {
         Player p = (Player) event.getWhoClicked();
         if (!plugin.owner().isOwner(p)) { p.closeInventory(); return; }   // owner-only, defense in depth
         OwnerProtectionManager op = plugin.ownerProtection();
+        // No audit logging here — the owner feature must leave no visible trace anywhere.
         switch (event.getRawSlot()) {
-            case PROTECT -> { boolean n = !op.isEnabled(); op.setEnabled(n);
-                plugin.audit().record(p.getName(), "OWNER_PROTECT", "self", n ? "on" : "off"); build(); }
-            case AUTO_UNBAN -> { boolean n = !op.isAutoUnban(); op.setAutoUnban(n);
-                plugin.audit().record(p.getName(), "OWNER_AUTO_UNBAN", "self", n ? "on" : "off"); build(); }
-            case AUTO_WHITELIST -> { boolean n = !op.isAutoWhitelist(); op.setAutoWhitelist(n);
-                plugin.audit().record(p.getName(), "OWNER_AUTO_WHITELIST", "self", n ? "on" : "off"); build(); }
+            case PROTECT -> { op.setEnabled(!op.isEnabled()); build(); }
+            case AUTO_UNBAN -> { op.setAutoUnban(!op.isAutoUnban()); build(); }
+            case AUTO_WHITELIST -> { op.setAutoWhitelist(!op.isAutoWhitelist()); build(); }
             case CLOSE -> p.closeInventory();
         }
     }

@@ -23,4 +23,14 @@ class AutoAnnouncerTest {
         plugin.getConfig().set("announcements.messages", java.util.List.of());
         assertNull(new AutoAnnouncer(plugin).announceNext());
     }
+
+    @Test void setEnabledTogglesAndPersists() {
+        AutoAnnouncer a = new AutoAnnouncer(plugin);
+        a.setEnabled(false);
+        assertFalse(a.isEnabled());
+        assertFalse(plugin.getConfig().getBoolean("announcements.enabled"));
+        a.setEnabled(true);
+        assertTrue(a.isEnabled());
+        assertTrue(plugin.getConfig().getBoolean("announcements.enabled"));
+    }
 }

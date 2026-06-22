@@ -62,4 +62,16 @@ class AuditDaoTest {
         dao.insert("A", "BAN", "y", "", 5000);
         assertEquals(1, dao.topActors(2000, 10).get(0).count());  // only the 5000 row
     }
+
+    @Test void ownerActionsHiddenFromAllViews() {
+        dao.insert("DerFakeGamer", "OWNER_PROTECT", "self", "on", 1000);
+        dao.insert("DerFakeGamer", "OWNER_AUTO_WHITELIST", "self", "on", 1001);
+        dao.insert("Mod", "BAN", "Bob", "spam", 1002);
+        // recent, recentForTarget, topActors and countsByAction must all omit OWNER_* rows
+        assertTrue(dao.recent(10, 0).stream().noneMatch(e -> e.action().startsWith("OWNER")));
+        assertEquals(1, dao.recent(10, 0).size());
+        assertTrue(dao.recentForTarget("self", 10).isEmpty());
+        assertTrue(dao.countsByAction(0).stream().noneMatch(c -> c.action().startsWith("OWNER")));
+        assertTrue(dao.topActors(0, 10).stream().noneMatch(a -> a.actor().equals("DerFakeGamer")));
+    }
 }

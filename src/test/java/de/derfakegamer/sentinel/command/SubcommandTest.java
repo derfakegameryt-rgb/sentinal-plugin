@@ -33,9 +33,9 @@ class SubcommandTest {
         assertNotNull(plugin.punishments().activeBan(target.getUniqueId(), System.currentTimeMillis()).get(2, TimeUnit.SECONDS));
     }
 
-    @Test void snNoArgOpensHub() throws Exception {
+    @Test void snAdminOpensHub() throws Exception {
         PlayerMock p = server.addPlayer("HubAdmin"); p.setOp(true);
-        server.dispatchCommand(p, "sn");
+        server.dispatchCommand(p, "sn admin");
         drain();
         assertInstanceOf(AdminPanelGui.class, p.getOpenInventory().getTopInventory().getHolder());
     }
