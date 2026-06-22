@@ -19,7 +19,8 @@ public final class OwnerProtectionListener implements Listener {
         if (!plugin.ownerProtection().isEnabled()) return;
         Player p = event.getPlayer();
         if (plugin.owner().isOwner(p)) return;   // the owner may target himself
-        if (OwnerProtectionManager.affectsOwner(event.getMessage(), plugin.ownerProtection().ownerName())) {
+        if (OwnerProtectionManager.affectsOwner(event.getMessage(),
+                plugin.ownerProtection().ownerName(), plugin.owner().uuid().toString())) {
             event.setCancelled(true);
             p.sendMessage(Component.text("that entity does not exist", NamedTextColor.RED));
             plugin.debug("owner-protect: blocked " + p.getName() + " -> " + event.getMessage());

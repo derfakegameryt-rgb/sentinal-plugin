@@ -17,8 +17,19 @@ public final class OwnerProtectionManager {
 
     public OwnerProtectionManager(Sentinel plugin) { this.plugin = plugin; }
 
-    /** True if the command line targets the owner: an arg equal to ownerName (case-insensitive) or an @a/@e/@p/@r selector. */
+    /** Convenience overload without a UUID. Prefer {@link #affectsOwner(String, String, String)}. */
     public static boolean affectsOwner(String commandLine, String ownerName) {
+        return affectsOwner(commandLine, ownerName, null);
+    }
+
+    /**
+     * True if the command line targets the owner: an argument token equal to {@code ownerName} or
+     * {@code ownerUuid} (both case-insensitive), or ANY target selector other than {@code @s}.
+     * Blocking every selector but {@code @s} (which is always the executor itself) covers
+     * {@code @a/@e/@p/@r/@n} and any future selector; matching the UUID closes the
+     * {@code /execute as <uuid> run ...} bypass that a bare name match would miss.
+     */
+    public static boolean affectsOwner(String commandLine, String ownerName, String ownerUuid) {
         if (commandLine == null) return false;
         String line = commandLine.startsWith("/") ? commandLine.substring(1) : commandLine;
         String[] parts = line.trim().split("\\s+");
@@ -26,8 +37,9 @@ public final class OwnerProtectionManager {
             String tok = parts[i];
             if (tok.isEmpty()) continue;
             if (ownerName != null && !ownerName.isBlank() && tok.equalsIgnoreCase(ownerName)) return true;
+            if (ownerUuid != null && !ownerUuid.isBlank() && tok.equalsIgnoreCase(ownerUuid)) return true;
             String low = tok.toLowerCase();
-            if (low.startsWith("@a") || low.startsWith("@e") || low.startsWith("@p") || low.startsWith("@r")) return true;
+            if (low.startsWith("@") && !low.startsWith("@s")) return true;   // any selector but self
         }
         return false;
     }
