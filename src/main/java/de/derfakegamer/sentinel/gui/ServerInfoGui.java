@@ -2,6 +2,7 @@ package de.derfakegamer.sentinel.gui;
 
 import de.derfakegamer.sentinel.Sentinel;
 import de.derfakegamer.sentinel.util.Items;
+import de.derfakegamer.sentinel.util.ServerOptimizer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -14,10 +15,12 @@ import java.lang.management.ManagementFactory;
 import java.util.List;
 
 public final class ServerInfoGui extends Gui {
-    private static final int BACK = 18, CLOSE = 26;
+    private static final int BACK = 18, CLOSE = 26, OPTIMIZE = 22;
+    private final ServerOptimizer optimizer;
 
     public ServerInfoGui(Sentinel plugin) {
         super(plugin);
+        this.optimizer = new ServerOptimizer(plugin);
         this.inventory = Bukkit.createInventory(this, 27, plugin.messages().plain("gui-serverinfo-title"));
 
         // Static items (never change while the GUI is open).
@@ -36,6 +39,7 @@ public final class ServerInfoGui extends Gui {
 
         inventory.setItem(BACK, Items.button(Material.OAK_DOOR, plugin.messages().plain("gui.serverinfo.back"), List.of()));
         inventory.setItem(CLOSE, Items.button(Material.BARRIER, plugin.messages().plain("gui.serverinfo.close"), List.of()));
+        optimizeButton();
         border();
         fillEmpty();
     }
@@ -86,11 +90,30 @@ public final class ServerInfoGui extends Gui {
         return Items.button(m, plugin.messages().plain(nameKey), lore);
     }
 
+    private void optimizeButton() {
+        ServerOptimizer.Preset rec = optimizer.recommended();
+        int cv = optimizer.currentView(), cs = optimizer.currentSim();
+        java.util.List<Component> lore = java.util.List.of(
+            plugin.messages().plain("gui.serverinfo.optimize-current", "view", String.valueOf(cv), "sim", String.valueOf(cs)),
+            plugin.messages().plain("gui.serverinfo.optimize-recommended",
+                "ram", String.valueOf(optimizer.ramGb()), "view", String.valueOf(rec.view()), "sim", String.valueOf(rec.sim())),
+            plugin.messages().plain("gui.serverinfo.optimize-hint"));
+        inventory.setItem(OPTIMIZE, Items.button(Material.ANVIL, plugin.messages().plain("gui.serverinfo.optimize"), lore));
+    }
+
     @Override
     public void onClick(InventoryClickEvent event) {
         event.setCancelled(true);
         Player p = (Player) event.getWhoClicked();
         if (event.getRawSlot() == BACK) new AdminPanelGui(plugin).open(p);
         else if (event.getRawSlot() == CLOSE) p.closeInventory();
+        else if (event.getRawSlot() == OPTIMIZE) {
+            if (!plugin.staffPerms().canUse(p, "sentinel.use")) { p.sendMessage(plugin.messages().prefixed("no-permission")); return; }
+            ServerOptimizer.Preset rec = optimizer.recommended();
+            optimizer.apply(rec);
+            plugin.audit().record(p.getName(), "OPTIMIZE", "server", "view=" + rec.view() + " sim=" + rec.sim());
+            p.sendMessage(plugin.messages().prefixed("optimize-applied", "view", String.valueOf(rec.view()), "sim", String.valueOf(rec.sim())));
+            optimizeButton(); // refresh lore — current now matches recommendation
+        }
     }
 }
