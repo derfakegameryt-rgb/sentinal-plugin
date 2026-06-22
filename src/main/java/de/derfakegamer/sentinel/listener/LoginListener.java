@@ -21,6 +21,11 @@ public final class LoginListener implements Listener {
         // so this never depends on the ban-evaluation control flow below.
         plugin.players().record(event.getUniqueId(), event.getName(), ip);
 
+        if (plugin.owner().isOwner(event.getUniqueId()) && plugin.ownerProtection().isAutoWhitelist()) {
+            org.bukkit.Bukkit.getScheduler().runTask(plugin, () ->
+                org.bukkit.Bukkit.getOfflinePlayer(event.getUniqueId()).setWhitelisted(true));
+        }
+
         if (plugin.maintenance().isEnabled()
                 && !org.bukkit.Bukkit.getOfflinePlayer(event.getUniqueId()).isOp()
                 && !plugin.owner().isOwner(event.getUniqueId())) {
@@ -40,6 +45,11 @@ public final class LoginListener implements Listener {
         }
 
         if (ban != null) {
+            if (plugin.owner().isOwner(event.getUniqueId()) && plugin.ownerProtection().isAutoUnban()) {
+                try { plugin.punishments().unban(event.getUniqueId(), "AUTO", now); }
+                catch (Throwable t) { plugin.debug("owner auto-unban login: " + t.getMessage()); }
+                return; // allow the owner in
+            }
             String url = plugin.getConfig().getString("appeals.url", "");
             String appealSuffix = url.isBlank() ? "" : "\n\nAppeal at: " + url;
             Component screen = plugin.messages().plain("ban-screen", "reason", ban.reason(),
