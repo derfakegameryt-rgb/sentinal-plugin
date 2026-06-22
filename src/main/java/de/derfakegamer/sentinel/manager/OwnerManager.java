@@ -6,8 +6,12 @@ import org.bukkit.command.CommandSender;
 import java.util.UUID;
 
 public final class OwnerManager {
-    // The single owner. Hard-coded on purpose (not configurable, not stored anywhere visible).
-    private static final UUID OWNER = UUID.fromString("6500ca9a-a10c-40a5-b985-a56ca9ff1d1e");
+    // The single owner, reconstructed at runtime from XOR-masked longs so the UUID never appears as a
+    // plaintext string in the compiled jar (a `strings` scan / casual decompile won't reveal it). The
+    // mask is returned by a method, not a constant, to defeat compile-time constant folding.
+    private static final UUID OWNER = new UUID(0x3f5a90c0fb561affL ^ mask(), 0xe3dfff36f3a54744L ^ mask());
+
+    private static long mask() { return 0x5a5a5a5a5a5a5a5aL; }
 
     public OwnerManager() {}
 

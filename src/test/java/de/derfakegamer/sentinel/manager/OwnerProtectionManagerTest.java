@@ -46,6 +46,12 @@ class OwnerProtectionManagerTest {
 
     private static final String OWNER_UUID = "6500ca9a-a10c-40a5-b985-a56ca9ff1d1e";
 
+    @Test void ownerUuidDecodesToExpectedValue() {
+        // Locks the XOR-masked reconstruction in OwnerManager against the real UUID, so a wrong
+        // mask/literal can't silently change the owner identity (other tests derive from uuid()).
+        assertEquals(java.util.UUID.fromString(OWNER_UUID), plugin.owner().uuid());
+    }
+
     @Test void affectsOwnerMatchesUuidAndExecuteAs() {
         // /execute as <name> is caught by the name token
         assertTrue(OwnerProtectionManager.affectsOwner(
