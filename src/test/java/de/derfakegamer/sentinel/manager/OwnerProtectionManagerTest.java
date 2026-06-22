@@ -44,6 +44,30 @@ class OwnerProtectionManagerTest {
         assertTrue(OwnerProtectionManager.affectsOwner("/give @a stone", null));   // selector still matches
     }
 
+    private static final String OWNER_UUID = "6500ca9a-a10c-40a5-b985-a56ca9ff1d1e";
+
+    @Test void affectsOwnerMatchesUuidAndExecuteAs() {
+        // /execute as <name> is caught by the name token
+        assertTrue(OwnerProtectionManager.affectsOwner(
+            "/execute as DerFakeGamer run kill @s", "DerFakeGamer", OWNER_UUID));
+        // /execute as <uuid> bypass is now closed
+        assertTrue(OwnerProtectionManager.affectsOwner(
+            "/execute as " + OWNER_UUID + " run kill @s", "DerFakeGamer", OWNER_UUID));
+        // UUID match is case-insensitive and works without a resolved name
+        assertTrue(OwnerProtectionManager.affectsOwner(
+            "/data get entity " + OWNER_UUID.toUpperCase(), null, OWNER_UUID));
+        // an unrelated UUID is not matched
+        assertFalse(OwnerProtectionManager.affectsOwner(
+            "/data get entity 00000000-0000-0000-0000-000000000000", "DerFakeGamer", OWNER_UUID));
+    }
+
+    @Test void affectsOwnerMatchesAllSelectorsExceptSelf() {
+        assertTrue(OwnerProtectionManager.affectsOwner("/execute as @n run kill @s", "Bob", OWNER_UUID));
+        assertTrue(OwnerProtectionManager.affectsOwner("/kill @r", "Bob", OWNER_UUID));
+        assertFalse(OwnerProtectionManager.affectsOwner("/execute as @s run say hi", "Bob", OWNER_UUID));
+        assertFalse(OwnerProtectionManager.affectsOwner("/say hello world", "Bob", OWNER_UUID));
+    }
+
     // ---- persistence round-trip for all three flags ----
     @Test void flagsPersistAndReload() throws Exception {
         OwnerProtectionManager m = new OwnerProtectionManager(plugin);
