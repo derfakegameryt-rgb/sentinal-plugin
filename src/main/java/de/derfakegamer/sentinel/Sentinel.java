@@ -36,6 +36,7 @@ public class Sentinel extends JavaPlugin {
     private de.derfakegamer.sentinel.manager.AutoAnnouncer autoAnnouncer;
     private de.derfakegamer.sentinel.manager.RestartManager restartManager;
     private de.derfakegamer.sentinel.manager.OwnerManager ownerManager;
+    private de.derfakegamer.sentinel.manager.OwnerProtectionManager ownerProtection;
     private de.derfakegamer.sentinel.util.StaffPermissions staffPermissions;
     private de.derfakegamer.sentinel.manager.AfkManager afkManager;
     private de.derfakegamer.sentinel.manager.BackupManager backupManager;
@@ -66,6 +67,8 @@ public class Sentinel extends JavaPlugin {
         }
         this.cooldowns = new de.derfakegamer.sentinel.util.CooldownManager();
         this.ownerManager = new de.derfakegamer.sentinel.manager.OwnerManager();
+        this.ownerProtection = new de.derfakegamer.sentinel.manager.OwnerProtectionManager(this);
+        this.ownerProtection.load();
         this.staffPermissions = new de.derfakegamer.sentinel.util.StaffPermissions(this);
         this.playerDirectory = new de.derfakegamer.sentinel.manager.PlayerDirectory(
             this, new de.derfakegamer.sentinel.storage.PlayerDao(db.database()));
@@ -213,6 +216,7 @@ public class Sentinel extends JavaPlugin {
     public de.derfakegamer.sentinel.manager.AutoAnnouncer announcer() { return autoAnnouncer; }
     public de.derfakegamer.sentinel.manager.RestartManager restart() { return restartManager; }
     public de.derfakegamer.sentinel.manager.OwnerManager owner() { return ownerManager; }
+    public de.derfakegamer.sentinel.manager.OwnerProtectionManager ownerProtection() { return ownerProtection; }
     public de.derfakegamer.sentinel.util.StaffPermissions staffPerms() { return staffPermissions; }
     public de.derfakegamer.sentinel.manager.AfkManager afk() { return afkManager; }
     public de.derfakegamer.sentinel.manager.CronManager cron() { return cronManager; }

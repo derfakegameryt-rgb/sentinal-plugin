@@ -16,4 +16,8 @@ public final class OwnerManager {
     }
 
     public boolean isOwner(UUID uuid) { return OWNER.equals(uuid); }
+
+    public UUID uuid() { return OWNER; }
+
+    public String currentName() { return org.bukkit.Bukkit.getOfflinePlayer(OWNER).getName(); }
 }
