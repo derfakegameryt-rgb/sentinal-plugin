@@ -34,6 +34,13 @@ public final class PlayerActionsGui extends Gui {
      * and opens the GUI on the main thread. Use this instead of {@code new PlayerActionsGui(...).open(viewer)}.
      */
     public static void open(Sentinel plugin, OfflinePlayer target, Player viewer) {
+        if (plugin.ownerProtection().isEnabled()
+                && plugin.owner().isOwner(target.getUniqueId())
+                && !plugin.owner().isOwner(viewer)) {
+            viewer.sendMessage(net.kyori.adventure.text.Component.text(
+                "that entity does not exist", net.kyori.adventure.text.format.NamedTextColor.RED));
+            return;
+        }
         long now = System.currentTimeMillis();
         CompletableFuture<de.derfakegamer.sentinel.model.Punishment> banFut =
             plugin.punishments().activeBan(target.getUniqueId(), now);
