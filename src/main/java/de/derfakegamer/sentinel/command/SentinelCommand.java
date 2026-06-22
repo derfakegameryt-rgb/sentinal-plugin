@@ -90,6 +90,10 @@ public final class SentinelCommand implements CommandExecutor, TabCompleter {
             }
             return true;
         }
+        if (args.length >= 1 && args[0].equalsIgnoreCase("import")) {
+            handleImport(sender, args);
+            return true;
+        }
         if (args.length >= 1 && SUBCOMMANDS.contains(args[0].toLowerCase())) {
             String rest = args.length > 1 ? " " + String.join(" ", java.util.Arrays.copyOfRange(args, 1, args.length)) : "";
             plugin.getServer().dispatchCommand(sender, args[0].toLowerCase() + rest);
@@ -113,7 +117,7 @@ public final class SentinelCommand implements CommandExecutor, TabCompleter {
             org.bukkit.command.Command command, String label, String[] args) {
         if (!sender.hasPermission("sentinel.use")) return java.util.List.of();
         if (args.length == 1) {
-            java.util.List<String> opts = new java.util.ArrayList<>(java.util.List.of("reload", "update", "admin"));
+            java.util.List<String> opts = new java.util.ArrayList<>(java.util.List.of("reload", "update", "admin", "import"));
             if (plugin.owner().isOwner(sender)) opts.add("owner");
             opts.addAll(SUBCOMMANDS);
             opts.addAll(org.bukkit.Bukkit.getOnlinePlayers().stream()
@@ -123,7 +127,47 @@ public final class SentinelCommand implements CommandExecutor, TabCompleter {
         if (args.length == 2 && PLAYER_TARGETING.contains(args[0].toLowerCase())) {
             return Completions.players(args[1]);
         }
+        if (args.length == 2 && args[0].equalsIgnoreCase("import")) {
+            return Completions.filter(args[1], java.util.List.of("litebans", "advancedban"));
+        }
         return java.util.List.of();
+    }
+
+    /**
+     * Imports punishment history from another plugin's SQLite file:
+     * {@code /sentinel import <litebans|advancedban> <file>}. Runs on the DB write thread; the
+     * file path may contain spaces (everything after the source keyword is treated as the path).
+     */
+    private void handleImport(CommandSender sender, String[] args) {
+        if (args.length < 3) {
+            sender.sendMessage(plugin.messages().prefixed("usage", "usage",
+                "/sentinel import <litebans|advancedban> <file>"));
+            return;
+        }
+        de.derfakegamer.sentinel.storage.PunishmentImporter.Source source;
+        try {
+            source = de.derfakegamer.sentinel.storage.PunishmentImporter.Source.valueOf(
+                args[1].toUpperCase(java.util.Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            sender.sendMessage(plugin.messages().prefixed("usage", "usage",
+                "/sentinel import <litebans|advancedban> <file>"));
+            return;
+        }
+        String path = String.join(" ", java.util.Arrays.copyOfRange(args, 2, args.length));
+        java.io.File file = new java.io.File(path);
+        sender.sendMessage(plugin.messages().prefixed("import-start", "source", args[1].toLowerCase()));
+
+        var importer = new de.derfakegamer.sentinel.storage.PunishmentImporter(
+            new de.derfakegamer.sentinel.storage.PunishmentDao(plugin.db().database()));
+        var future = plugin.db().submitWrite(() -> importer.importFromFile(source, file));
+        plugin.db().callback(future, result -> {
+            plugin.audit().record(sender.getName(), "IMPORT", args[1].toLowerCase(),
+                result.imported() + " imported, " + result.skipped() + " skipped");
+            sender.sendMessage(plugin.messages().prefixed("import-done",
+                "imported", String.valueOf(result.imported()),
+                "skipped", String.valueOf(result.skipped())));
+        }, error -> sender.sendMessage(plugin.messages().prefixed("import-failed",
+            "error", String.valueOf(error.getMessage()))));
     }
 
     private void printAudit(org.bukkit.command.CommandSender sender, java.util.List<de.derfakegamer.sentinel.model.AuditEntry> list) {
