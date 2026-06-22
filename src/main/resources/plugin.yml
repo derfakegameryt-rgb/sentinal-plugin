@@ -3,6 +3,7 @@ version: '2.6.0'
 main: de.derfakegamer.sentinel.Sentinel
 api-version: '1.21'
 author: DerFakeGamer
+softdepend: [PlaceholderAPI]
 commands:
   sentinel:
     description: Sentinel admin (reload)

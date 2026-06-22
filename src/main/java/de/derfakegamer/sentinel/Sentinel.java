@@ -162,6 +162,14 @@ public class Sentinel extends JavaPlugin {
         this.updateChecker = new de.derfakegamer.sentinel.updater.UpdateChecker(this);
         this.updateChecker.start();
         new de.derfakegamer.sentinel.manager.MetricsManager(this).start();
+        if (getServer().getPluginManager().getPlugin("PlaceholderAPI") != null) {
+            try {
+                new de.derfakegamer.sentinel.hook.SentinelExpansion(this).register();
+                getLogger().info("Registered PlaceholderAPI expansion (%sentinel_...%).");
+            } catch (Throwable t) {
+                getLogger().warning("Failed to register PlaceholderAPI expansion: " + t.getMessage());
+            }
+        }
         getLogger().info("Sentinel enabled.");
     }
 
