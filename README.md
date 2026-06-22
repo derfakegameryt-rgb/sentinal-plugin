@@ -42,6 +42,21 @@ One universal JAR runs on **Minecraft 1.21.11 (Java 21)** and **26.1.1 (Java 25)
 - Auto-announcer, scheduled console tasks (cron-like)
 - Discord webhook mirroring of punishments & reports
 - **Auto-updater** (see below)
+- **One-click Optimize** — the Server Info GUI (slot 22) shows current and recommended
+  view/simulation distances, then applies them to every world and persists them to
+  `server.properties` on click. The recommended preset is chosen by RAM tier:
+
+| RAM (GB) | View distance | Simulation distance |
+|----------|---------------|---------------------|
+| 1        | 4             | 3                   |
+| 2        | 6             | 4                   |
+| 4        | 7             | 5                   |
+| 6        | 8             | 5                   |
+| 8        | 9             | 6                   |
+| 12       | 10            | 6                   |
+| 16       | 11            | 7                   |
+| 24       | 12            | 7                   |
+| 32+      | 12            | 8                   |
 
 ---
 

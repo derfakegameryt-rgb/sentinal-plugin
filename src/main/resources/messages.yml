@@ -99,6 +99,7 @@ gui-audit-title: "<#3B82F6>Sentinel · Audit Log"
 gui-modstats-title: "<#3B82F6>Sentinel · Mod Stats"
 db-error: "<red>Something went wrong — please try again in a moment."
 cooldown: "<red>Please wait <white><seconds></white>s before doing that again."
+optimize-applied: "<#60A5FA>Server optimised — view-distance <white><view></white>, simulation-distance <white><sim></white>."
 
 afk-now: "<#60A5FA><player></#60A5FA> <gray>is now AFK."
 afk-back: "<#60A5FA><player></#60A5FA> <gray>is no longer AFK."
@@ -162,6 +163,10 @@ gui:
     uptime: "<aqua>Uptime"
     back: "<gray>Back"
     close: "<red>Close"
+    optimize: "<aqua>Optimize server"
+    optimize-current: "<red>Current — View: <view>  Sim: <sim>"
+    optimize-recommended: "<green>Recommended (<ram> GB) — View: <view>  Sim: <sim>"
+    optimize-hint: "<gray>Click to apply"
   confirm:
     confirm: "<green>Confirm"
     confirm-lore:
