@@ -21,6 +21,7 @@ dependencies {
     compileOnly("com.google.code.gson:gson:2.11.0")
     compileOnly("org.apache.logging.log4j:log4j-core:2.22.1")
     implementation("org.xerial:sqlite-jdbc:3.47.1.0")
+    implementation("org.bstats:bstats-bukkit:3.1.0")
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.11.3")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
@@ -48,6 +49,8 @@ spotless {
 tasks.shadowJar {
     archiveClassifier.set("")
     relocate("org.sqlite", "de.derfakegamer.sentinel.libs.sqlite")
+    // bStats requires relocation into the plugin's own package (its own rule).
+    relocate("org.bstats", "de.derfakegamer.sentinel.libs.bstats")
     // sqlite-jdbc ships native binaries for ~24 platforms (~24 MB). Keep only the ones
     // real Paper servers run on to shrink the jar; drop the exotic/mobile/legacy ones.
     exclude("org/sqlite/native/Linux-Android/**")

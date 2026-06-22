@@ -161,6 +161,7 @@ public class Sentinel extends JavaPlugin {
         this.cronManager.start();
         this.updateChecker = new de.derfakegamer.sentinel.updater.UpdateChecker(this);
         this.updateChecker.start();
+        new de.derfakegamer.sentinel.manager.MetricsManager(this).start();
         getLogger().info("Sentinel enabled.");
     }
 
