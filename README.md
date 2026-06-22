@@ -57,6 +57,14 @@ One universal JAR runs on **Minecraft 1.21.11 (Java 21)** and **26.1.1 (Java 25)
 | 24       | 12            | 7                   |
 | 32+      | 12            | 8                   |
 
+**Integrations** *(all optional, all zero-config to leave off)*
+- **Discord webhook** — posts punishments and reports to a channel via an incoming webhook
+  URL (no bot, no token, no JDA — the jar stays 3.9 MB)
+- **PlaceholderAPI** — `%sentinel_maintenance%`, `%sentinel_vanished%`, `%sentinel_frozen%`,
+  `%sentinel_afk%`, `%sentinel_staffchat%`
+- **bStats** — optional, opt-out usage metrics
+- **Migration import** — pull existing punishment history out of LiteBans or AdvancedBan
+
 ---
 
 ## Installation
@@ -76,7 +84,7 @@ Open the main admin GUI with `/sentinel` (alias `/sn`). Most actions are availab
 
 | Command | Description |
 |---|---|
-| `/sentinel` · `/sn` | Open the admin panel / player list; `reload`, `update` subcommands |
+| `/sentinel` · `/sn` | Open the admin panel / player list; `reload`, `update`, `import` subcommands |
 | `/ban <player> <reason>` | Permanently ban |
 | `/tempban <player> <duration> <reason>` | Temporary ban (e.g. `1d2h`) |
 | `/ipban <player> <reason>` | Ban the player's IP |
@@ -135,6 +143,8 @@ all defaulting to `op`:
 - `logging` — chat-log retention and commands to never log
 - `maintenance`, `announcements`, `afk`, `backup`, `scheduled-tasks`
 - `appeals.url` — public appeal URL shown on the ban screen
+- `language` — `en` (default) or `de`; untranslated keys fall back to English
+- `discord` — `enabled`, `webhook-url`, `username` for the Discord webhook
 
 On startup Sentinel **validates the config** and logs clear warnings for malformed values
 (invalid durations, unknown sound, bad `warn-actions`/`scheduled-tasks` syntax, invalid UUIDs).
@@ -146,6 +156,46 @@ Warnings never stop the server — fix them and `/sentinel reload`.
 
 Sentinel uses an embedded **SQLite** database (`plugins/Sentinel/sentinel.db`) — no setup
 required, nothing to configure.
+
+---
+
+## Integrations
+
+**Discord** — create a webhook under *Channel Settings → Integrations → Webhooks*, then set
+in `config.yml`:
+
+```yaml
+discord:
+  enabled: true
+  webhook-url: "https://discord.com/api/webhooks/…"
+  username: "Sentinel"
+```
+
+Punishments and reports are posted as embeds. Sending is fully async and fire-and-forget — a
+broken webhook never blocks the server and is never spammed to the console.
+
+**PlaceholderAPI** — if PlaceholderAPI is installed, Sentinel registers a `sentinel` expansion
+exposing in-memory state: `%sentinel_maintenance%`, `%sentinel_vanished%`, `%sentinel_frozen%`,
+`%sentinel_afk%`, `%sentinel_staffchat%` (each `true`/`false`). Punishment-count placeholders are
+intentionally omitted — PlaceholderAPI resolves on the main thread and must not block on a DB read.
+
+**bStats** — optional usage metrics, opt-out per server in `plugins/bStats/config.yml`. Disabled
+until a bStats plugin id is registered.
+
+---
+
+## Migrating from LiteBans / AdvancedBan
+
+Import existing punishment history from another plugin's **SQLite** database:
+
+```text
+/sentinel import litebans   plugins/LiteBans/litebans.sqlite
+/sentinel import advancedban plugins/AdvancedBan/AdvancedBan.sqlite
+```
+
+SQLite source files only — Sentinel ships no MySQL driver by design, so MySQL-backed installs
+should export to SQLite first. Rows that can't be mapped (notes, unparseable UUIDs) are skipped
+and counted; the result is reported in chat and written to the audit log. Run it once.
 
 ---
 
@@ -163,9 +213,15 @@ the result (and any error).
 ## Building
 
 ```bash
-./gradlew build   # shaded plugin jar -> build/libs/
-./gradlew test    # run the test suite
+./gradlew build          # shaded plugin jar -> build/libs/ (runs tests + spotlessCheck)
+./gradlew test           # run the test suite
+./gradlew spotlessApply  # auto-fix import/whitespace hygiene
 ```
+
+CI runs the tests and builds the jar on every push and pull request
+(`.github/workflows/ci.yml`). On a `v*` tag, `.github/workflows/release.yml` builds the jar and
+publishes the GitHub Release to the public `sentinal-plugin` repo — this requires a `RELEASE_TOKEN`
+repo secret (a PAT with `contents: write` on that repo).
 
 ---
 

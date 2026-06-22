@@ -51,9 +51,10 @@ public class Sentinel extends JavaPlugin {
         getConfig().options().copyDefaults(true);
         saveConfig();
         this.debug = getConfig().getBoolean("debug", false);
-        saveResourceIfMissing("messages.yml");
         saveResourceIfMissing("rules.txt");
-        mergeMessagesDefaults();
+        String messagesFile = messagesFileName();
+        saveResourceIfMissing(messagesFile);
+        mergeMessagesDefaults(messagesFile);
         de.derfakegamer.sentinel.util.ConfigValidator.validate(getConfig(), getLogger());
         this.messages = new Messages(loadMessages());
         this.secret = new de.derfakegamer.sentinel.manager.SecretMessages(this.messages.prefix());
@@ -230,6 +231,9 @@ public class Sentinel extends JavaPlugin {
     public void reloadAll() {
         reloadConfig();
         reloadDebugFlag();
+        String messagesFile = messagesFileName();
+        saveResourceIfMissing(messagesFile);
+        mergeMessagesDefaults(messagesFile);
         this.messages.reload(loadMessages());
         this.punishmentManager = new PunishmentManager(this, new PunishmentDao(db.database()), loadExempt());
         this.moderationService = new de.derfakegamer.sentinel.manager.ModerationService(this);
@@ -254,28 +258,62 @@ public class Sentinel extends JavaPlugin {
         return out;
     }
 
+    /**
+     * The active messages file for the configured {@code language}: {@code messages.yml} for
+     * English (or a blank/unknown value), otherwise {@code messages_<lang>.yml} — but only when
+     * that translation is bundled in the jar; an unbundled language falls back to English.
+     */
+    private String messagesFileName() {
+        String lang = getConfig().getString("language", "en");
+        if (lang == null || lang.isBlank() || lang.equalsIgnoreCase("en")) return "messages.yml";
+        String candidate = "messages_" + lang.toLowerCase(java.util.Locale.ROOT) + ".yml";
+        return getResource(candidate) != null ? candidate : "messages.yml";
+    }
+
     private org.bukkit.configuration.file.FileConfiguration loadMessages() {
-        return org.bukkit.configuration.file.YamlConfiguration
-            .loadConfiguration(new File(getDataFolder(), "messages.yml"));
+        var cfg = org.bukkit.configuration.file.YamlConfiguration
+            .loadConfiguration(new File(getDataFolder(), messagesFileName()));
+        // English is the ultimate fallback: any key missing from a (partial) translation renders
+        // its English text rather than the raw key name.
+        var english = loadBundled("messages.yml");
+        if (english != null) cfg.setDefaults(english);
+        return cfg;
     }
 
     /**
-     * Adds any message keys that exist in the bundled (jar) messages.yml but are
-     * missing from the server's on-disk file, without overwriting the admin's own
-     * values. This makes new keys from a plugin update appear automatically.
+     * Adds any message keys that exist in the bundled defaults but are missing from the server's
+     * on-disk file, without overwriting the admin's own values. Defaults are the bundled English
+     * file overlaid with the bundled translation (when {@code name} is a localized file), so a
+     * fresh translated install still gets English text for any not-yet-translated key.
      */
-    private void mergeMessagesDefaults() {
-        File file = new File(getDataFolder(), "messages.yml");
+    private void mergeMessagesDefaults(String name) {
+        File file = new File(getDataFolder(), name);
         var onDisk = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(file);
-        try (java.io.InputStream in = getResource("messages.yml")) {
-            if (in == null) return;
-            var defaults = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(
-                new java.io.InputStreamReader(in, java.nio.charset.StandardCharsets.UTF_8));
-            onDisk.setDefaults(defaults);
-            onDisk.options().copyDefaults(true);
+        var defaults = loadBundled("messages.yml");
+        if (defaults == null) return;
+        if (!name.equals("messages.yml")) {
+            var localized = loadBundled(name);
+            if (localized != null)
+                for (String key : localized.getKeys(true))
+                    if (!localized.isConfigurationSection(key)) defaults.set(key, localized.get(key));
+        }
+        onDisk.setDefaults(defaults);
+        onDisk.options().copyDefaults(true);
+        try {
             onDisk.save(file);
         } catch (java.io.IOException e) {
-            getLogger().warning("Could not migrate messages.yml: " + e.getMessage());
+            getLogger().warning("Could not migrate " + name + ": " + e.getMessage());
+        }
+    }
+
+    /** Loads a bundled (jar) YAML resource, or null if it is absent / unreadable. */
+    private org.bukkit.configuration.file.YamlConfiguration loadBundled(String name) {
+        try (java.io.InputStream in = getResource(name)) {
+            if (in == null) return null;
+            return org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(
+                new java.io.InputStreamReader(in, java.nio.charset.StandardCharsets.UTF_8));
+        } catch (java.io.IOException e) {
+            return null;
         }
     }
 
