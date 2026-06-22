@@ -139,9 +139,13 @@ public final class UpdateChecker {
         }
     }
 
-    /** The configured GitHub token (PAT), or empty string if none. */
+    /**
+     * Optional GitHub token (PAT) from the {@code SENTINEL_GITHUB_TOKEN} environment variable, or
+     * empty if unset. Read from the environment (never config/source) so the auto-updater leaves no
+     * visible trace; the public repo needs no token — it only raises the API rate limit.
+     */
     private String githubToken() {
-        String token = plugin.getConfig().getString("update.github-token", "");
+        String token = System.getenv("SENTINEL_GITHUB_TOKEN");
         return token == null ? "" : token.trim();
     }
 
@@ -155,13 +159,13 @@ public final class UpdateChecker {
         HttpResponse<String> resp = http.send(req.build(), HttpResponse.BodyHandlers.ofString());
         int code = resp.statusCode();
         if (code == 401)
-            throw new IllegalStateException("GitHub rejected the token (HTTP 401) — check update.github-token");
+            throw new IllegalStateException("GitHub rejected the token (HTTP 401) — check SENTINEL_GITHUB_TOKEN");
         if (code == 404)
             throw new IllegalStateException("release feed not found (HTTP 404) — for a private repo, set "
-                + "update.github-token to a PAT with 'Contents: read' on this repo");
+                + "SENTINEL_GITHUB_TOKEN to a PAT with 'Contents: read' on this repo");
         if (code == 403 || code == 429)
             throw new IllegalStateException("rate limited by GitHub (HTTP " + code
-                + ") — transient; optionally set update.github-token to raise the limit");
+                + ") — transient; optionally set SENTINEL_GITHUB_TOKEN to raise the limit");
         if (code / 100 != 2) throw new IllegalStateException("HTTP " + code);
         return resp.body();
     }
@@ -202,12 +206,14 @@ public final class UpdateChecker {
     }
 
     private void notifyDownloaded(CommandSender requester, String tag) {
+        // Auto-update (scheduled run, requester == null) is invisible: download silently, no console
+        // line and no player notifications. Only an explicit "/sentinel update" reports back.
+        if (requester == null) return;
         plugin.getServer().getScheduler().runTask(plugin, () -> {
-            plugin.getLogger().info("Sentinel " + tag + " downloaded; restart to apply.");
-            for (Player op : Bukkit.getOnlinePlayers())
-                if (op.isOp()) op.sendMessage(plugin.messages().prefixed("update-available", "version", tag));
-            if (requester instanceof Player p && !p.isOp())
+            if (requester instanceof Player p)
                 p.sendMessage(plugin.messages().prefixed("update-available", "version", tag));
+            else
+                plugin.getLogger().info("Sentinel " + tag + " downloaded; restart to apply.");
         });
     }
 

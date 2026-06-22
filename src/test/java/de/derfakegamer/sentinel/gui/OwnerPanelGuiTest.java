@@ -32,7 +32,7 @@ class OwnerPanelGuiTest {
         assertEquals(54, gui.getInventory().getSize());
     }
 
-    @Test void clickingProtectToggleFlipsPersistsAndAudits() throws Exception {
+    @Test void clickingProtectToggleFlipsAndLeavesNoAuditTrace() throws Exception {
         OwnerPanelGui gui = new OwnerPanelGui(plugin);
         gui.open(owner);
         assertFalse(plugin.ownerProtection().isEnabled());
@@ -40,8 +40,10 @@ class OwnerPanelGuiTest {
         assertTrue(plugin.ownerProtection().isEnabled());
         plugin.db().submit(() -> null).get(2, java.util.concurrent.TimeUnit.SECONDS);
         server.getScheduler().performTicks(3);
+        // The owner feature must be invisible: no OWNER_* entry may surface in the audit views.
         var audit = plugin.audit().recent(10, 0).get(2, java.util.concurrent.TimeUnit.SECONDS);
-        assertTrue(audit.stream().anyMatch(e -> "OWNER_PROTECT".equals(e.action())));
+        assertTrue(audit.stream().noneMatch(e -> e.action() != null && e.action().startsWith("OWNER")),
+            "owner toggles must never appear in the audit log");
     }
 
     @Test void clickingAutoUnbanAndWhitelistToggles() {

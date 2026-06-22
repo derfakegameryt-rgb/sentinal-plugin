@@ -137,7 +137,6 @@ all defaulting to `op`:
 - `maintenance`, `announcements`, `afk`, `backup`, `scheduled-tasks`
 - `discord.webhook-url` — paste a webhook URL to mirror punishments & reports (blank = off)
 - `appeals.url` — public appeal URL shown on the ban screen
-- `update.github-token` — optional; only needed to raise the GitHub API rate limit
 
 On startup Sentinel **validates the config** and logs clear warnings for malformed values
 (bad webhook URL, invalid durations, unknown sound, bad `warn-actions`/`scheduled-tasks` syntax,
@@ -191,9 +190,10 @@ The bot is fail-soft: a Discord outage or bad token never affects gameplay.
 
 Sentinel checks this repository's GitHub Releases on startup and every 5 minutes. When a newer
 version is published it downloads the new JAR into `plugins/update/` to apply on the next restart.
-The repository is public, so **no token is required** — leave `update.github-token` blank.
-Transient failures (offline, rate limit) are kept out of the console to avoid log spam; run
-`/sentinel update` to check on demand and see any error.
+The background check runs **silently** — no console lines and no in-game notifications. The
+repository is public, so **no token is required**; an optional `SENTINEL_GITHUB_TOKEN` environment
+variable only raises the GitHub API rate limit. Run `/sentinel update` to check on demand and see
+the result (and any error).
 
 ---
 
