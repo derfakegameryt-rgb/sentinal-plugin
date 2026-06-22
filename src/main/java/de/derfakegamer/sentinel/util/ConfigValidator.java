@@ -22,8 +22,6 @@ public final class ConfigValidator {
     private ConfigValidator() {}
 
     public static void validate(FileConfiguration cfg, Logger log) {
-        checkDiscordWebhook(cfg, log);
-        checkDiscordBot(cfg, log);
         checkAppealsUrl(cfg, log);
         checkGuiSoundName(cfg, log);
         checkNonNegativeInts(cfg, log);
@@ -31,31 +29,6 @@ public final class ConfigValidator {
         checkWarnActions(cfg, log);
         checkScheduledTasks(cfg, log);
         checkExemptUuids(cfg, log);
-        checkDatabase(cfg, log);
-    }
-
-    // 1. discord.webhook-url
-    private static void checkDiscordWebhook(FileConfiguration cfg, Logger log) {
-        String url = cfg.getString("discord.webhook-url", "");
-        if (url == null || url.isBlank()) return;
-        if (!url.startsWith("https://discord.com/api/webhooks/")
-                && !url.startsWith("https://discordapp.com/api/webhooks/")) {
-            log.warning("Sentinel config: discord.webhook-url looks malformed"
-                    + " (expected https://discord.com/api/webhooks/... or https://discordapp.com/api/webhooks/...)"
-                    + " — Discord mirroring may fail.");
-        }
-    }
-
-    // 1b. discord.bot block
-    private static void checkDiscordBot(FileConfiguration cfg, Logger log) {
-        if (cfg.getBoolean("discord.bot.enabled", false)) {
-            if (cfg.getString("discord.bot.token", "").isBlank()
-                || cfg.getString("discord.bot.guild-id", "").isBlank()
-                || cfg.getString("discord.bot.log-channel-id", "").isBlank())
-                log.warning("Sentinel config: discord.bot is enabled but token, guild-id, or log-channel-id is blank.");
-            if (cfg.getInt("discord.bot.status-seconds", 60) < 1)
-                log.warning("Sentinel config: discord.bot.status-seconds must be at least 1.");
-        }
     }
 
     // 2. appeals.url
@@ -218,23 +191,7 @@ public final class ConfigValidator {
         }
     }
 
-    // 8. database block
-    private static void checkDatabase(FileConfiguration cfg, Logger log) {
-        String dbType = cfg.getString("database.type", "sqlite").trim().toLowerCase();
-        if (!dbType.equals("sqlite") && !dbType.equals("mysql")) {
-            log.warning("Sentinel config: database.type '" + dbType + "' is unknown — using sqlite. Use 'sqlite' or 'mysql'.");
-        } else if (dbType.equals("mysql")) {
-            if (cfg.getString("database.mysql.host", "").isBlank()
-                || cfg.getString("database.mysql.database", "").isBlank()
-                || cfg.getString("database.mysql.user", "").isBlank())
-                log.warning("Sentinel config: database.mysql requires non-empty host, database, and user.");
-            int port = cfg.getInt("database.mysql.port", 3306);
-            if (port < 1 || port > 65535)
-                log.warning("Sentinel config: database.mysql.port " + port + " is out of range (1-65535).");
-        }
-    }
-
-    // 9. exempt UUID list
+    // 8. exempt UUID list
     private static void checkExemptUuids(FileConfiguration cfg, Logger log) {
         List<String> exempt = cfg.getStringList("exempt");
         for (String entry : exempt) {

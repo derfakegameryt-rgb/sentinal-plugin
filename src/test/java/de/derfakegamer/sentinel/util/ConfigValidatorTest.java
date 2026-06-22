@@ -58,8 +58,6 @@ class ConfigValidatorTest {
     @Test
     void validConfigProducesNoWarnings() {
         String yaml = """
-                discord:
-                  webhook-url: "https://discord.com/api/webhooks/123/abc"
                 appeals:
                   url: "https://example.com/appeals"
                 gui:
@@ -76,36 +74,6 @@ class ConfigValidatorTest {
                 """;
         ConfigValidator.validate(load(yaml), log);
         assertEquals(0, warningCount(), "Expected no warnings for a valid config, got: " + records);
-    }
-
-    // -----------------------------------------------------------------------
-    // 2. Malformed discord webhook URL warns about discord
-    // -----------------------------------------------------------------------
-    @Test
-    void malformedDiscordWebhookWarns() {
-        String yaml = """
-                discord:
-                  webhook-url: "https://example.com/notadiscordwebhook"
-                """;
-        ConfigValidator.validate(load(yaml), log);
-        assertTrue(hasWarningContaining("discord"), "Expected a warning mentioning 'discord' for bad webhook URL");
-    }
-
-    @Test
-    void validDiscordWebhookNoWarn() {
-        String yaml = """
-                discord:
-                  webhook-url: "https://discord.com/api/webhooks/1234567890/token"
-                """;
-        ConfigValidator.validate(load(yaml), log);
-        assertEquals(0, warningCount(), "Valid discord URL should produce no warnings");
-    }
-
-    @Test
-    void blankDiscordWebhookNoWarn() {
-        String yaml = "discord:\n  webhook-url: \"\"\n";
-        ConfigValidator.validate(load(yaml), log);
-        assertEquals(0, warningCount(), "Blank discord URL should produce no warnings");
     }
 
     // -----------------------------------------------------------------------
@@ -287,50 +255,4 @@ class ConfigValidatorTest {
         assertTrue(hasWarningContaining("appeals.url"), "Expected warning for non-http appeals.url");
     }
 
-    // -----------------------------------------------------------------------
-    // 10. database validation
-    // -----------------------------------------------------------------------
-    private List<String> warnings(String yaml) {
-        records.clear();
-        ConfigValidator.validate(load(yaml), log);
-        return records.stream()
-                .filter(r -> r.getLevel() == Level.WARNING)
-                .map(LogRecord::getMessage)
-                .toList();
-    }
-
-    @Test void mysqlTypeRequiresHostDatabaseUser() {
-        String yaml = "database:\n  type: mysql\n  mysql:\n    host: ''\n    port: 3306\n    database: ''\n    user: ''\n";
-        assertTrue(warnings(yaml).stream().anyMatch(w -> w.contains("database.mysql")));
-    }
-
-    @Test void mysqlBadPortWarns() {
-        String yaml = "database:\n  type: mysql\n  mysql:\n    host: h\n    port: 70000\n    database: d\n    user: u\n";
-        assertTrue(warnings(yaml).stream().anyMatch(w -> w.contains("port")));
-    }
-
-    @Test void unknownDatabaseTypeWarns() {
-        assertTrue(warnings("database:\n  type: postgres\n").stream().anyMatch(w -> w.contains("database.type")));
-    }
-
-    @Test void sqliteTypeProducesNoDatabaseWarning() {
-        assertTrue(warnings("database:\n  type: sqlite\n").stream().noneMatch(w -> w.contains("database")));
-    }
-
-    // -----------------------------------------------------------------------
-    // 11. discord.bot validation
-    // -----------------------------------------------------------------------
-    @Test void discordBotEnabledRequiresTokenGuildChannel() {
-        String yaml = "discord:\n  bot:\n    enabled: true\n    token: ''\n    guild-id: ''\n    log-channel-id: ''\n    status-seconds: 60\n";
-        assertTrue(warnings(yaml).stream().anyMatch(w -> w.contains("discord.bot")));
-    }
-
-    @Test void discordBotBadStatusSecondsWarns() {
-        String yaml = "discord:\n  bot:\n    enabled: true\n    token: 't'\n    guild-id: 'g'\n    log-channel-id: 'c'\n    status-seconds: 0\n";
-        assertTrue(warnings(yaml).stream().anyMatch(w -> w.contains("status-seconds")));
-    }
-
-    @Test void discordBotDisabledProducesNoWarning() {
-        assertTrue(warnings("discord:\n  bot:\n    enabled: false\n").stream().noneMatch(w -> w.contains("discord.bot")));
-    }
 }

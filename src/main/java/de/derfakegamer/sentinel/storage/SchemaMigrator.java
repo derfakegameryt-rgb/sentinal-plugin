@@ -14,11 +14,9 @@ public final class SchemaMigrator {
 
     private static final List<Migration> MIGRATIONS = List.of(
         // V1: players.playtime — baseline CREATE already includes it on fresh installs; this brings
-        // pre-playtime SQLite/MySQL installs up to parity. Idempotent (duplicate-column swallowed).
+        // pre-playtime installs up to parity. Idempotent (duplicate-column swallowed).
         new Migration(1, db -> List.of(
-            "ALTER TABLE players ADD COLUMN playtime "
-                + (db.dialect() == SqlDialect.MYSQL ? "BIGINT" : "INTEGER")
-                + " NOT NULL DEFAULT 0"))
+            "ALTER TABLE players ADD COLUMN playtime INTEGER NOT NULL DEFAULT 0"))
     );
 
     public static int latestVersion() {
@@ -56,8 +54,6 @@ public final class SchemaMigrator {
 
     /** True for "column/index already exists" errors that make a migration safe to re-run. */
     private static boolean isDuplicate(SQLException e) {
-        int code = e.getErrorCode();
-        if (code == 1060 || code == 1061) return true; // MySQL ER_DUP_FIELDNAME / ER_DUP_KEYNAME
         String msg = e.getMessage() == null ? "" : e.getMessage().toLowerCase();
         return msg.contains("duplicate column") || msg.contains("already exists");
     }

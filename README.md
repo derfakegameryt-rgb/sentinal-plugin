@@ -40,7 +40,6 @@ One universal JAR runs on **Minecraft 1.21.11 (Java 21)** and **26.1.1 (Java 25)
 - Maintenance mode (custom MOTD + kick message, owner bypass)
 - Scheduled restarts, world backups (zip), playtime tracking
 - Auto-announcer, scheduled console tasks (cron-like)
-- Discord webhook mirroring of punishments & reports
 - **Auto-updater** (see below)
 - **One-click Optimize** — the Server Info GUI (slot 22) shows current and recommended
   view/simulation distances, then applies them to every world and persists them to
@@ -135,54 +134,18 @@ all defaulting to `op`:
 - `chat` — anti-spam, anti-advertising, word/caps/flood filters, slow-mode
 - `logging` — chat-log retention and commands to never log
 - `maintenance`, `announcements`, `afk`, `backup`, `scheduled-tasks`
-- `discord.webhook-url` — paste a webhook URL to mirror punishments & reports (blank = off)
 - `appeals.url` — public appeal URL shown on the ban screen
 
 On startup Sentinel **validates the config** and logs clear warnings for malformed values
-(bad webhook URL, invalid durations, unknown sound, bad `warn-actions`/`scheduled-tasks` syntax,
-invalid UUIDs). Warnings never stop the server — fix them and `/sentinel reload`.
+(invalid durations, unknown sound, bad `warn-actions`/`scheduled-tasks` syntax, invalid UUIDs).
+Warnings never stop the server — fix them and `/sentinel reload`.
 
 ---
 
 ## Database
 
-Sentinel uses **SQLite** by default — no setup required. To share one database across a
-proxy network (so bans apply on every server), switch to **MySQL/MariaDB** in `config.yml`:
-
-```yaml
-database:
-  type: mysql
-  mysql:
-    host: localhost
-    port: 3306
-    database: sentinel
-    user: sentinel
-    password: "secret"
-```
-
-Each server pointing at the same MySQL database shares all punishments, reports, appeals,
-notes, and chat logs. A MySQL connection failure at startup disables the plugin (it never
-silently falls back to SQLite).
-
-**Manual MySQL smoke test:** with `type: mysql`, start the server and confirm the tables are
-created; ban a player from a second account and reconnect to confirm the kick; open the
-History and Reports GUIs; verify rows appear in MySQL; restart and confirm data persists.
-On a network, ban on one server and confirm the ban is enforced when joining another.
-
----
-
-## Discord
-
-Sentinel can mirror events to Discord two ways:
-
-- **Webhook (simple):** set `discord.webhook-url` for one-line punishment/report messages.
-- **Bot (full):** set `discord.bot.enabled: true` and a `discord.bot.token` to run a real bot —
-  colour-coded embeds in `log-channel-id`, a live `{online}/{max}` presence, and moderation
-  slash commands (`/ban`, `/tempban`, `/mute`, `/tempmute`, `/kick`, `/warn`, `/unban`, `/unmute`)
-  usable by members holding any role in `staff-role-ids`. The token is read from the server's
-  config only — never commit it.
-
-The bot is fail-soft: a Discord outage or bad token never affects gameplay.
+Sentinel uses an embedded **SQLite** database (`plugins/Sentinel/sentinel.db`) — no setup
+required, nothing to configure.
 
 ---
 
