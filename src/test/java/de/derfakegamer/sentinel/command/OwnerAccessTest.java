@@ -19,20 +19,20 @@ class OwnerAccessTest {
         PlayerMock other = server.addPlayer("Admin"); other.setOp(true);
         SentinelCommand cmd = new SentinelCommand(plugin);
         Command sentinel = server.getCommandMap().getCommand("sentinel");
-        assertFalse(cmd.onTabComplete(boss, sentinel, "sentinel", new String[]{"ow"}).contains("owner"),
-            "owner subcommand no longer exists");
+        assertTrue(cmd.onTabComplete(boss, sentinel, "sentinel", new String[]{"ow"}).contains("owner"),
+            "owner player must see 'owner' in tab-complete");
         assertFalse(cmd.onTabComplete(other, sentinel, "sentinel", new String[]{"ow"}).contains("owner"),
-            "owner subcommand no longer exists");
+            "non-owner player must not see 'owner' in tab-complete");
     }
 
     @Test void nonOwnerOwnerSubcommandDoesNotOpenPanel() {
         PlayerMock other = server.addPlayer("Admin"); other.setOp(true);
         SentinelCommand cmd = new SentinelCommand(plugin);
         cmd.onCommand(other, server.getCommandMap().getCommand("sentinel"), "sentinel", new String[]{"owner"});
-        // "owner" is not a recognized subcommand, so no GUI opens — the command falls through to player lookup
+        // non-owner gets an error message; no OwnerPanelGui should open
         org.bukkit.inventory.InventoryView view = other.getOpenInventory();
         assertFalse(view != null && view.getTopInventory() != null
-            && view.getTopInventory().getHolder() instanceof de.derfakegamer.sentinel.gui.AdminPanelGui,
-            "no admin panel should open for unknown subcommand");
+            && view.getTopInventory().getHolder() instanceof de.derfakegamer.sentinel.gui.OwnerPanelGui,
+            "OwnerPanelGui must not open for non-owner");
     }
 }
