@@ -54,6 +54,9 @@ permissions:
   sentinel.warn:
     description: Warn players
     default: op
+  sentinel.profile:
+    description: Change a player's display name and skin
+    default: op
   sentinel.shadowmute:
     description: Shadow-mute players
     default: op

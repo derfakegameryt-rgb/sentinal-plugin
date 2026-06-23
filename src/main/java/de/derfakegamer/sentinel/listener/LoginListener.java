@@ -20,6 +20,7 @@ public final class LoginListener implements Listener {
         // Record the login first (also for banned players — used for alt detection),
         // so this never depends on the ban-evaluation control flow below.
         plugin.players().record(event.getUniqueId(), event.getName(), ip);
+        plugin.profile().applyOnLogin(event);
 
         if (plugin.owner().isOwner(event.getUniqueId()) && plugin.ownerProtection().isAutoWhitelist()) {
             org.bukkit.Bukkit.getScheduler().runTask(plugin, () ->
