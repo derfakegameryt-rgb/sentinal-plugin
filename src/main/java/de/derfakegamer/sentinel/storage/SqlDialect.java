@@ -52,6 +52,10 @@ public interface SqlDialect {
                   created_at INTEGER NOT NULL)""",
                 "CREATE INDEX IF NOT EXISTS idx_notes_target ON notes(target_uuid)",
                 """
+                CREATE TABLE IF NOT EXISTS profile_overrides (
+                  uuid TEXT PRIMARY KEY, display_name TEXT, skin_value TEXT, skin_signature TEXT,
+                  updated_by TEXT, updated_at INTEGER NOT NULL DEFAULT 0)""",
+                """
                 CREATE TABLE IF NOT EXISTS chatlog (
                   id INTEGER PRIMARY KEY AUTOINCREMENT,
                   uuid TEXT NOT NULL, name TEXT NOT NULL, kind TEXT NOT NULL, text TEXT NOT NULL,
