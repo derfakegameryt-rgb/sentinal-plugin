@@ -65,6 +65,7 @@ public final class ProfileManager {
     public void setName(org.bukkit.entity.Player target, String name, String staff) {
         java.util.UUID id = target.getUniqueId();
         plugin.db().callback(plugin.db().submit(() -> dao.find(id)), existing -> {
+            if (!target.isOnline()) return;
             String sv = existing != null ? existing.skinValue() : null;
             String ss = existing != null ? existing.skinSignature() : null;
             applyLive(target, name, sv, ss);
@@ -138,5 +139,6 @@ public final class ProfileManager {
             profile.getProperties().removeIf(p -> "textures".equals(p.getName()));
             profile.setProperty(new ProfileProperty("textures", o.skinValue(), o.skinSignature()));
         }
+        event.setPlayerProfile(profile);
     }
 }
