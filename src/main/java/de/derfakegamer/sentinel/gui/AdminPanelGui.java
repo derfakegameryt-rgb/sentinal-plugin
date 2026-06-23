@@ -12,8 +12,8 @@ public final class AdminPanelGui extends Gui {
     private static final int INFO = 10, OPS = 11, WHITELIST = 12, STATS = 13;
     // Row 2 (moderation): bans, mutes, reports, appeals, audit, announcements toggle
     private static final int BANS = 19, MUTES = 20, REPORTS = 21, APPEALS = 22, AUDIT = 23, ANNOUNCE = 24;
-    // Row 3 (player tools): player manager, vanish, staff chat
-    private static final int PLAYERS = 28, VANISH = 29, STAFFCHAT = 30;
+    // Row 3 (player tools): player manager, vanish, staff chat, self name/skin/reset
+    private static final int PLAYERS = 28, VANISH = 29, STAFFCHAT = 30, SETNAME = 31, SETSKIN = 32, RESETPROFILE = 33;
     private static final int CLOSE = 49;
 
     public AdminPanelGui(Sentinel plugin) {
@@ -32,6 +32,9 @@ public final class AdminPanelGui extends Gui {
         inventory.setItem(PLAYERS,   button(Material.PLAYER_HEAD,   "gui.panel.player-manager", "gui.panel.player-manager-lore"));
         inventory.setItem(VANISH,    button(Material.ENDER_EYE,     "gui.panel.vanish",         "gui.panel.vanish-lore"));
         inventory.setItem(STAFFCHAT, button(Material.NETHER_STAR,   "gui.panel.staffchat",      "gui.panel.staffchat-lore"));
+        inventory.setItem(SETNAME,      button(Material.NAME_TAG,     "gui.panel.setname",      "gui.panel.setname-lore"));
+        inventory.setItem(SETSKIN,      button(Material.PLAYER_HEAD,  "gui.panel.setskin",      "gui.panel.setskin-lore"));
+        inventory.setItem(RESETPROFILE, button(Material.WATER_BUCKET, "gui.panel.resetprofile", "gui.panel.resetprofile-lore"));
         inventory.setItem(CLOSE,     Items.button(Material.BARRIER, plugin.messages().plain("gui.panel.close"), java.util.List.of()));
         border();
         fillEmpty();
@@ -78,6 +81,33 @@ public final class AdminPanelGui extends Gui {
                 boolean on = plugin.staffChat().toggle(p.getUniqueId());
                 p.sendMessage(plugin.messages().prefixed(on ? "staffchat-on" : "staffchat-off"));
                 plugin.audit().record(p.getName(), "STAFFCHAT", p.getName(), on ? "on" : "off");
+            }
+            case SETNAME -> {
+                if (!plugin.staffPerms().canUse(p, "sentinel.profile")) { p.sendMessage(plugin.messages().prefixed("no-permission")); return; }
+                p.closeInventory();
+                p.sendMessage(plugin.messages().prefixed("profile-enter-name"));
+                plugin.chatInput().await(p.getUniqueId(), input -> {
+                    if (!de.derfakegamer.sentinel.manager.ProfileManager.isValidName(input)) {
+                        p.sendMessage(plugin.messages().prefixed("profile-bad-name")); return;
+                    }
+                    plugin.profile().setName(p, input, p.getName());
+                    p.sendMessage(plugin.messages().prefixed("profile-name-set", "player", p.getName(), "name", input));
+                });
+            }
+            case SETSKIN -> {
+                if (!plugin.staffPerms().canUse(p, "sentinel.profile")) { p.sendMessage(plugin.messages().prefixed("no-permission")); return; }
+                p.closeInventory();
+                p.sendMessage(plugin.messages().prefixed("profile-enter-skin"));
+                plugin.chatInput().await(p.getUniqueId(), input ->
+                    plugin.profile().setSkin(p, input, p.getName(), ok ->
+                        p.sendMessage(plugin.messages().prefixed(
+                            ok ? "profile-skin-set" : "profile-skin-not-found", "player", p.getName(), "name", input))));
+            }
+            case RESETPROFILE -> {
+                if (!plugin.staffPerms().canUse(p, "sentinel.profile")) { p.sendMessage(plugin.messages().prefixed("no-permission")); return; }
+                plugin.profile().reset(p, p.getName());
+                p.sendMessage(plugin.messages().prefixed("profile-reset", "player", p.getName()));
+                p.closeInventory();
             }
             case CLOSE -> p.closeInventory();
         }

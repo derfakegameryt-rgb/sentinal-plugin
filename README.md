@@ -31,8 +31,8 @@ One universal JAR runs on **Minecraft 1.21.11 (Java 21)** and **26.1.1 (Java 25)
 
 **Staff tooling**
 - Staff chat (`/sc`), self-vanish, freeze, live inventory & ender-chest viewing (invsee / echestsee), player notes
-- **Profile override** — set an online player's display name (chat/TAB/above-head) and skin
-  (copied from any Mojang username) from the player-actions GUI; persisted and re-applied on join
+- **Profile override** — from the admin panel, set your **own** display name (chat/TAB/above-head)
+  and skin (copied from any Mojang username); persisted and re-applied on your next join
 - **GUI-first:** `/sentinel` opens a point-and-click menu; durations and reasons are entered in chat
   or picked from presets, with a confirmation step against misclicks
 - Admin GUIs: player list, player actions, active bans/mutes, reports, appeals, history, notes, alts, stats, chat log, templates

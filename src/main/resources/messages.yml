@@ -168,6 +168,15 @@ gui:
     staffchat: "<aqua>Staff Chat"
     staffchat-lore:
       - "<gray>Toggle your staff-only chat"
+    setname: "<aqua>Set name"
+    setname-lore:
+      - "<gray>Change your own chat / TAB / above-head name"
+    setskin: "<aqua>Set skin"
+    setskin-lore:
+      - "<gray>Copy any Mojang account's skin onto yourself"
+    resetprofile: "<aqua>Reset profile"
+    resetprofile-lore:
+      - "<gray>Restore your real name and skin"
     close: "<red>Close"
   serverinfo:
     version: "<aqua>Version"
