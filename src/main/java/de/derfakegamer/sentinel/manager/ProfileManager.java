@@ -64,14 +64,17 @@ public final class ProfileManager {
 
     public void setName(org.bukkit.entity.Player target, String name, String staff) {
         java.util.UUID id = target.getUniqueId();
-        plugin.db().callback(plugin.db().submit(() -> dao.find(id)), existing -> {
-            if (!target.isOnline()) return;
+        long now = System.currentTimeMillis();
+        // find + upsert on the single writer thread so the existing skin override is preserved atomically.
+        plugin.db().callback(plugin.db().submitWrite(() -> {
+            de.derfakegamer.sentinel.model.ProfileOverride existing = dao.find(id);
             String sv = existing != null ? existing.skinValue() : null;
             String ss = existing != null ? existing.skinSignature() : null;
-            applyLive(target, name, sv, ss);
-            long now = System.currentTimeMillis();
-            plugin.db().execute(() -> dao.upsert(
-                new de.derfakegamer.sentinel.model.ProfileOverride(id, name, sv, ss, staff, now)));
+            dao.upsert(new de.derfakegamer.sentinel.model.ProfileOverride(id, name, sv, ss, staff, now));
+            return new String[]{sv, ss};
+        }), skin -> {
+            if (!target.isOnline()) return;
+            applyLive(target, name, skin[0], skin[1]);
             plugin.audit().record(staff, "SETNAME", target.getName(), name);
         });
     }
@@ -86,13 +89,17 @@ public final class ProfileManager {
             org.bukkit.Bukkit.getScheduler().runTask(plugin, () -> {
                 org.bukkit.entity.Player t = org.bukkit.Bukkit.getPlayer(id);
                 if (t == null || !t.isOnline() || tex == null) { done.accept(false); return; }
-                plugin.db().callback(plugin.db().submit(() -> dao.find(id)), existing -> {
+                long now = System.currentTimeMillis();
+                // find + upsert on the single writer thread so the existing name override is preserved atomically.
+                plugin.db().callback(plugin.db().submitWrite(() -> {
+                    de.derfakegamer.sentinel.model.ProfileOverride existing = dao.find(id);
                     String nm = existing != null ? existing.displayName() : null;
+                    dao.upsert(new de.derfakegamer.sentinel.model.ProfileOverride(
+                        id, nm, tex.getValue(), tex.getSignature(), staff, now));
+                    return nm;
+                }), nm -> {
+                    if (!t.isOnline()) { done.accept(false); return; }
                     applyLive(t, nm, tex.getValue(), tex.getSignature());
-                    long now = System.currentTimeMillis();
-                    plugin.db().execute(() -> dao.upsert(
-                        new de.derfakegamer.sentinel.model.ProfileOverride(
-                            id, nm, tex.getValue(), tex.getSignature(), staff, now)));
                     plugin.audit().record(staff, "SETSKIN", t.getName(), sourceName);
                     done.accept(true);
                 });
@@ -128,7 +135,7 @@ public final class ProfileManager {
     public void applyOnLogin(org.bukkit.event.player.AsyncPlayerPreLoginEvent event) {
         de.derfakegamer.sentinel.model.ProfileOverride o;
         try {
-            o = plugin.db().submit(() -> dao.find(event.getUniqueId())).join();
+            o = plugin.db().submitWrite(() -> dao.find(event.getUniqueId())).join();
         } catch (Exception e) {
             return; // never block a login on a profile lookup
         }
