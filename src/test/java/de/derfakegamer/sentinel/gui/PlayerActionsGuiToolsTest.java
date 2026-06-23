@@ -69,7 +69,7 @@ class PlayerActionsGuiToolsTest {
 
         PlayerActionsGui gui = new PlayerActionsGui(plugin, owner, false, false, false, 0, null);
         gui.open(mod);
-        org.bukkit.event.inventory.InventoryClickEvent ev = ConfirmGuiTest.clickSlot(mod, gui, 26); // OPTOGGLE
+        org.bukkit.event.inventory.InventoryClickEvent ev = ConfirmGuiTest.clickSlot(mod, gui, 32); // OPTOGGLE
         gui.onClick(ev);
 
         assertTrue(ev.isCancelled());
