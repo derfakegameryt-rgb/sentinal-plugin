@@ -31,6 +31,7 @@ dependencies {
     testImplementation("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
     testImplementation("org.xerial:sqlite-jdbc:3.47.1.0")
     testImplementation("com.google.code.gson:gson:2.11.0")
+    testImplementation("org.apache.logging.log4j:log4j-core:2.22.1")
 }
 
 tasks.test { useJUnitPlatform() }

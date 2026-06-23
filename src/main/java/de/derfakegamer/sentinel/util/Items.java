@@ -57,4 +57,11 @@ public final class Items {
     public static ItemStack accent() {
         return button(Material.LIGHT_BLUE_STAINED_GLASS_PANE, Component.text(" "), null);
     }
+
+    /** True for the non-interactive border/filler panes, so callers can skip click feedback on them. */
+    public static boolean isDecorative(ItemStack item) {
+        if (item == null) return false;
+        Material t = item.getType();
+        return t == Material.BLACK_STAINED_GLASS_PANE || t == Material.LIGHT_BLUE_STAINED_GLASS_PANE;
+    }
 }

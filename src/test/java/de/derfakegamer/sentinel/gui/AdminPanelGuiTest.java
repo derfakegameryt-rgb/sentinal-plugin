@@ -109,6 +109,31 @@ class AdminPanelGuiTest {
         }
     }
 
+    @Test void hasSelfProfileButtons() {
+        AdminPanelGui gui = new AdminPanelGui(plugin);
+        assertEquals(Material.NAME_TAG,    gui.getInventory().getItem(31).getType(), "Set name at 31");
+        assertEquals(Material.PLAYER_HEAD, gui.getInventory().getItem(32).getType(), "Set skin at 32");
+        assertEquals(Material.WATER_BUCKET, gui.getInventory().getItem(33).getType(), "Reset profile at 33");
+    }
+
+    @Test void setNameStoresOverrideForTheClickingAdmin() throws Exception {
+        PlayerMock admin = server.addPlayer("Admin"); admin.setOp(true);
+        AdminPanelGui gui = new AdminPanelGui(plugin);
+        gui.open(admin);
+        InventoryClickEvent ev = ConfirmGuiTest.clickSlot(admin, gui, 31); // Set name
+        gui.onClick(ev);
+        // GUI prompts for chat input; supply it the way the chat-input flow consumes it:
+        plugin.chatInput().consume(admin.getUniqueId()).accept("Renamed");
+        // setName writes via submitWrite; drain the executor then read back.
+        plugin.db().submit(() -> null).get(2, java.util.concurrent.TimeUnit.SECONDS);
+        server.getScheduler().performTicks(2);
+        var dao = new de.derfakegamer.sentinel.storage.ProfileOverrideDao(plugin.db().database());
+        var stored = plugin.db().submit(() -> dao.find(admin.getUniqueId()))
+            .get(2, java.util.concurrent.TimeUnit.SECONDS);
+        assertNotNull(stored, "an override row should exist for the admin");
+        assertEquals("Renamed", stored.displayName());
+    }
+
     @Test void hubHasAuditAndAnnouncementsButtons() {
         PlayerMock p = server.addPlayer();
         AdminPanelGui gui = new AdminPanelGui(plugin);

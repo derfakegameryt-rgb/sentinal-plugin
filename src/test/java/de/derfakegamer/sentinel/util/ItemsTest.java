@@ -15,4 +15,15 @@ class ItemsTest {
     @Test void accentIsLightBlueGlass() {
         assertEquals(Material.LIGHT_BLUE_STAINED_GLASS_PANE, Items.accent().getType());
     }
+
+    @org.junit.jupiter.api.Test
+    void isDecorativeMatchesFillerAndAccentOnly() {
+        assertTrue(de.derfakegamer.sentinel.util.Items.isDecorative(
+            new org.bukkit.inventory.ItemStack(org.bukkit.Material.BLACK_STAINED_GLASS_PANE)));
+        assertTrue(de.derfakegamer.sentinel.util.Items.isDecorative(
+            new org.bukkit.inventory.ItemStack(org.bukkit.Material.LIGHT_BLUE_STAINED_GLASS_PANE)));
+        assertFalse(de.derfakegamer.sentinel.util.Items.isDecorative(
+            new org.bukkit.inventory.ItemStack(org.bukkit.Material.BARRIER)));
+        assertFalse(de.derfakegamer.sentinel.util.Items.isDecorative(null));
+    }
 }
