@@ -21,6 +21,7 @@ public final class PlayerActionsGui extends Gui {
     private static final int LOGS = 17;
     private static final int TEMPLATES = 27;
     private static final int IPBAN = 19, FREEZE = 20, INVSEE = 21, ECHEST = 22, HISTORY = 23, NOTES = 24, ALTS = 25, OPTOGGLE = 26, BACK = 36, CLOSE = 44;
+    private static final int SETNAME = 28, SETSKIN = 29, RESETPROFILE = 30;
 
     private final OfflinePlayer target;
     private final boolean banned;
@@ -139,6 +140,15 @@ public final class PlayerActionsGui extends Gui {
             inventory.setItem(ECHEST, Items.button(Material.ENDER_CHEST,
                 plugin.messages().plain("gui.actions.echest"),
                 plugin.messages().list("gui.actions.echest-lore")));
+            inventory.setItem(SETNAME, Items.button(Material.NAME_TAG,
+                plugin.messages().plain("gui.actions.setname"),
+                plugin.messages().list("gui.actions.setname-lore")));
+            inventory.setItem(SETSKIN, Items.button(Material.PLAYER_HEAD,
+                plugin.messages().plain("gui.actions.setskin"),
+                plugin.messages().list("gui.actions.setskin-lore")));
+            inventory.setItem(RESETPROFILE, Items.button(Material.WATER_BUCKET,
+                plugin.messages().plain("gui.actions.resetprofile"),
+                plugin.messages().list("gui.actions.resetprofile-lore")));
         }
         inventory.setItem(HISTORY, Items.button(Material.WRITABLE_BOOK,
             plugin.messages().plain("gui.actions.history"),
@@ -233,6 +243,42 @@ public final class PlayerActionsGui extends Gui {
             case ECHEST -> {
                 Player online = target.getPlayer();
                 if (online != null) mod.openInventory(online.getEnderChest());
+            }
+            case SETNAME -> {
+                if (!plugin.staffPerms().canUse(mod, "sentinel.profile")) { mod.sendMessage(plugin.messages().prefixed("no-permission")); return; }
+                Player online = target.getPlayer();
+                if (online == null) { mod.sendMessage(plugin.messages().prefixed("profile-target-offline")); return; }
+                mod.closeInventory();
+                mod.sendMessage(plugin.messages().prefixed("profile-enter-name"));
+                plugin.chatInput().await(mod.getUniqueId(), input -> {
+                    Player t = target.getPlayer();
+                    if (t == null) { mod.sendMessage(plugin.messages().prefixed("profile-target-offline")); return; }
+                    if (!de.derfakegamer.sentinel.manager.ProfileManager.isValidName(input)) { mod.sendMessage(plugin.messages().prefixed("profile-bad-name")); return; }
+                    plugin.profile().setName(t, input, mod.getName());
+                    mod.sendMessage(plugin.messages().prefixed("profile-name-set", "player", name(), "name", input));
+                });
+            }
+            case SETSKIN -> {
+                if (!plugin.staffPerms().canUse(mod, "sentinel.profile")) { mod.sendMessage(plugin.messages().prefixed("no-permission")); return; }
+                Player online = target.getPlayer();
+                if (online == null) { mod.sendMessage(plugin.messages().prefixed("profile-target-offline")); return; }
+                mod.closeInventory();
+                mod.sendMessage(plugin.messages().prefixed("profile-enter-skin"));
+                plugin.chatInput().await(mod.getUniqueId(), input -> {
+                    Player t = target.getPlayer();
+                    if (t == null) { mod.sendMessage(plugin.messages().prefixed("profile-target-offline")); return; }
+                    plugin.profile().setSkin(t, input, mod.getName(), ok ->
+                        mod.sendMessage(plugin.messages().prefixed(
+                            ok ? "profile-skin-set" : "profile-skin-not-found", "player", name(), "name", input)));
+                });
+            }
+            case RESETPROFILE -> {
+                if (!plugin.staffPerms().canUse(mod, "sentinel.profile")) { mod.sendMessage(plugin.messages().prefixed("no-permission")); return; }
+                Player online = target.getPlayer();
+                if (online == null) { mod.sendMessage(plugin.messages().prefixed("profile-target-offline")); return; }
+                plugin.profile().reset(online, mod.getName());
+                mod.sendMessage(plugin.messages().prefixed("profile-reset", "player", name()));
+                mod.closeInventory();
             }
             case LOGS -> ChatLogGui.open(plugin, target, mod);
             case TEMPLATES -> new TemplatesGui(plugin, target).open(mod);

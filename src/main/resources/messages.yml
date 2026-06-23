@@ -78,6 +78,14 @@ update-failed: "<red>Update check failed: <error>"
 import-start: "<#60A5FA>Importing punishments from <white><source></white>…"
 import-done: "<#60A5FA>Import finished — <white><imported></white> imported, <white><skipped></white> skipped."
 import-failed: "<red>Import failed: <error>"
+profile-enter-name: "<#60A5FA>Type the new name in chat (max 16, letters/digits/underscore), or type <white>cancel<#60A5FA>."
+profile-enter-skin: "<#60A5FA>Type the Mojang username whose skin to copy, or type <white>cancel<#60A5FA>."
+profile-name-set: "<#60A5FA><player></#60A5FA> <gray>is now shown as <white><name></white>."
+profile-skin-set: "<#60A5FA><player></#60A5FA> <gray>now wears <white><name></white>'s skin."
+profile-skin-not-found: "<red>Could not fetch a skin for <white><name></white>."
+profile-bad-name: "<red>Invalid name — max 16 characters, only letters, digits and underscore."
+profile-reset: "<#60A5FA><player></#60A5FA><gray>'s name and skin were reset."
+profile-target-offline: "<red>The player must be online for that."
 gui-notes-title: "<#3B82F6>Sentinel · Notes · <player>"
 enter-note: "<#60A5FA>Type the note in chat, or type <white>cancel<#60A5FA>."
 note-added: "<#60A5FA>Note added."
@@ -247,6 +255,15 @@ gui:
     echest: "<light_purple>View ender chest"
     echest-lore:
       - "<gray>Open this player's ender chest"
+    setname: "<aqua>Set name"
+    setname-lore:
+      - "<gray>Change chat / TAB / above-head name"
+    setskin: "<aqua>Set skin"
+    setskin-lore:
+      - "<gray>Copy a Mojang account's skin"
+    resetprofile: "<aqua>Reset profile"
+    resetprofile-lore:
+      - "<gray>Restore real name and skin"
     history: "<aqua>History"
     history-lore:
       - "<gray>View past punishments"
