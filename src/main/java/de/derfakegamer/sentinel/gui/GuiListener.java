@@ -17,9 +17,17 @@ public final class GuiListener implements Listener {
     @EventHandler
     public void onClick(InventoryClickEvent event) {
         if (event.getInventory().getHolder() instanceof Gui gui) {
-            playClick(event.getWhoClicked());
+            if (isActionable(event)) playClick(event.getWhoClicked());
             gui.onClick(event);
         }
+    }
+
+    /** A click worth a sound: inside the GUI's top inventory, on a real (non-decorative) item. */
+    private static boolean isActionable(InventoryClickEvent event) {
+        int raw = event.getRawSlot();
+        if (raw < 0 || raw >= event.getInventory().getSize()) return false;
+        org.bukkit.inventory.ItemStack item = event.getCurrentItem();
+        return item != null && !de.derfakegamer.sentinel.util.Items.isDecorative(item);
     }
 
     /** Drags are a separate event from clicks; cancel any drag touching a Sentinel GUI's slots. */
