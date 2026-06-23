@@ -44,6 +44,7 @@ public class Sentinel extends JavaPlugin {
     private de.derfakegamer.sentinel.manager.AuditManager auditManager;
     private de.derfakegamer.sentinel.util.CooldownManager cooldowns;
     private de.derfakegamer.sentinel.manager.WebhookManager webhookManager;
+    private de.derfakegamer.sentinel.manager.ProfileManager profileManager;
 
     @Override
     public void onEnable() {
@@ -76,6 +77,8 @@ public class Sentinel extends JavaPlugin {
             this, new de.derfakegamer.sentinel.storage.PlayerDao(db.database()));
         this.noteManager = new de.derfakegamer.sentinel.manager.NoteManager(
             this, new de.derfakegamer.sentinel.storage.NoteDao(db.database()));
+        this.profileManager = new de.derfakegamer.sentinel.manager.ProfileManager(
+            this, new de.derfakegamer.sentinel.storage.ProfileOverrideDao(db.database()));
         this.punishmentManager = new PunishmentManager(this, new PunishmentDao(db.database()), loadExempt());
         this.moderationService = new de.derfakegamer.sentinel.manager.ModerationService(this);
         this.chatInputManager = new de.derfakegamer.sentinel.manager.ChatInputManager();
@@ -209,6 +212,7 @@ public class Sentinel extends JavaPlugin {
     public de.derfakegamer.sentinel.updater.UpdateChecker updater() { return updateChecker; }
     public de.derfakegamer.sentinel.manager.PlayerDirectory players() { return playerDirectory; }
     public de.derfakegamer.sentinel.manager.NoteManager notes() { return noteManager; }
+    public de.derfakegamer.sentinel.manager.ProfileManager profile() { return profileManager; }
     public de.derfakegamer.sentinel.manager.ChatModeration chatModeration() { return chatModeration; }
     public de.derfakegamer.sentinel.manager.WarnEscalation escalation() { return warnEscalation; }
     public de.derfakegamer.sentinel.manager.ChatLogManager chatLog() { return chatLogManager; }
