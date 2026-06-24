@@ -19,22 +19,18 @@ import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 
 public final class UpdateChecker {
-    // List ALL releases and pick the highest version ourselves. Relying on GitHub's single
-    // "latest" flag is unreliable when several release tags point at the same commit (it can
-    // surface an older tag like 1.0.0 instead of the newest) — see parseBestRelease.
+    // Pulls releases from the PUBLIC release repository. Public releases need no authentication, so
+    // the updater carries no token and no private-repo handling. We list ALL releases and pick the
+    // highest version ourselves — relying on GitHub's single "latest" flag is unreliable when
+    // several tags point at the same commit (it can surface an older tag) — see parseBestRelease.
     private static final String API =
         "https://api.github.com/repos/derfakegameryt-rgb/sentinal-plugin/releases?per_page=100";
 
     private final Sentinel plugin;
+    // NORMAL redirect following: a public asset's browser_download_url 302-redirects to a CDN URL,
+    // which the client follows automatically (no auth header is ever sent, so nothing to strip).
     private final HttpClient http = HttpClient.newBuilder()
         .followRedirects(HttpClient.Redirect.NORMAL)
-        .connectTimeout(Duration.ofSeconds(10))
-        .build();
-    // Used for the asset download's first hop: we must NOT auto-follow, because GitHub redirects
-    // a private asset to a pre-signed CDN URL that rejects the Authorization header. We follow the
-    // redirect manually with the auth header stripped.
-    private final HttpClient noFollow = HttpClient.newBuilder()
-        .followRedirects(HttpClient.Redirect.NEVER)
         .connectTimeout(Duration.ofSeconds(10))
         .build();
 
@@ -71,14 +67,7 @@ public final class UpdateChecker {
         return firstJarUrl(JsonParser.parseString(json).getAsJsonObject());
     }
 
-    /**
-     * The first .jar asset's download URL in a single release object, or null.
-     * Prefers the asset's API {@code url} (e.g. {@code .../releases/assets/123}) over
-     * {@code browser_download_url}: the API URL, fetched with an {@code Accept:
-     * application/octet-stream} header and a token, downloads assets from BOTH public and
-     * private repositories, whereas {@code browser_download_url} does not work for private
-     * repos via a token. Falls back to {@code browser_download_url} when no API URL is present.
-     */
+    /** The first .jar asset's public {@code browser_download_url} in a single release object, or null. */
     private static String firstJarUrl(JsonObject release) {
         if (!release.has("assets")) return null;
         JsonArray assets = release.getAsJsonArray("assets");
@@ -86,9 +75,8 @@ public final class UpdateChecker {
             JsonObject asset = element.getAsJsonObject();
             String name = asset.has("name") ? asset.get("name").getAsString() : "";
             if (name.toLowerCase().endsWith(".jar")) {
-                if (asset.has("url") && !asset.get("url").isJsonNull())
-                    return asset.get("url").getAsString();
-                return asset.has("browser_download_url") ? asset.get("browser_download_url").getAsString() : null;
+                return asset.has("browser_download_url") && !asset.get("browser_download_url").isJsonNull()
+                    ? asset.get("browser_download_url").getAsString() : null;
             }
         }
         return null;
@@ -148,73 +136,37 @@ public final class UpdateChecker {
         }
     }
 
-    /**
-     * Optional GitHub token (PAT) from the {@code SENTINEL_GITHUB_TOKEN} environment variable, or
-     * empty if unset. Read from the environment (never config/source) so the auto-updater leaves no
-     * visible trace; the public repo needs no token — it only raises the API rate limit.
-     */
-    private String githubToken() {
-        String token = System.getenv("SENTINEL_GITHUB_TOKEN");
-        return token == null ? "" : token.trim();
-    }
-
     private String httpGet(String url) throws Exception {
-        HttpRequest.Builder req = HttpRequest.newBuilder(URI.create(url))
+        HttpRequest req = HttpRequest.newBuilder(URI.create(url))
             .header("Accept", "application/vnd.github+json")
             .header("User-Agent", "Sentinel-Updater")
-            .timeout(Duration.ofSeconds(15)).GET();
-        String token = githubToken();
-        if (!token.isBlank()) req.header("Authorization", "Bearer " + token);
-        HttpResponse<String> resp = http.send(req.build(), HttpResponse.BodyHandlers.ofString());
+            .timeout(Duration.ofSeconds(15)).GET().build();
+        HttpResponse<String> resp = http.send(req, HttpResponse.BodyHandlers.ofString());
         int code = resp.statusCode();
-        if (code == 401)
-            throw new IllegalStateException("GitHub rejected the token (HTTP 401) — check SENTINEL_GITHUB_TOKEN");
         if (code == 404)
-            throw new IllegalStateException("release feed not found (HTTP 404) — for a private repo, set "
-                + "SENTINEL_GITHUB_TOKEN to a PAT with 'Contents: read' on this repo");
+            throw new IllegalStateException("release feed not found (HTTP 404)");
         if (code == 403 || code == 429)
-            throw new IllegalStateException("rate limited by GitHub (HTTP " + code
-                + ") — transient; optionally set SENTINEL_GITHUB_TOKEN to raise the limit");
+            throw new IllegalStateException("rate limited by GitHub (HTTP " + code + ") — transient");
         if (code / 100 != 2) throw new IllegalStateException("HTTP " + code);
         return resp.body();
     }
 
     /**
-     * Downloads an asset. Works for public AND private repos: requests the asset (API URL) with
-     * {@code Accept: application/octet-stream} and the token, then follows the redirect to the
-     * pre-signed CDN URL manually WITH THE AUTHORIZATION HEADER STRIPPED — the CDN rejects requests
-     * that carry both a signature and an Authorization header.
+     * Downloads a public release asset. The download goes into a sibling temp file, is validated,
+     * then atomically moved into place — a dropped connection or a bad response can never leave a
+     * truncated/corrupt jar in the update folder (which Bukkit would try to apply on the next restart).
      */
     private void download(String url, File dest) throws Exception {
         File dir = dest.getParentFile();
         if (dir != null) dir.mkdirs();
-        // Download into a sibling temp file, validate it, then atomically move it into place. A
-        // dropped connection or a bad response can never leave a truncated/corrupt jar in the
-        // update folder (which Bukkit would try to apply on the next restart).
         File tmp = File.createTempFile(dest.getName() + "-", ".part", dir);
         try {
-            String token = githubToken();
-            HttpRequest.Builder req = HttpRequest.newBuilder(URI.create(url))
+            HttpRequest req = HttpRequest.newBuilder(URI.create(url))
                 .header("User-Agent", "Sentinel-Updater")
-                .header("Accept", "application/octet-stream")
-                .timeout(Duration.ofSeconds(60)).GET();
-            if (!token.isBlank()) req.header("Authorization", "Bearer " + token);
-
+                .timeout(Duration.ofSeconds(60)).GET().build();
             HttpResponse<java.io.InputStream> resp =
-                noFollow.send(req.build(), HttpResponse.BodyHandlers.ofInputStream());
-            int code = resp.statusCode();
-            if (code == 301 || code == 302 || code == 303 || code == 307 || code == 308) {
-                try (var ignored = resp.body()) { /* drain/close the redirect response */ }
-                String location = resp.headers().firstValue("location")
-                    .orElseThrow(() -> new IllegalStateException("asset redirect without Location header"));
-                // No Authorization here: the CDN URL is pre-signed and rejects a second auth mechanism.
-                HttpRequest redirect = HttpRequest.newBuilder(URI.create(location))
-                    .header("User-Agent", "Sentinel-Updater")
-                    .timeout(Duration.ofSeconds(60)).GET().build();
-                resp = http.send(redirect, HttpResponse.BodyHandlers.ofInputStream());
-                code = resp.statusCode();
-            }
-            if (code / 100 != 2) throw new IllegalStateException("HTTP " + code);
+                http.send(req, HttpResponse.BodyHandlers.ofInputStream()); // follows the CDN redirect
+            if (resp.statusCode() / 100 != 2) throw new IllegalStateException("HTTP " + resp.statusCode());
             try (var in = resp.body()) {
                 Files.copy(in, tmp.toPath(), StandardCopyOption.REPLACE_EXISTING);
             }
