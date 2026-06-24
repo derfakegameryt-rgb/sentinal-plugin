@@ -145,25 +145,29 @@ public final class PunishmentCommands implements CommandExecutor, TabCompleter {
                     }, error -> plugin.getLogger().log(java.util.logging.Level.SEVERE, "Failed to resolve player", error));
                 }
             }
-            case "unban", "unmute" -> {
+            case "unban", "unmute", "ipunban" -> {
                 if (args.length < 1) return usage(sender, "/" + cmd + " <player>");
-                String unNode = cmd.equals("unban") ? "sentinel.unban" : "sentinel.unmute";
+                String unNode = cmd.equals("unmute") ? "sentinel.unmute" : "sentinel.unban";
                 if (!plugin.staffPerms().canUse(sender, unNode)) { sender.sendMessage(plugin.messages().prefixed("no-permission")); return true; }
-                String notKey = cmd.equals("unban") ? "not-banned" : "not-muted";
+                String notKey = switch (cmd) { case "unban" -> "not-banned"; case "ipunban" -> "not-ip-banned"; default -> "not-muted"; };
                 if (sender instanceof Player sp) {
                     plugin.db().callbackOrError(sp, resolve(args[0]), t -> {
                         if (t == null) { sender.sendMessage(plugin.messages().prefixed("player-not-found")); return; }
-                        CompletableFuture<Boolean> fut = cmd.equals("unban")
-                            ? plugin.moderation().removeBan(issuerId, issuerName, t.id, t.name)
-                            : plugin.moderation().removeMute(issuerId, issuerName, t.id, t.name);
+                        CompletableFuture<Boolean> fut = switch (cmd) {
+                            case "unban" -> plugin.moderation().removeBan(issuerId, issuerName, t.id, t.name);
+                            case "ipunban" -> plugin.moderation().removeIpBan(issuerId, issuerName, t.id, t.name);
+                            default -> plugin.moderation().removeMute(issuerId, issuerName, t.id, t.name);
+                        };
                         plugin.db().callbackOrError(sp, fut, ok -> { if (ok == null || !ok) sender.sendMessage(plugin.messages().prefixed(notKey)); });
                     });
                 } else {
                     plugin.db().callback(resolve(args[0]), t -> {
                         if (t == null) { sender.sendMessage(plugin.messages().prefixed("player-not-found")); return; }
-                        CompletableFuture<Boolean> fut = cmd.equals("unban")
-                            ? plugin.moderation().removeBan(issuerId, issuerName, t.id, t.name)
-                            : plugin.moderation().removeMute(issuerId, issuerName, t.id, t.name);
+                        CompletableFuture<Boolean> fut = switch (cmd) {
+                            case "unban" -> plugin.moderation().removeBan(issuerId, issuerName, t.id, t.name);
+                            case "ipunban" -> plugin.moderation().removeIpBan(issuerId, issuerName, t.id, t.name);
+                            default -> plugin.moderation().removeMute(issuerId, issuerName, t.id, t.name);
+                        };
                         plugin.db().callback(fut, ok -> { if (ok == null || !ok) sender.sendMessage(plugin.messages().prefixed(notKey)); },
                             error -> plugin.getLogger().log(java.util.logging.Level.SEVERE, "Failed to remove punishment", error));
                     }, error -> plugin.getLogger().log(java.util.logging.Level.SEVERE, "Failed to resolve player", error));

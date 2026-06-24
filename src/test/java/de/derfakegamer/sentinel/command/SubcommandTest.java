@@ -65,4 +65,16 @@ class SubcommandTest {
         drain();
         assertNotNull(p.nextMessage());   // some output was sent
     }
+
+    @Test void snIpunbanClearsIpBan() throws Exception {
+        PlayerMock op = server.addPlayer("Admin"); op.setOp(true);
+        PlayerMock target = server.addPlayer("Griefer");
+        String ip = "5.5.5.5";
+        plugin.punishments().ipBan(target.getUniqueId(), "Griefer", ip, op.getUniqueId(), "Admin", "x", 0)
+            .get(2, TimeUnit.SECONDS);
+        new SentinelCommand(plugin).onCommand(op, server.getCommandMap().getCommand("sentinel"),
+            "sentinel", new String[]{"ipunban", "Griefer"});
+        drain();
+        assertNull(plugin.punishments().activeIpBan(ip, System.currentTimeMillis()).get(2, TimeUnit.SECONDS));
+    }
 }
