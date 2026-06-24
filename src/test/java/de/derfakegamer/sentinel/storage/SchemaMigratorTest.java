@@ -5,7 +5,6 @@ import java.io.File;
 import java.nio.file.Files;
 import java.sql.*;
 import java.util.List;
-import java.util.function.Function;
 import static org.junit.jupiter.api.Assertions.*;
 
 class SchemaMigratorTest {
