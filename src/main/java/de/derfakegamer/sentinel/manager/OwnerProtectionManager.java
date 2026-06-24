@@ -53,7 +53,7 @@ public final class OwnerProtectionManager {
                 "true".equalsIgnoreCase(dao.get("owner_auto_whitelist", "false"))
             }).thenAccept(v -> {
                 protect = v[0]; autoUnban = v[1]; autoWhitelist = v[2];
-                if (autoWhitelist) Bukkit.getScheduler().runTask(plugin, this::whitelistOwnerNow);
+                if (autoWhitelist) plugin.scheduler().runGlobal(this::whitelistOwnerNow);
             });
         } catch (Throwable t) { plugin.debug("owner load: " + t.getMessage()); }
     }

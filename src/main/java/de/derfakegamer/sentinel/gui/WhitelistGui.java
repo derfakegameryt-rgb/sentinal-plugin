@@ -69,7 +69,7 @@ public final class WhitelistGui extends Gui {
             p.sendMessage(plugin.messages().prefixed("whitelist-enter"));
             plugin.chatInput().await(p.getUniqueId(), name -> {
                 if (name.equalsIgnoreCase("cancel")) return;
-                Bukkit.getScheduler().runTask(plugin, () -> {
+                plugin.scheduler().runGlobal(() -> {
                     OfflinePlayer t = Bukkit.getOfflinePlayer(name);
                     t.setWhitelisted(true);
                     p.sendMessage(plugin.messages().prefixed("whitelist-added", "player", name));
@@ -82,7 +82,7 @@ public final class WhitelistGui extends Gui {
         if (slot >= 0 && slot < PAGE_SIZE && index < list.size()) {
             if (!plugin.staffPerms().canUse(p, "sentinel.use")) { p.sendMessage(plugin.messages().prefixed("no-permission")); return; }
             OfflinePlayer t = list.get(index);
-            t.setWhitelisted(false);
+            plugin.scheduler().runGlobal(() -> t.setWhitelisted(false));
             p.sendMessage(plugin.messages().prefixed("whitelist-removed", "player",
                 t.getName() != null ? t.getName() : t.getUniqueId().toString()));
             new WhitelistGui(plugin, page).open(p);

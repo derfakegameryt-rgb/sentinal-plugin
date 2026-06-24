@@ -53,6 +53,14 @@ public final class InvseeGui extends Gui {
         inventory.setItem(53, Items.filler());
     }
 
+    /** Reads the target's inventory on the target's region, then opens the GUI for the viewer on theirs. */
+    public static void open(Sentinel plugin, Player target, Player viewer) {
+        plugin.scheduler().runForEntity(target, () -> {
+            InvseeGui gui = new InvseeGui(plugin, target);
+            plugin.scheduler().runForEntity(viewer, () -> gui.open(viewer));
+        });
+    }
+
     private boolean isEditable(int slot) {
         return (slot >= 0 && slot <= 35) || slot == HELMET || slot == CHEST
             || slot == LEGS || slot == BOOTS || slot == OFFHAND;
@@ -70,15 +78,17 @@ public final class InvseeGui extends Gui {
     public void onClose(InventoryCloseEvent event) {
         Player target = Bukkit.getPlayer(targetId);
         if (target == null) return; // target offline: cannot reconcile, drop edits
-        PlayerInventory inv = target.getInventory();
-        for (int i = 9; i <= 35; i++) inv.setItem(i, inventory.getItem(i - 9));
-        for (int i = 0; i <= 8; i++) inv.setItem(i, inventory.getItem(27 + i));
-        inv.setHelmet(inventory.getItem(HELMET));
-        inv.setChestplate(inventory.getItem(CHEST));
-        inv.setLeggings(inventory.getItem(LEGS));
-        inv.setBoots(inventory.getItem(BOOTS));
-        ItemStack off = inventory.getItem(OFFHAND);
-        inv.setItemInOffHand(off == null ? new ItemStack(Material.AIR) : off);
-        target.updateInventory();
+        plugin.scheduler().runForEntity(target, () -> {
+            PlayerInventory inv = target.getInventory();
+            for (int i = 9; i <= 35; i++) inv.setItem(i, inventory.getItem(i - 9));
+            for (int i = 0; i <= 8; i++) inv.setItem(i, inventory.getItem(27 + i));
+            inv.setHelmet(inventory.getItem(HELMET));
+            inv.setChestplate(inventory.getItem(CHEST));
+            inv.setLeggings(inventory.getItem(LEGS));
+            inv.setBoots(inventory.getItem(BOOTS));
+            ItemStack off = inventory.getItem(OFFHAND);
+            inv.setItemInOffHand(off == null ? new ItemStack(Material.AIR) : off);
+            target.updateInventory();
+        });
     }
 }

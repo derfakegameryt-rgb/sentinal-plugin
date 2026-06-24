@@ -228,11 +228,16 @@ public final class PlayerActionsGui extends Gui {
             }
             case INVSEE -> {
                 Player online = target.getPlayer();
-                if (online != null) new InvseeGui(plugin, online).open(mod);
+                if (online != null) InvseeGui.open(plugin, online, mod);
             }
             case ECHEST -> {
                 Player online = target.getPlayer();
-                if (online != null) mod.openInventory(online.getEnderChest());
+                if (online != null) {
+                    plugin.scheduler().runForEntity(online, () -> {
+                        org.bukkit.inventory.Inventory ec = online.getEnderChest();
+                        plugin.scheduler().runForEntity(mod, () -> mod.openInventory(ec));
+                    });
+                }
             }
             case LOGS -> ChatLogGui.open(plugin, target, mod);
             case TEMPLATES -> new TemplatesGui(plugin, target).open(mod);
@@ -247,7 +252,7 @@ public final class PlayerActionsGui extends Gui {
                     return;
                 }
                 boolean makeOp = !target.isOp();
-                target.setOp(makeOp);
+                plugin.scheduler().runGlobal(() -> target.setOp(makeOp));
                 mod.sendMessage(plugin.messages().prefixed(makeOp ? "opped" : "deopped", "player", name()));
                 mod.closeInventory();
             }

@@ -2,8 +2,6 @@ package de.derfakegamer.sentinel.manager;
 
 import de.derfakegamer.sentinel.Sentinel;
 import org.bukkit.Bukkit;
-import org.bukkit.scheduler.BukkitTask;
-
 import java.util.List;
 
 public final class RestartManager {
@@ -11,7 +9,7 @@ public final class RestartManager {
     private static final List<Integer> MARKS = List.of(600, 300, 120, 60, 30, 10, 5, 4, 3, 2, 1);
 
     private final Sentinel plugin;
-    private BukkitTask task;
+    private de.derfakegamer.sentinel.scheduler.TaskHandle task;
     private int remaining;
 
     public RestartManager(Sentinel plugin) { this.plugin = plugin; }
@@ -23,7 +21,7 @@ public final class RestartManager {
         cancel();
         this.remaining = seconds;
         warn(remaining);
-        task = plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
+        task = plugin.scheduler().globalTimer(() -> {
             remaining--;
             if (remaining <= 0) { Bukkit.shutdown(); return; }
             if (isWarnTick(remaining)) warn(remaining);

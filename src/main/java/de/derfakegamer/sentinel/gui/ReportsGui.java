@@ -74,7 +74,13 @@ public final class ReportsGui extends Gui {
             PlayerActionsGui.open(plugin, target, mod);
         } else {
             Player target = Bukkit.getPlayer(r.targetUuid());
-            if (target != null) { mod.teleport(target.getLocation()); mod.closeInventory(); }
+            if (target != null) {
+                mod.closeInventory();
+                plugin.scheduler().runForEntity(target, () -> {
+                    org.bukkit.Location loc = target.getLocation();
+                    mod.teleportAsync(loc);
+                });
+            }
         }
     }
 }

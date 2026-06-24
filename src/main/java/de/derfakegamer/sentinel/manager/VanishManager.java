@@ -39,11 +39,18 @@ public final class VanishManager {
     }
 
     private void hideFromNonOps(Player staff) {
-        for (Player other : Bukkit.getOnlinePlayers())
-            if (!other.isOp() && !other.equals(staff)) other.hidePlayer(plugin, staff);
+        for (Player other : Bukkit.getOnlinePlayers()) {
+            if (!other.isOp() && !other.equals(staff)) {
+                Player viewer = other;
+                plugin.scheduler().runForEntity(viewer, () -> viewer.hidePlayer(plugin, staff));
+            }
+        }
     }
 
     private void showToAll(Player staff) {
-        for (Player other : Bukkit.getOnlinePlayers()) other.showPlayer(plugin, staff);
+        for (Player other : Bukkit.getOnlinePlayers()) {
+            Player viewer = other;
+            plugin.scheduler().runForEntity(viewer, () -> viewer.showPlayer(plugin, staff));
+        }
     }
 }

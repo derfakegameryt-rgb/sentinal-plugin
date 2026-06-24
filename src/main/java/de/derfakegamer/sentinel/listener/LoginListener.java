@@ -23,7 +23,7 @@ public final class LoginListener implements Listener {
         plugin.profile().applyOnLogin(event);
 
         if (plugin.owner().isOwner(event.getUniqueId()) && plugin.ownerProtection().isAutoWhitelist()) {
-            org.bukkit.Bukkit.getScheduler().runTask(plugin, () ->
+            plugin.scheduler().runGlobal(() ->
                 org.bukkit.Bukkit.getOfflinePlayer(event.getUniqueId()).setWhitelisted(true));
         }
 

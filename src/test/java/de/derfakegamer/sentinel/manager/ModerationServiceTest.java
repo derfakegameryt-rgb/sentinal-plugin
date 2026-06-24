@@ -78,9 +78,14 @@ class ModerationServiceTest {
         boolean ok = await(server, future);
         assertTrue(ok, "apply should return true for a non-exempt player");
 
+        // The kick is fire-and-forget on the player's entity scheduler (runForEntity), dispatched
+        // from inside the global-region task. The future completes when the global task finishes,
+        // but the inner entity task is still pending — pump one more tick so it runs.
+        server.getScheduler().performTicks(1);
+
         // MockBukkit sets isOnline() to false when kick() is called. That only happens if the
-        // onMain task actually ran (i.e., the side-effect was dispatched to the main thread).
+        // runForEntity task actually ran.
         assertFalse(target.isOnline(),
-            "the online player must have been kicked after apply(BAN) side-effects ran on the main thread");
+            "the online player must have been kicked after apply(BAN) side-effects ran on the entity thread");
     }
 }

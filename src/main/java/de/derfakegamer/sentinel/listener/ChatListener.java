@@ -29,7 +29,7 @@ public final class ChatListener implements Listener {
             String text = PlainTextComponentSerializer.plainText().serialize(event.message()).trim();
             Consumer<String> callback = plugin.chatInput().consume(id);
             if (callback != null && !text.equalsIgnoreCase("cancel")) {
-                plugin.getServer().getScheduler().runTask(plugin, () -> callback.accept(text));
+                plugin.scheduler().runForEntity(event.getPlayer(), () -> callback.accept(text));
             }
             return;
         }
