@@ -30,7 +30,6 @@ commands:
   clearchat: { description: Clear the chat, aliases: [cc], permission: sentinel.use }
   broadcast: { description: Broadcast a message, aliases: [bc], permission: sentinel.use }
   restart: { description: Schedule a server restart, permission: sentinel.use }
-  playtime: { description: Show playtime, permission: sentinel.use }
   backup:
     description: Back up all worlds to a zip.
     permission: sentinel.use

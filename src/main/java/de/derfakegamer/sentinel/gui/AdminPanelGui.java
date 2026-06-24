@@ -8,8 +8,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 
 public final class AdminPanelGui extends Gui {
-    // Row 1 (general): operators, whitelist, playtime
-    private static final int OPS = 11, WHITELIST = 12, STATS = 13;
+    // Row 1 (general): operators, whitelist
+    private static final int OPS = 11, WHITELIST = 12;
     // Row 2 (moderation): bans, mutes, reports, appeals, audit, announcements toggle
     private static final int BANS = 19, MUTES = 20, REPORTS = 21, APPEALS = 22, AUDIT = 23, ANNOUNCE = 24;
     // Row 3 (player tools): player manager, vanish, staff chat, self name/skin/reset
@@ -21,7 +21,6 @@ public final class AdminPanelGui extends Gui {
         this.inventory = Bukkit.createInventory(this, 54, plugin.messages().plain("gui-panel-title"));
         inventory.setItem(OPS,       button(Material.PLAYER_HEAD,   "gui.panel.ops",            "gui.panel.ops-lore"));
         inventory.setItem(WHITELIST, button(Material.NAME_TAG,      "gui.panel.whitelist",      "gui.panel.whitelist-lore"));
-        inventory.setItem(STATS,     button(Material.CLOCK,         "gui.panel.stats",          "gui.panel.stats-lore"));
         inventory.setItem(BANS,      button(Material.IRON_BARS,     "gui.panel.bans",           "gui.panel.bans-lore"));
         inventory.setItem(MUTES,     button(Material.BOOK,          "gui.panel.mutes",          "gui.panel.mutes-lore"));
         inventory.setItem(REPORTS,   button(Material.PAPER,         "gui.panel.reports",        "gui.panel.reports-lore"));
@@ -61,7 +60,6 @@ public final class AdminPanelGui extends Gui {
             case MUTES -> ActiveMutesGui.open(plugin, p, 0);
             case REPORTS -> ReportsGui.open(plugin, 0, p);
             case WHITELIST -> new WhitelistGui(plugin, 0).open(p);
-            case STATS -> StatsGui.open(plugin, p);
             case APPEALS -> AppealsGui.open(plugin, p, 0);
             case AUDIT -> AuditGui.open(plugin, p, 0);
             case ANNOUNCE -> {

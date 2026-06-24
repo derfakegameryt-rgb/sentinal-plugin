@@ -100,8 +100,6 @@ enter-search: "<#60A5FA>Type a player name to search, or type <white>cancel<#60A
 restart-warning: "<red>Server restarting in <white><time></white>."
 restart-scheduled: "<#60A5FA>Restart scheduled in <white><time></white>."
 restart-cancelled: "<#60A5FA>Restart cancelled."
-playtime: "<#60A5FA><player></#60A5FA> <gray>has played <white><time></white>."
-gui-stats-title: "<#3B82F6>Sentinel · Playtime"
 gui-audit-title: "<#3B82F6>Sentinel · Audit Log"
 gui-modstats-title: "<#3B82F6>Sentinel · Mod Stats"
 db-error: "<red>Something went wrong — please try again in a moment."
@@ -125,9 +123,6 @@ gui:
     whitelist: "<aqua>Whitelist"
     whitelist-lore:
       - "<gray>Manage the server whitelist"
-    stats: "<aqua>Playtime"
-    stats-lore:
-      - "<gray>Top players by playtime"
     bans: "<aqua>Active Bans"
     bans-lore:
       - "<gray>Currently banned players"

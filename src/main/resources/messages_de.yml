@@ -103,8 +103,6 @@ enter-search: "<#60A5FA>Tippe einen Spielernamen zum Suchen, oder tippe <white>c
 restart-warning: "<red>Server startet in <white><time></white> neu."
 restart-scheduled: "<#60A5FA>Neustart geplant in <white><time></white>."
 restart-cancelled: "<#60A5FA>Neustart abgebrochen."
-playtime: "<#60A5FA><player></#60A5FA> <gray>hat <white><time></white> gespielt."
-gui-stats-title: "<#3B82F6>Sentinel · Spielzeit"
 gui-audit-title: "<#3B82F6>Sentinel · Audit-Log"
 gui-modstats-title: "<#3B82F6>Sentinel · Team-Statistiken"
 db-error: "<red>Etwas ist schiefgelaufen — bitte versuche es gleich noch einmal."

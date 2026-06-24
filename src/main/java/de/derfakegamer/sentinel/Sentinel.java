@@ -148,9 +148,6 @@ public class Sentinel extends JavaPlugin {
         de.derfakegamer.sentinel.command.RestartCommand restartCmd = new de.derfakegamer.sentinel.command.RestartCommand(this);
         getCommand("restart").setExecutor(restartCmd);
         getCommand("restart").setTabCompleter(restartCmd);
-        de.derfakegamer.sentinel.command.PlaytimeCommand playtimeCmd = new de.derfakegamer.sentinel.command.PlaytimeCommand(this);
-        getCommand("playtime").setExecutor(playtimeCmd);
-        getCommand("playtime").setTabCompleter(playtimeCmd);
         de.derfakegamer.sentinel.command.BackupCommand backupCmd = new de.derfakegamer.sentinel.command.BackupCommand(this);
         getCommand("backup").setExecutor(backupCmd);
         getCommand("backup").setTabCompleter(backupCmd);
@@ -182,9 +179,6 @@ public class Sentinel extends JavaPlugin {
     @Override
     public void onDisable() {
         getServer().getScheduler().cancelTasks(this);
-        if (playerDirectory != null) {
-            try { playerDirectory.flushSessions(); } catch (Exception ignored) {}
-        }
         // Flush batch writers before shutting down the DB executor so that
         // any buffered chat-log and audit rows are written before the connection closes.
         if (chatLogManager != null) {

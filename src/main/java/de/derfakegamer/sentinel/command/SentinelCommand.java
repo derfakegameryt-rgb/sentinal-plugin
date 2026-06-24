@@ -14,7 +14,7 @@ public final class SentinelCommand implements CommandExecutor, TabCompleter {
     private static final java.util.Set<String> SUBCOMMANDS = java.util.Set.of(
         "ban","tempban","ipban","unban","mute","tempmute","unmute","kick","warn",
         "shadowmute","unshadowmute","history","sc","clearchat",
-        "broadcast","bc","restart","playtime","report","rules","audit","stats");
+        "broadcast","bc","restart","report","rules","audit","stats");
 
     /** Subcommands whose first argument is a player name (for arg-2 tab completion). */
     private static final java.util.Set<String> PLAYER_TARGETING = java.util.Set.of(

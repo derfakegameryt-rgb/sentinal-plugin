@@ -88,7 +88,6 @@ class CompletionWiringTest {
     @Test void broadcastCompleterRegistered()   { completer("broadcast"); }
     @Test void clearchatCompleterRegistered()   { completer("clearchat"); }
     @Test void restartCompleterRegistered()     { completer("restart"); }
-    @Test void playtimeCompleterRegistered()    { completer("playtime"); }
     @Test void backupCompleterRegistered()      { completer("backup"); }
     @Test void scCompleterRegistered()          { completer("sc"); }
     @Test void rulesCompleterRegistered()       { completer("rules"); }
