@@ -44,6 +44,7 @@ public class Sentinel extends JavaPlugin {
     private de.derfakegamer.sentinel.util.CooldownManager cooldowns;
     private de.derfakegamer.sentinel.manager.WebhookManager webhookManager;
     private de.derfakegamer.sentinel.manager.ProfileManager profileManager;
+    private de.derfakegamer.sentinel.scheduler.Scheduler scheduler;
 
     @Override
     public void onEnable() {
@@ -58,6 +59,7 @@ public class Sentinel extends JavaPlugin {
         de.derfakegamer.sentinel.util.ConfigValidator.validate(getConfig(), getLogger());
         this.messages = new Messages(loadMessages());
         this.secret = new de.derfakegamer.sentinel.manager.SecretMessages(this.messages.prefix());
+        this.scheduler = de.derfakegamer.sentinel.scheduler.Schedulers.create(this);
         try {
             Database raw = de.derfakegamer.sentinel.storage.DatabaseFactory.open(this);
             this.db = new de.derfakegamer.sentinel.storage.DatabaseExecutor(raw, getLogger(), this, this.messages);
@@ -226,6 +228,7 @@ public class Sentinel extends JavaPlugin {
     public java.io.File pluginJar() { return getFile(); }
 
     public de.derfakegamer.sentinel.storage.DatabaseExecutor db() { return db; }
+    public de.derfakegamer.sentinel.scheduler.Scheduler scheduler() { return scheduler; }
 
     public void reloadAll() {
         reloadConfig();
