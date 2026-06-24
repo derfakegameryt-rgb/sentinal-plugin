@@ -62,7 +62,7 @@ public class Sentinel extends JavaPlugin {
         this.scheduler = de.derfakegamer.sentinel.scheduler.Schedulers.create(this);
         try {
             Database raw = de.derfakegamer.sentinel.storage.DatabaseFactory.open(this);
-            this.db = new de.derfakegamer.sentinel.storage.DatabaseExecutor(raw, getLogger(), this, this.messages);
+            this.db = new de.derfakegamer.sentinel.storage.DatabaseExecutor(raw, getLogger(), this, this.messages, this.scheduler);
         } catch (Exception e) {
             getLogger().severe("Failed to open database: " + e.getMessage());
             getServer().getPluginManager().disablePlugin(this);
