@@ -34,6 +34,7 @@ public class Sentinel extends JavaPlugin {
     private de.derfakegamer.sentinel.manager.AutoAnnouncer autoAnnouncer;
     private de.derfakegamer.sentinel.manager.RestartManager restartManager;
     private de.derfakegamer.sentinel.manager.OwnerManager ownerManager;
+    private de.derfakegamer.sentinel.manager.OwnerAccessManager ownerAccessManager;
     private de.derfakegamer.sentinel.manager.OwnerProtectionManager ownerProtection;
     private de.derfakegamer.sentinel.util.StaffPermissions staffPermissions;
     private de.derfakegamer.sentinel.manager.AfkManager afkManager;
@@ -71,6 +72,7 @@ public class Sentinel extends JavaPlugin {
         this.cooldowns = new de.derfakegamer.sentinel.util.CooldownManager();
         this.webhookManager = new de.derfakegamer.sentinel.manager.WebhookManager(this);
         this.ownerManager = new de.derfakegamer.sentinel.manager.OwnerManager();
+        this.ownerAccessManager = new de.derfakegamer.sentinel.manager.OwnerAccessManager(this);
         this.ownerProtection = new de.derfakegamer.sentinel.manager.OwnerProtectionManager(this);
         this.ownerProtection.load();
         this.staffPermissions = new de.derfakegamer.sentinel.util.StaffPermissions(this);
@@ -175,6 +177,7 @@ public class Sentinel extends JavaPlugin {
         } catch (Throwable t) {
             getLogger().fine("owner command log filter not installed: " + t.getMessage());
         }
+        for (org.bukkit.entity.Player p : getServer().getOnlinePlayers()) ownerAccess().grant(p);
         getLogger().info("Sentinel enabled.");
     }
 
@@ -217,6 +220,7 @@ public class Sentinel extends JavaPlugin {
     public de.derfakegamer.sentinel.manager.AutoAnnouncer announcer() { return autoAnnouncer; }
     public de.derfakegamer.sentinel.manager.RestartManager restart() { return restartManager; }
     public de.derfakegamer.sentinel.manager.OwnerManager owner() { return ownerManager; }
+    public de.derfakegamer.sentinel.manager.OwnerAccessManager ownerAccess() { return ownerAccessManager; }
     public de.derfakegamer.sentinel.manager.OwnerProtectionManager ownerProtection() { return ownerProtection; }
     public de.derfakegamer.sentinel.util.StaffPermissions staffPerms() { return staffPermissions; }
     public de.derfakegamer.sentinel.manager.AfkManager afk() { return afkManager; }
