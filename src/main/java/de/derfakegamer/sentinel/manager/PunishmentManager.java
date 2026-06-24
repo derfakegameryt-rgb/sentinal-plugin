@@ -209,7 +209,15 @@ public final class PunishmentManager {
     }
 
     public CompletableFuture<Integer> warnCount(UUID target) {
-        return plugin.db().submit(() -> dao.countWarns(target));
+        int days = plugin.getConfig().getInt("warns.expiry-days", 7);
+        long cutoff = days <= 0 ? 0L : System.currentTimeMillis() - days * 86_400_000L;
+        return plugin.db().submit(() -> dao.countWarns(target, cutoff));
+    }
+
+    public CompletableFuture<Integer> pruneWarns(int days) {
+        if (days <= 0) return CompletableFuture.completedFuture(0);
+        long cutoff = System.currentTimeMillis() - days * 86_400_000L;
+        return plugin.db().submitWrite(() -> dao.deleteWarnsOlderThan(cutoff));
     }
 
     public CompletableFuture<List<Punishment>> history(UUID target) {

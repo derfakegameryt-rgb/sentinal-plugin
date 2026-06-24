@@ -99,6 +99,7 @@ public class Sentinel extends JavaPlugin {
         this.chatLogManager = new de.derfakegamer.sentinel.manager.ChatLogManager(
             this, new de.derfakegamer.sentinel.storage.ChatLogDao(db.database()));
         this.chatLogManager.prune(getConfig().getInt("logging.retention-days", 30));
+        this.punishmentManager.pruneWarns(getConfig().getInt("warns.expiry-days", 7));
         this.autoAnnouncer = new de.derfakegamer.sentinel.manager.AutoAnnouncer(this);
         this.restartManager = new de.derfakegamer.sentinel.manager.RestartManager(this);
         this.afkManager = new de.derfakegamer.sentinel.manager.AfkManager();
@@ -120,6 +121,8 @@ public class Sentinel extends JavaPlugin {
                     getServer().broadcast(messages().plain("afk-now", "player", p.getName()));
             }
         }, 600L, 600L);
+        scheduler.asyncTimer(() -> punishmentManager.pruneWarns(getConfig().getInt("warns.expiry-days", 7)),
+            1_728_000L, 1_728_000L); // daily (24h in ticks)
         SentinelCommand sentinelCmd = new de.derfakegamer.sentinel.command.SentinelCommand(this);
         getCommand("sentinel").setExecutor(sentinelCmd);
         getCommand("sn").setExecutor(sentinelCmd);
