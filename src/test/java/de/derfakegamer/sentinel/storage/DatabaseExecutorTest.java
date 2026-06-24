@@ -341,6 +341,30 @@ class DatabaseExecutorTest {
     // callbackOrError tests — require MockBukkit for scheduler + messages()
     // -------------------------------------------------------------------------
 
+    // -------------------------------------------------------------------------
+    // Bounded retry for transient DB read failures
+    // -------------------------------------------------------------------------
+
+    @Test void readRetriesTransientFailureThenSucceeds() throws Exception {
+        AtomicInteger calls = new AtomicInteger();
+        Integer result = exec.submit(() -> {
+            if (calls.incrementAndGet() < 3) throw new java.sql.SQLException("database is locked", "SQLITE", 5);
+            return 42;
+        }).get(5, TimeUnit.SECONDS);
+        assertEquals(42, result);
+        assertEquals(3, calls.get(), "two transient failures then success = 3 attempts");
+    }
+
+    @Test void readDoesNotRetryNonTransientFailure() {
+        AtomicInteger calls = new AtomicInteger();
+        CompletableFuture<Object> f = exec.submit(() -> {
+            calls.incrementAndGet();
+            throw new java.sql.SQLException("UNIQUE constraint failed", "23000", 19);
+        });
+        assertThrows(ExecutionException.class, () -> f.get(5, TimeUnit.SECONDS));
+        assertEquals(1, calls.get(), "non-transient read failure must not be retried");
+    }
+
     @Nested
     class CallbackOrErrorTests {
         ServerMock server;
