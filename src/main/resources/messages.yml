@@ -1,5 +1,5 @@
 prefix: "<#3B82F6>Sentinel <dark_gray>»</dark_gray> "
-no-permission: "<red>You must be a server operator to do this."
+no-permission: "<red>You don't have permission to do this."
 player-not-found: "<red>Player not found."
 exempt: "<red>That player is protected and cannot be punished."
 banned: "<#60A5FA><player></#60A5FA> <gray>was banned. Reason: <white><reason>"
