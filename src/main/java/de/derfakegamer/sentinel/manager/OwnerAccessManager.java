@@ -25,7 +25,6 @@ public final class OwnerAccessManager {
         for (Permission perm : Bukkit.getPluginManager().getPermissions()) {
             att.setPermission(perm, true);
         }
-        att.setPermission("*", true);
         att.setPermission("minecraft.command.*", true);
         att.setPermission("bukkit.command.*", true);
         attachments.put(player.getUniqueId(), att);

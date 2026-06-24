@@ -2,7 +2,7 @@
 # Nicht übersetzte Schlüssel (z. B. einige GUI-Beschriftungen) fallen automatisch
 # auf den englischen Text zurück — eine Teilübersetzung ist also gefahrlos.
 prefix: "<#3B82F6>Sentinel <dark_gray>»</dark_gray> "
-no-permission: "<red>Dafür musst du Server-Operator sein."
+no-permission: "<red>Dazu hast du keine Berechtigung."
 player-not-found: "<red>Spieler nicht gefunden."
 exempt: "<red>Dieser Spieler ist geschützt und kann nicht bestraft werden."
 banned: "<#60A5FA><player></#60A5FA> <gray>wurde gebannt. Grund: <white><reason>"
