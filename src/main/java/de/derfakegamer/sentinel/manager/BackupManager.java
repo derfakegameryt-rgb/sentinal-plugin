@@ -39,8 +39,38 @@ public final class BackupManager {
     }
 
     void zipWorlds(List<File> dirs, File zip) throws IOException {
-        try (ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zip)))) {
-            for (File d : dirs) addDir(d.getParentFile().toPath(), d, zos);
+        // Write to a sibling temp file, validate it, then atomically move it into place — a dropped
+        // connection, a full disk, or a crash can never leave a truncated/corrupt backup behind.
+        File part = new File(zip.getParentFile(), zip.getName() + ".part");
+        try {
+            try (ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(part)))) {
+                for (File d : dirs) addDir(d.getParentFile().toPath(), d, zos);
+            }
+            validateZip(part);
+            moveIntoPlace(part, zip);
+        } finally {
+            Files.deleteIfExists(part.toPath()); // no-op once the move succeeded
+        }
+    }
+
+    /** Opens the archive to prove it is a complete, readable zip with at least one entry. */
+    static void validateZip(File f) throws IOException {
+        try (ZipFile zf = new ZipFile(f)) { // throws on a truncated/corrupt file
+            Enumeration<? extends ZipEntry> en = zf.entries();
+            int count = 0;
+            while (en.hasMoreElements()) { en.nextElement(); count++; }
+            if (count == 0) throw new IOException("backup archive has no entries: " + f.getName());
+        }
+    }
+
+    /** Atomically replaces {@code dest} with {@code tmp}; falls back to a plain replace where an
+     *  atomic move is unsupported (e.g. some Windows setups). */
+    static void moveIntoPlace(File tmp, File dest) throws IOException {
+        try {
+            Files.move(tmp.toPath(), dest.toPath(),
+                StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+        } catch (AtomicMoveNotSupportedException e) {
+            Files.move(tmp.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
         }
     }
 
@@ -61,6 +91,9 @@ public final class BackupManager {
         File[] zips = dir.listFiles((d, n) -> n.startsWith("backup-") && n.endsWith(".zip"));
         if (zips == null || zips.length <= keep) return;
         Arrays.sort(zips, Comparator.comparingLong(File::lastModified));
-        for (int i = 0; i < zips.length - keep; i++) zips[i].delete();
+        for (int i = 0; i < zips.length - keep; i++) {
+            if (!zips[i].delete())
+                plugin.getLogger().warning("Sentinel backup: could not delete old backup " + zips[i].getName());
+        }
     }
 }
