@@ -34,16 +34,16 @@ class UpdateCheckerTest {
         assertNull(UpdateChecker.parseJarDownloadUrl("{\"tag_name\":\"v1.0.0\",\"assets\":[]}"));
     }
 
-    @Test void prefersAssetApiUrlOverBrowserUrlForPrivateRepoSupport() {
+    @Test void usesPublicBrowserDownloadUrl() {
         // Real GitHub asset objects carry both "url" (API) and "browser_download_url".
-        // The API url is the one that works with a token for private repos, so it wins.
+        // For a PUBLIC repo we use the direct browser_download_url (no token / no auth needed).
         String json = """
             {"tag_name":"v1.5.0","assets":[
               {"name":"Sentinel.jar",
                "url":"https://api.github.com/repos/o/r/releases/assets/42",
                "browser_download_url":"https://example.com/Sentinel.jar"}
             ]}""";
-        assertEquals("https://api.github.com/repos/o/r/releases/assets/42",
+        assertEquals("https://example.com/Sentinel.jar",
             UpdateChecker.parseJarDownloadUrl(json));
     }
 
