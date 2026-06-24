@@ -17,22 +17,24 @@ public final class BackupManager {
     /** Saves all worlds (sync), then zips + prunes async, reporting to the requester. {@code stamp} names the file. */
     public void backup(CommandSender requester, long stamp) {
         requester.sendMessage(plugin.messages().prefixed("backup-started"));
-        List<File> worldDirs = new ArrayList<>();
-        for (org.bukkit.World w : Bukkit.getWorlds()) { w.save(); worldDirs.add(w.getWorldFolder()); }
-        File dir = new File(plugin.getDataFolder(), "backups");
-        dir.mkdirs();
-        File zip = new File(dir, "backup-" + stamp + ".zip");
-        int keep = plugin.getConfig().getInt("backup.keep", 5);
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-            try {
-                zipWorlds(worldDirs, zip);
-                prune(dir, keep);
-                Bukkit.getScheduler().runTask(plugin, () ->
-                    requester.sendMessage(plugin.messages().prefixed("backup-done", "file", zip.getName())));
-            } catch (Exception e) {
-                Bukkit.getScheduler().runTask(plugin, () ->
-                    requester.sendMessage(plugin.messages().prefixed("backup-failed", "error", String.valueOf(e.getMessage()))));
-            }
+        plugin.scheduler().runGlobal(() -> {
+            List<File> worldDirs = new ArrayList<>();
+            for (org.bukkit.World w : Bukkit.getWorlds()) { w.save(); worldDirs.add(w.getWorldFolder()); }
+            File dir = new File(plugin.getDataFolder(), "backups");
+            dir.mkdirs();
+            File zip = new File(dir, "backup-" + stamp + ".zip");
+            int keep = plugin.getConfig().getInt("backup.keep", 5);
+            plugin.scheduler().runAsync(() -> {
+                try {
+                    zipWorlds(worldDirs, zip);
+                    prune(dir, keep);
+                    plugin.scheduler().runGlobal(() ->
+                        requester.sendMessage(plugin.messages().prefixed("backup-done", "file", zip.getName())));
+                } catch (Exception e) {
+                    plugin.scheduler().runGlobal(() ->
+                        requester.sendMessage(plugin.messages().prefixed("backup-failed", "error", String.valueOf(e.getMessage()))));
+                }
+            });
         });
     }
 

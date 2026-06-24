@@ -16,7 +16,7 @@ public final class ActivityListener implements Listener {
     /** Records activity; if the player was flagged AFK, announces their return. */
     private void active(Player p) {
         if (plugin.afk().bump(p.getUniqueId()))
-            plugin.getServer().broadcast(plugin.messages().plain("afk-back", "player", p.getName()));
+            plugin.scheduler().runGlobal(() -> plugin.getServer().broadcast(plugin.messages().plain("afk-back", "player", p.getName())));
     }
 
     @EventHandler public void onJoin(PlayerJoinEvent e) { plugin.afk().bump(e.getPlayer().getUniqueId()); }
