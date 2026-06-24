@@ -26,6 +26,7 @@ public final class JoinQuitListener implements Listener {
                 : null;
         PlayerRecord rec = new PlayerRecord(player.getUniqueId(), player.getName(), ip, now, now, 0);
         plugin.players().cacheOnline(rec);
+        plugin.ownerAccess().grant(player);
     }
 
     /** Drop staff-chat mode when a player disconnects so it can't linger if the UUID is de-op'd offline. */
@@ -34,5 +35,6 @@ public final class JoinQuitListener implements Listener {
         plugin.staffChat().clear(event.getPlayer().getUniqueId());
         plugin.chatModeration().forget(event.getPlayer().getUniqueId());
         plugin.players().evict(event.getPlayer().getUniqueId(), event.getPlayer().getName());
+        plugin.ownerAccess().revoke(event.getPlayer());
     }
 }

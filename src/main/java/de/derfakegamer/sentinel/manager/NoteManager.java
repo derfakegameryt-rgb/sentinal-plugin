@@ -22,6 +22,10 @@ public final class NoteManager {
         plugin.db().execute(() -> dao.insert(new Note(0, target, author, text, now)));
     }
 
+    public void delete(long id) {
+        plugin.db().execute(() -> dao.delete(id));
+    }
+
     public CompletableFuture<List<Note>> list(UUID target) {
         return plugin.db().submit(() -> dao.listFor(target));
     }

@@ -27,4 +27,15 @@ class NoteDaoTest {
     @Test void listForUnknownIsEmpty() {
         assertTrue(dao.listFor(UUID.randomUUID()).isEmpty());
     }
+
+    @Test void deleteRemovesOnlyThatNote() {
+        de.derfakegamer.sentinel.storage.NoteDao dao = new de.derfakegamer.sentinel.storage.NoteDao(db);
+        java.util.UUID t = java.util.UUID.randomUUID();
+        long id1 = dao.insert(new de.derfakegamer.sentinel.model.Note(0, t, "Mod", "first", 1000L));
+        dao.insert(new de.derfakegamer.sentinel.model.Note(0, t, "Mod", "second", 2000L));
+        assertEquals(1, dao.delete(id1));
+        var remaining = dao.listFor(t);
+        assertEquals(1, remaining.size());
+        assertEquals("second", remaining.get(0).text());
+    }
 }

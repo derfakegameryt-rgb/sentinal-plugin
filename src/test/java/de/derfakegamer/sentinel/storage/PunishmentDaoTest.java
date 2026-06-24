@@ -49,6 +49,6 @@ class PunishmentDaoTest {
         dao.insert(Punishment.builder().type(PunishmentType.WARN).targetUuid(target)
             .targetName("Notch").reason("spam").issuerUuid(issuer).issuerName("Admin")
             .createdAt(100).expiresAt(0).active(true).build());
-        assertEquals(1, dao.countWarns(target));
+        assertEquals(1, dao.countWarns(target, 0L));
     }
 }

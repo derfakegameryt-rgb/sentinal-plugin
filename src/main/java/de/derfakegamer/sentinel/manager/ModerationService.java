@@ -115,6 +115,17 @@ public final class ModerationService {
             });
     }
 
+    public CompletableFuture<Boolean> removeIpBan(UUID issuerId, String issuerName, UUID targetId, String targetName) {
+        long now = System.currentTimeMillis();
+        return plugin.punishments().removeIpBan(targetId, issuerName, now)
+            .thenCompose(ok -> {
+                if (ok) plugin.audit().record(issuerName, "UNIPBAN", targetName, "");
+                return onGlobal(() -> {
+                    if (ok) Bukkit.broadcast(plugin.messages().prefixed("ip-unbanned", "player", targetName, "reason", ""));
+                }).thenApply(v -> ok);
+            });
+    }
+
     public CompletableFuture<Boolean> removeMute(UUID issuerId, String issuerName, UUID targetId, String targetName) {
         long now = System.currentTimeMillis();
         return plugin.punishments().unmute(targetId, issuerName, now)

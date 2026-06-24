@@ -22,6 +22,7 @@ public final class NotesGui extends Gui {
         DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").withZone(ZoneOffset.UTC);
 
     private final OfflinePlayer target;
+    private final java.util.List<Note> notes;
 
     /** Async opener: fetches notes then constructs and opens the GUI on the main thread. */
     public static void open(Sentinel plugin, OfflinePlayer target, Player viewer) {
@@ -32,6 +33,7 @@ public final class NotesGui extends Gui {
     public NotesGui(Sentinel plugin, OfflinePlayer target, List<Note> notes) {
         super(plugin);
         this.target = target;
+        this.notes = notes;
         this.inventory = Bukkit.createInventory(this, 54,
             plugin.messages().plain("gui-notes-title", "player", name()));
         for (int i = 0; i < PAGE_SIZE && i < notes.size(); i++) {
@@ -57,6 +59,15 @@ public final class NotesGui extends Gui {
     public void onClick(InventoryClickEvent event) {
         event.setCancelled(true);
         Player mod = (Player) event.getWhoClicked();
+        int slot = event.getRawSlot();
+        if (slot >= 0 && slot < PAGE_SIZE && slot < notes.size()) {
+            if (event.isShiftClick()) {
+                plugin.notes().delete(notes.get(slot).id());
+                mod.sendMessage(plugin.messages().prefixed("note-deleted"));
+                NotesGui.open(plugin, target, mod);
+            }
+            return; // plain click on a note: no-op
+        }
         switch (event.getRawSlot()) {
             case NAV_ACT_L1 -> {
                 mod.closeInventory();

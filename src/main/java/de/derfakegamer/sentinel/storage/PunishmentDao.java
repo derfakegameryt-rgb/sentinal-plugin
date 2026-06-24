@@ -100,14 +100,20 @@ public final class PunishmentDao {
         }
     }
 
-    public int countWarns(UUID target) {
-      {
-        String sql = "SELECT COUNT(*) FROM punishments WHERE type='WARN' AND target_uuid=? AND active=1";
+    public int countWarns(UUID target, long cutoff) {
+        String sql = "SELECT COUNT(*) FROM punishments WHERE type='WARN' AND target_uuid=? AND active=1 AND created_at >= ?";
         try (PreparedStatement ps = db.connection().prepareStatement(sql)) {
             ps.setString(1, target.toString());
+            ps.setLong(2, cutoff);
             try (ResultSet rs = ps.executeQuery()) { return rs.next() ? rs.getInt(1) : 0; }
         } catch (SQLException e) { throw new RuntimeException(e); }
-      }
+    }
+
+    public int deleteWarnsOlderThan(long cutoff) {
+        try (PreparedStatement ps = db.connection().prepareStatement("DELETE FROM punishments WHERE type='WARN' AND created_at < ?")) {
+            ps.setLong(1, cutoff);
+            return ps.executeUpdate();
+        } catch (SQLException e) { throw new RuntimeException(e); }
     }
 
     private Punishment map(ResultSet rs) throws SQLException {

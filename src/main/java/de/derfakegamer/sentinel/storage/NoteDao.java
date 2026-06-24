@@ -26,6 +26,13 @@ public final class NoteDao {
         }
     }
 
+    public int delete(long id) {
+        try (PreparedStatement ps = db.connection().prepareStatement("DELETE FROM notes WHERE id=?")) {
+            ps.setLong(1, id);
+            return ps.executeUpdate();
+        } catch (SQLException e) { throw new RuntimeException(e); }
+    }
+
     public List<Note> listFor(UUID target) {
         {
             List<Note> out = new ArrayList<>();

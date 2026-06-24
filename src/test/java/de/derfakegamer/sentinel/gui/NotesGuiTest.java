@@ -35,6 +35,23 @@ class NotesGuiTest {
         assertEquals(2, count);
     }
 
+    @Test void shiftClickDeletesNote() throws Exception {
+        PlayerMock mod = server.addPlayer("Mod"); mod.setOp(true);
+        org.bukkit.OfflinePlayer target = server.getOfflinePlayer("Griefer");
+        plugin.notes().add(target.getUniqueId(), "Mod", "bad behaviour");
+        plugin.db().submit(() -> null).get(2, java.util.concurrent.TimeUnit.SECONDS); // let the write land
+        java.util.List<de.derfakegamer.sentinel.model.Note> notes =
+            plugin.notes().list(target.getUniqueId()).get(2, java.util.concurrent.TimeUnit.SECONDS);
+        NotesGui gui = new NotesGui(plugin, target, notes);
+        gui.open(mod);
+        org.bukkit.event.inventory.InventoryClickEvent ev = new org.bukkit.event.inventory.InventoryClickEvent(
+            mod.getOpenInventory(), org.bukkit.event.inventory.InventoryType.SlotType.CONTAINER, 0,
+            org.bukkit.event.inventory.ClickType.SHIFT_LEFT, org.bukkit.event.inventory.InventoryAction.PICKUP_ALL);
+        gui.onClick(ev);
+        plugin.db().submit(() -> null).get(2, java.util.concurrent.TimeUnit.SECONDS);
+        assertTrue(plugin.notes().list(target.getUniqueId()).get(2, java.util.concurrent.TimeUnit.SECONDS).isEmpty());
+    }
+
     @Test void addButtonAwaitsChatInput() throws Exception {
         PlayerMock mod = server.addPlayer("Mod");
         OfflinePlayer target = server.addPlayer("Suspect");

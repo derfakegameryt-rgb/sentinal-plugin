@@ -85,4 +85,29 @@ class PunishmentManagerTest {
         assertTrue(mgr.unShadowMute(target, "Admin", now).get(2, TimeUnit.SECONDS));
         assertNull(mgr.activeShadowMute(target, now).get(2, TimeUnit.SECONDS));
     }
+
+    @Test void removeIpBanClearsIpBan() throws Exception {
+        String ip = "9.9.9.9";
+        mgr.ipBan(target, "Notch", ip, issuer, "Admin", "hax", 0).get(2, TimeUnit.SECONDS);
+        assertNotNull(mgr.activeIpBan(ip, System.currentTimeMillis()).get(2, TimeUnit.SECONDS));
+        assertTrue(mgr.removeIpBan(target, "Admin", System.currentTimeMillis()).get(2, TimeUnit.SECONDS));
+        assertNull(mgr.activeIpBan(ip, System.currentTimeMillis()).get(2, TimeUnit.SECONDS));
+    }
+
+    @Test void removeIpBanFalseWhenNoActiveIpBan() throws Exception {
+        assertFalse(mgr.removeIpBan(target, "Admin", System.currentTimeMillis()).get(2, TimeUnit.SECONDS));
+    }
+
+    @Test void expiredWarnsDoNotCountAndArePruned() throws Exception {
+        // one warn, issued "now"
+        mgr.warn(target, "Notch", issuer, "Admin", "spam").get(2, TimeUnit.SECONDS);
+        assertEquals(1, mgr.warnCount(target).get(2, TimeUnit.SECONDS));
+        // a cutoff in the future means the warn is "older than" the window → not counted
+        PunishmentDao dao = new PunishmentDao(plugin.db().database());
+        long futureCutoff = System.currentTimeMillis() + 60_000L;
+        assertEquals(0, plugin.db().submit(() -> dao.countWarns(target, futureCutoff)).get(2, TimeUnit.SECONDS));
+        // pruneWarns(0) keeps everything; a prune whose cutoff is in the future deletes the row
+        assertEquals(1, plugin.db().submitWrite(() -> dao.deleteWarnsOlderThan(futureCutoff)).get(2, TimeUnit.SECONDS));
+        assertEquals(0, mgr.warnCount(target).get(2, TimeUnit.SECONDS));
+    }
 }

@@ -14,6 +14,7 @@ commands:
   tempban: { description: Temporarily ban a player, permission: sentinel.use }
   ipban: { description: Ban a player's IP, permission: sentinel.use }
   unban: { description: Unban a player, permission: sentinel.use }
+  ipunban: { description: Remove a player's IP ban, permission: sentinel.unban }
   mute: { description: Mute a player, permission: sentinel.use }
   tempmute: { description: Temporarily mute a player, permission: sentinel.use }
   unmute: { description: Unmute a player, permission: sentinel.use }

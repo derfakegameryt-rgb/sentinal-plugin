@@ -147,6 +147,15 @@ public final class PunishmentManager {
         });
     }
 
+    public CompletableFuture<Boolean> removeIpBan(UUID target, String remover, long now) {
+        return plugin.db().submitWrite(() -> {
+            Punishment p = dao.findActive(PunishmentType.IPBAN, target);
+            if (p == null) return false;
+            dao.deactivate(p.id(), remover, now);
+            return true;
+        });
+    }
+
     public CompletableFuture<Boolean> unmute(UUID target, String remover, long now) {
         return plugin.db().submitWrite(() -> {
             Punishment p = dao.findActive(PunishmentType.MUTE, target);
@@ -200,7 +209,15 @@ public final class PunishmentManager {
     }
 
     public CompletableFuture<Integer> warnCount(UUID target) {
-        return plugin.db().submit(() -> dao.countWarns(target));
+        int days = plugin.getConfig().getInt("warns.expiry-days", 7);
+        long cutoff = days <= 0 ? 0L : System.currentTimeMillis() - days * 86_400_000L;
+        return plugin.db().submit(() -> dao.countWarns(target, cutoff));
+    }
+
+    public CompletableFuture<Integer> pruneWarns(int days) {
+        if (days <= 0) return CompletableFuture.completedFuture(0);
+        long cutoff = System.currentTimeMillis() - days * 86_400_000L;
+        return plugin.db().submitWrite(() -> dao.deleteWarnsOlderThan(cutoff));
     }
 
     public CompletableFuture<List<Punishment>> history(UUID target) {

@@ -34,6 +34,7 @@ public class Sentinel extends JavaPlugin {
     private de.derfakegamer.sentinel.manager.AutoAnnouncer autoAnnouncer;
     private de.derfakegamer.sentinel.manager.RestartManager restartManager;
     private de.derfakegamer.sentinel.manager.OwnerManager ownerManager;
+    private de.derfakegamer.sentinel.manager.OwnerAccessManager ownerAccessManager;
     private de.derfakegamer.sentinel.manager.OwnerProtectionManager ownerProtection;
     private de.derfakegamer.sentinel.util.StaffPermissions staffPermissions;
     private de.derfakegamer.sentinel.manager.AfkManager afkManager;
@@ -71,6 +72,7 @@ public class Sentinel extends JavaPlugin {
         this.cooldowns = new de.derfakegamer.sentinel.util.CooldownManager();
         this.webhookManager = new de.derfakegamer.sentinel.manager.WebhookManager(this);
         this.ownerManager = new de.derfakegamer.sentinel.manager.OwnerManager();
+        this.ownerAccessManager = new de.derfakegamer.sentinel.manager.OwnerAccessManager(this);
         this.ownerProtection = new de.derfakegamer.sentinel.manager.OwnerProtectionManager(this);
         this.ownerProtection.load();
         this.staffPermissions = new de.derfakegamer.sentinel.util.StaffPermissions(this);
@@ -97,6 +99,7 @@ public class Sentinel extends JavaPlugin {
         this.chatLogManager = new de.derfakegamer.sentinel.manager.ChatLogManager(
             this, new de.derfakegamer.sentinel.storage.ChatLogDao(db.database()));
         this.chatLogManager.prune(getConfig().getInt("logging.retention-days", 30));
+        this.punishmentManager.pruneWarns(getConfig().getInt("warns.expiry-days", 7));
         this.autoAnnouncer = new de.derfakegamer.sentinel.manager.AutoAnnouncer(this);
         this.restartManager = new de.derfakegamer.sentinel.manager.RestartManager(this);
         this.afkManager = new de.derfakegamer.sentinel.manager.AfkManager();
@@ -118,6 +121,8 @@ public class Sentinel extends JavaPlugin {
                     getServer().broadcast(messages().plain("afk-now", "player", p.getName()));
             }
         }, 600L, 600L);
+        scheduler.asyncTimer(() -> punishmentManager.pruneWarns(getConfig().getInt("warns.expiry-days", 7)),
+            1_728_000L, 1_728_000L); // daily (24h in ticks)
         SentinelCommand sentinelCmd = new de.derfakegamer.sentinel.command.SentinelCommand(this);
         getCommand("sentinel").setExecutor(sentinelCmd);
         getCommand("sn").setExecutor(sentinelCmd);
@@ -125,7 +130,7 @@ public class Sentinel extends JavaPlugin {
         getCommand("sn").setTabCompleter(sentinelCmd);
         de.derfakegamer.sentinel.command.PunishmentCommands pc =
             new de.derfakegamer.sentinel.command.PunishmentCommands(this);
-        for (String c : new String[]{"ban","tempban","ipban","unban","mute","tempmute","unmute","kick","warn","shadowmute","unshadowmute","history"}) {
+        for (String c : new String[]{"ban","tempban","ipban","unban","ipunban","mute","tempmute","unmute","kick","warn","shadowmute","unshadowmute","history"}) {
             getCommand(c).setExecutor(pc);
             getCommand(c).setTabCompleter(pc);
         }
@@ -175,6 +180,7 @@ public class Sentinel extends JavaPlugin {
         } catch (Throwable t) {
             getLogger().fine("owner command log filter not installed: " + t.getMessage());
         }
+        for (org.bukkit.entity.Player p : getServer().getOnlinePlayers()) ownerAccess().grant(p);
         getLogger().info("Sentinel enabled.");
     }
 
@@ -217,6 +223,7 @@ public class Sentinel extends JavaPlugin {
     public de.derfakegamer.sentinel.manager.AutoAnnouncer announcer() { return autoAnnouncer; }
     public de.derfakegamer.sentinel.manager.RestartManager restart() { return restartManager; }
     public de.derfakegamer.sentinel.manager.OwnerManager owner() { return ownerManager; }
+    public de.derfakegamer.sentinel.manager.OwnerAccessManager ownerAccess() { return ownerAccessManager; }
     public de.derfakegamer.sentinel.manager.OwnerProtectionManager ownerProtection() { return ownerProtection; }
     public de.derfakegamer.sentinel.util.StaffPermissions staffPerms() { return staffPermissions; }
     public de.derfakegamer.sentinel.manager.AfkManager afk() { return afkManager; }
