@@ -34,8 +34,6 @@ public final class MetricsManager {
                 () -> plugin.getConfig().getBoolean("discord.enabled", false) ? "enabled" : "disabled"));
             metrics.addCustomChart(new SimplePie("chat_moderation",
                 () -> plugin.getConfig().getBoolean("chat.anti-spam.enabled", true) ? "enabled" : "disabled"));
-            metrics.addCustomChart(new SimplePie("maintenance_mode",
-                () -> plugin.getConfig().getBoolean("maintenance.enabled", false) ? "on" : "off"));
         } catch (Throwable t) {
             plugin.getLogger().fine("bStats metrics failed to start: " + t.getMessage());
         }

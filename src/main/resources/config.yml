@@ -12,10 +12,6 @@ reasons:            # the 5 presets shown in the Reason GUI
   - Advertising
   - Griefing
 
-maintenance:
-  enabled: false
-  kick-message: "The server is under maintenance. Please come back later."
-  motd: "<red>Under maintenance"   # MiniMessage format (e.g. <red>, <#3B82F6>)
 announcements:
   enabled: true
   interval-seconds: 300

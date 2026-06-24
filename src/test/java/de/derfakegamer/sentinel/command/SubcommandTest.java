@@ -42,8 +42,8 @@ class SubcommandTest {
     @Test void subcommandsAppearInTab() {
         PlayerMock op = server.addPlayer("Admin"); op.setOp(true);
         var out = new SentinelCommand(plugin).onTabComplete(op,
-            server.getCommandMap().getCommand("sentinel"), "sentinel", new String[]{"ma"});
-        assertTrue(out.contains("maintenance"));
+            server.getCommandMap().getCommand("sentinel"), "sentinel", new String[]{"his"});
+        assertTrue(out.contains("history"));
     }
 
     @Test void auditCommandPrintsEntries() throws Exception {
