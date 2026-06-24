@@ -149,6 +149,13 @@ public final class DatabaseExecutor {
      * the database — re-running it cannot double-apply. Non-transient errors (constraint, syntax, I/O)
      * are rethrown immediately. Runs on the single writer thread, so the backoff only briefly delays
      * later queued writes — never the server tick.
+     *
+     * <p>Caveat for multi-statement batches: a JDBC {@code executeBatch()} that fails busy/locked
+     * part-way is re-run whole, which could re-insert the already-applied rows. This is harmless for
+     * the only batched writers here (audit + chat-log: append-only, AUTOINCREMENT, no unique key — at
+     * worst a duplicate log row) and is effectively unreachable on SQLite anyway (busy_timeout blocks
+     * rather than returning BUSY). Do NOT route a batch into a uniquely-constrained or partially-
+     * committed table through this retry without making the batch itself idempotent/transactional.
      */
     private <T> T runWithRetry(Callable<T> work) throws Exception {
         int attempt = 0;
