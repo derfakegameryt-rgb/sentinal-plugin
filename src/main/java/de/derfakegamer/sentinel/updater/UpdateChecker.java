@@ -45,14 +45,13 @@ public final class UpdateChecker {
     /** Starts the periodic update check. Always on; fixed 5-minute interval (not configurable). */
     public void start() {
         long ticks = 300L * 20L; // 5 minutes
-        plugin.getServer().getScheduler().runTaskTimerAsynchronously(plugin,
-            () -> check(null), 20L, ticks);
+        plugin.scheduler().asyncTimer(() -> check(null), 20L, ticks);
     }
 
     /** On-demand check that always reports back to the requester. */
     public void checkNow(CommandSender requester) {
         requester.sendMessage(plugin.messages().prefixed("update-checking"));
-        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> check(requester));
+        plugin.scheduler().runAsync(() -> check(requester));
     }
 
     /** True iff the given release tag is newer than the running plugin version. */
@@ -209,7 +208,7 @@ public final class UpdateChecker {
         // Auto-update (scheduled run, requester == null) is invisible: download silently, no console
         // line and no player notifications. Only an explicit "/sentinel update" reports back.
         if (requester == null) return;
-        plugin.getServer().getScheduler().runTask(plugin, () -> {
+        plugin.scheduler().runGlobal(() -> {
             if (requester instanceof Player p)
                 p.sendMessage(plugin.messages().prefixed("update-available", "version", tag));
             else
@@ -227,7 +226,7 @@ public final class UpdateChecker {
                 plugin.getLogger().fine("Update check skipped: " + lastValue(placeholders));
             return;
         }
-        plugin.getServer().getScheduler().runTask(plugin,
+        plugin.scheduler().runGlobal(
             () -> requester.sendMessage(plugin.messages().prefixed(key, placeholders)));
     }
 

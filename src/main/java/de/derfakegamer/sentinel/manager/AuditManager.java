@@ -26,8 +26,8 @@ public final class AuditManager {
             entries -> plugin.db().execute(() -> dao.insertBatch(entries)),
             plugin.getLogger()
         );
-        // Flush every 2 seconds (40 ticks) via the Bukkit scheduler.
-        plugin.getServer().getScheduler().runTaskTimer(plugin, batchWriter::flush, 40L, 40L);
+        // Flush every 2 seconds (40 ticks) via the async scheduler.
+        plugin.scheduler().asyncTimer(batchWriter::flush, 40L, 40L);
     }
 
     public void record(String actor, String action, String target, String details) {

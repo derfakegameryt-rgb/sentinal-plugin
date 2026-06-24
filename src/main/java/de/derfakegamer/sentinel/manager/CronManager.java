@@ -55,7 +55,7 @@ public final class CronManager {
 
     /** Starts the 1-minute scheduler that dispatches due commands as console. */
     public void start() {
-        plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
+        plugin.scheduler().globalTimer(() -> {
             for (String cmd : due(System.currentTimeMillis(), LocalTime.now())) {
                 plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), cmd);
             }

@@ -9,7 +9,7 @@ import java.util.List;
 public final class AutoAnnouncer {
     private final Sentinel plugin;
     private int index = 0;
-    private org.bukkit.scheduler.BukkitTask task;
+    private de.derfakegamer.sentinel.scheduler.TaskHandle task;
 
     public AutoAnnouncer(Sentinel plugin) { this.plugin = plugin; }
 
@@ -32,7 +32,7 @@ public final class AutoAnnouncer {
     private void schedule() {
         if (task != null) return;   // already running
         long ticks = Math.max(20, plugin.getConfig().getLong("announcements.interval-seconds", 300)) * 20L;
-        task = plugin.getServer().getScheduler().runTaskTimer(plugin, this::announceNext, ticks, ticks);
+        task = plugin.scheduler().globalTimer(this::announceNext, ticks, ticks);
     }
 
     /** Cancels the running announcement timer, if any. */
