@@ -20,8 +20,8 @@ public final class Schedulers {
     /** True when running on Folia. */
     public static boolean isFolia() { return FOLIA; }
 
-    /** Builds the Paper scheduler. The Folia branch is added in the next task. */
+    /** Builds the appropriate scheduler for the detected platform. */
     public static Scheduler create(Plugin plugin) {
-        return new PaperScheduler(plugin);
+        return FOLIA ? new FoliaScheduler(plugin) : new PaperScheduler(plugin);
     }
 }
