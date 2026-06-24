@@ -14,7 +14,6 @@ import org.jetbrains.annotations.NotNull;
  *
  * Keys (player-scoped unless noted):
  *   vanished, frozen, afk, staffchat  -> "true" / "false"
- *   maintenance (server-wide)         -> "true" / "false"
  */
 public final class SentinelExpansion extends PlaceholderExpansion {
     private final Sentinel plugin;
@@ -37,8 +36,6 @@ public final class SentinelExpansion extends PlaceholderExpansion {
     @Override
     public String onRequest(OfflinePlayer player, @NotNull String params) {
         switch (params.toLowerCase()) {
-            case "maintenance":
-                return bool(plugin.maintenance().isEnabled());
             case "vanished":
                 return player == null ? "" : bool(plugin.vanish().isVanished(player.getUniqueId()));
             case "frozen":

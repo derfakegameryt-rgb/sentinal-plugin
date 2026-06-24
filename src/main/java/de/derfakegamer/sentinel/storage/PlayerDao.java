@@ -58,37 +58,6 @@ public final class PlayerDao {
         }
     }
 
-    public void addPlaytime(java.util.UUID uuid, long ms) {
-        {
-            try (java.sql.PreparedStatement ps = db.connection().prepareStatement(
-                    "UPDATE players SET playtime = playtime + ? WHERE uuid=?")) {
-                ps.setLong(1, ms); ps.setString(2, uuid.toString()); ps.executeUpdate();
-            } catch (java.sql.SQLException e) { throw new RuntimeException(e); }
-        }
-    }
-
-    public long playtime(java.util.UUID uuid) {
-        {
-            try (java.sql.PreparedStatement ps = db.connection().prepareStatement("SELECT playtime FROM players WHERE uuid=?")) {
-                ps.setString(1, uuid.toString());
-                try (java.sql.ResultSet rs = ps.executeQuery()) { return rs.next() ? rs.getLong(1) : 0; }
-            } catch (java.sql.SQLException e) { throw new RuntimeException(e); }
-        }
-    }
-
-    /** Top players by playtime: list of {name, playtimeMs}. */
-    public java.util.List<de.derfakegamer.sentinel.model.PlayerRecord> topByPlaytime(int limit) {
-        {
-            java.util.List<de.derfakegamer.sentinel.model.PlayerRecord> out = new java.util.ArrayList<>();
-            try (java.sql.PreparedStatement ps = db.connection().prepareStatement(
-                    "SELECT * FROM players ORDER BY playtime DESC LIMIT ?")) {
-                ps.setInt(1, limit);
-                try (java.sql.ResultSet rs = ps.executeQuery()) { while (rs.next()) out.add(map(rs)); }
-            } catch (java.sql.SQLException e) { throw new RuntimeException(e); }
-            return out;
-        }
-    }
-
     private PlayerRecord map(ResultSet rs) throws SQLException {
         return new PlayerRecord(UUID.fromString(rs.getString("uuid")), rs.getString("name"),
             rs.getString("last_ip"), rs.getLong("first_seen"), rs.getLong("last_seen"), rs.getLong("playtime"));

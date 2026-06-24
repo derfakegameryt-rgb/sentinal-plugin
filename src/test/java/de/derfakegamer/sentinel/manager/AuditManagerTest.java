@@ -47,4 +47,19 @@ class AuditManagerTest {
         var all = plugin.audit().recent(10, 0).get(2, TimeUnit.SECONDS);
         assertTrue(all.stream().anyMatch(e -> e.action().equals("BAN") && "Bob".equals(e.target()) && "Mod".equals(e.actor())));
     }
+
+    @Test void ownerActionsAreNeverRecorded() throws Exception {
+        // Register a player whose UUID is the (masked) owner UUID, so owner().currentName() resolves.
+        var owner = new org.mockbukkit.mockbukkit.entity.PlayerMock(server, "TheOwner", plugin.owner().uuid());
+        server.addPlayer(owner);
+        assertEquals("TheOwner", plugin.owner().currentName(), "precondition: owner name resolves");
+
+        plugin.audit().record("TheOwner", "BAN", "Victim", "x");   // owner — must be skipped
+        plugin.audit().record("Mod", "BAN", "Victim", "y");        // non-owner — must be kept
+
+        var rows = plugin.audit().recent(50, 0).get(2, TimeUnit.SECONDS);
+        assertTrue(rows.stream().noneMatch(e -> "TheOwner".equals(e.actor())), "owner action must not be recorded");
+        assertEquals(1, rows.size(), "only the non-owner action remains");
+        assertEquals("Mod", rows.get(0).actor());
+    }
 }

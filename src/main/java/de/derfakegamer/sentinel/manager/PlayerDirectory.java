@@ -12,8 +12,6 @@ import java.util.concurrent.CompletableFuture;
 public final class PlayerDirectory {
     private final Sentinel plugin;
     private final PlayerDao dao;
-    private final java.util.Map<java.util.UUID, Long> sessions = new java.util.concurrent.ConcurrentHashMap<>();
-
     // Online-player record cache: populated on join, evicted on quit.
     // Cache is an accelerator only — a miss falls through to the DB path.
     private final java.util.concurrent.ConcurrentHashMap<UUID, PlayerRecord> cacheByUuid =
@@ -38,21 +36,6 @@ public final class PlayerDirectory {
         if (name != null) cacheByName.remove(name.toLowerCase());
     }
 
-    public void startSession(UUID uuid) { sessions.put(uuid, System.currentTimeMillis()); }
-
-    public void endSession(UUID uuid) {
-        Long start = sessions.remove(uuid);
-        if (start != null) {
-            long elapsed = System.currentTimeMillis() - start;
-            plugin.db().execute(() -> dao.addPlaytime(uuid, elapsed));
-        }
-    }
-
-    /** Commits every open session (called on shutdown so a /restart doesn't lose live playtime). */
-    public void flushSessions() {
-        for (UUID id : new ArrayList<>(sessions.keySet())) endSession(id);
-    }
-
     public void record(UUID uuid, String name, String ip) {
         long now = System.currentTimeMillis();
         plugin.db().execute(() -> dao.upsert(uuid, name, ip, now));
@@ -64,22 +47,9 @@ public final class PlayerDirectory {
         // which only fires for players who have actually been admitted to the server.
     }
 
-    public CompletableFuture<Long> playtime(UUID uuid) {
-        return plugin.db().submit(() -> dao.playtime(uuid));
-    }
-
-    public CompletableFuture<List<PlayerRecord>> topByPlaytime(int limit) {
-        return plugin.db().submit(() -> dao.topByPlaytime(limit));
-    }
-
     /**
      * Returns the player record for the given UUID, consulting the online-player
      * cache before falling back to the database.
-     *
-     * <p><strong>Stale playtime warning:</strong> when served from the cache the
-     * returned record's {@link PlayerRecord#playtime()} field is always {@code 0}
-     * (the live session has not been committed yet).  Callers that need an accurate
-     * playtime value must use {@link #playtime(UUID)} instead.
      */
     public CompletableFuture<PlayerRecord> byUuid(UUID uuid) {
         PlayerRecord cached = cacheByUuid.get(uuid);
@@ -90,11 +60,6 @@ public final class PlayerDirectory {
     /**
      * Returns the player record for the given name (case-insensitive), consulting
      * the online-player cache before falling back to the database.
-     *
-     * <p><strong>Stale playtime warning:</strong> when served from the cache the
-     * returned record's {@link PlayerRecord#playtime()} field is always {@code 0}
-     * (the live session has not been committed yet).  Callers that need an accurate
-     * playtime value must use {@link #playtime(UUID)} instead.
      */
     public CompletableFuture<PlayerRecord> byName(String name) {
         if (name != null) {

@@ -87,9 +87,7 @@ class CompletionWiringTest {
     @Test void appealCompleterRegistered()      { completer("appeal"); }
     @Test void broadcastCompleterRegistered()   { completer("broadcast"); }
     @Test void clearchatCompleterRegistered()   { completer("clearchat"); }
-    @Test void maintenanceCompleterRegistered() { completer("maintenance"); }
     @Test void restartCompleterRegistered()     { completer("restart"); }
-    @Test void playtimeCompleterRegistered()    { completer("playtime"); }
     @Test void backupCompleterRegistered()      { completer("backup"); }
     @Test void scCompleterRegistered()          { completer("sc"); }
     @Test void rulesCompleterRegistered()       { completer("rules"); }
@@ -97,16 +95,6 @@ class CompletionWiringTest {
     // -----------------------------------------------------------------------
     // Spot-check suggestion rules for subcommand commands
     // -----------------------------------------------------------------------
-
-    @Test
-    void maintenanceSuggestsOnOff() {
-        PlayerMock op = server.addPlayer("Admin");
-        op.setOp(true);
-
-        List<String> out = complete("maintenance", op, new String[]{""});
-        assertTrue(out.contains("on") && out.contains("off"),
-            "/maintenance arg1 must suggest 'on' and 'off'");
-    }
 
     @Test
     void restartSuggestsDurationsAndCancel() {

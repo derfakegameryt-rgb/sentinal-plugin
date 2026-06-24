@@ -21,19 +21,11 @@ class AdminPanelGuiTest {
     @Test void panelIsADoubleChestWithSectionButtons() {
         AdminPanelGui gui = new AdminPanelGui(plugin);
         assertEquals(54, gui.getInventory().getSize(), "the hub must be a double chest (54 slots)");
-        // row 1 general (10-13), row 2 moderation (19-24), row 3 tools (28-30)
-        for (int slot : new int[]{10, 11, 12, 13, 19, 20, 21, 22, 23, 24, 28, 29, 30})
+        // row 1 general (10-11), row 2 moderation (19-24), row 3 tools (28-30)
+        for (int slot : new int[]{10, 11, 19, 20, 21, 22, 23, 24, 28, 29, 30})
             assertNotNull(gui.getInventory().getItem(slot), "section button at " + slot);
-    }
-
-    @Test void serverInfoOpensFromPanel() {
-        PlayerMock op = server.addPlayer("Admin"); op.setOp(true);
-        AdminPanelGui gui = new AdminPanelGui(plugin);
-        gui.open(op);
-        InventoryClickEvent ev = ConfirmGuiTest.clickSlot(op, gui, 10); // Server Info
-        gui.onClick(ev);
-        assertTrue(ev.isCancelled());
-        assertInstanceOf(ServerInfoGui.class, op.getOpenInventory().getTopInventory().getHolder());
+        assertEquals(Material.PLAYER_HEAD, gui.getInventory().getItem(10).getType(), "Operators at slot 10");
+        assertEquals(Material.NAME_TAG,    gui.getInventory().getItem(11).getType(), "Whitelist at slot 11");
     }
 
     @Test void hubHasPlayerManagerVanishStaffChat() {

@@ -21,8 +21,6 @@ backup-done: "<#60A5FA>Backup saved: <white><file></white>."
 backup-failed: "<red>Backup failed: <white><error></white>."
 reloaded: "<#60A5FA>Sentinel configuration reloaded."
 rules-missing: "<red>No rules have been set up yet."
-maintenance-on: "<#60A5FA>Maintenance mode enabled — non-operators are locked out."
-maintenance-off: "<#60A5FA>Maintenance mode disabled."
 ipban-requires-online: "<red>The player must be online to IP-ban them."
 not-banned: "<red>That player is not banned."
 not-muted: "<red>That player is not muted."
@@ -42,7 +40,6 @@ bad-duration: "<red>Invalid duration. Try again from the menu."
 gui-history-title: "<#3B82F6>Sentinel · History · <player>"
 gui-players-title: "<#3B82F6>Sentinel · Players"
 gui-panel-title: "<#3B82F6>Sentinel · Admin Panel"
-gui-serverinfo-title: "<#3B82F6>Sentinel · Server Info"
 gui-operators-title: "<#3B82F6>Sentinel · Operators"
 opped: "<#60A5FA><player></#60A5FA> <gray>is now an operator."
 deopped: "<#60A5FA><player></#60A5FA> <gray>is no longer an operator."
@@ -103,13 +100,10 @@ enter-search: "<#60A5FA>Type a player name to search, or type <white>cancel<#60A
 restart-warning: "<red>Server restarting in <white><time></white>."
 restart-scheduled: "<#60A5FA>Restart scheduled in <white><time></white>."
 restart-cancelled: "<#60A5FA>Restart cancelled."
-playtime: "<#60A5FA><player></#60A5FA> <gray>has played <white><time></white>."
-gui-stats-title: "<#3B82F6>Sentinel · Playtime"
 gui-audit-title: "<#3B82F6>Sentinel · Audit Log"
 gui-modstats-title: "<#3B82F6>Sentinel · Mod Stats"
 db-error: "<red>Something went wrong — please try again in a moment."
 cooldown: "<red>Please wait <white><seconds></white>s before doing that again."
-optimize-applied: "<#60A5FA>Server optimised — view-distance <white><view></white>, simulation-distance <white><sim></white>."
 
 afk-now: "<#60A5FA><player></#60A5FA> <gray>is now AFK."
 afk-back: "<#60A5FA><player></#60A5FA> <gray>is no longer AFK."
@@ -123,18 +117,12 @@ whitelist-off: "<#60A5FA>Whitelist is now <white>OFF<#60A5FA>."
 
 gui:
   panel:
-    info: "<aqua>Server Info"
-    info-lore:
-      - "<gray>Specs, TPS, memory, uptime"
     ops: "<aqua>Operators"
     ops-lore:
       - "<gray>Everyone with OP"
     whitelist: "<aqua>Whitelist"
     whitelist-lore:
       - "<gray>Manage the server whitelist"
-    stats: "<aqua>Playtime"
-    stats-lore:
-      - "<gray>Top players by playtime"
     bans: "<aqua>Active Bans"
     bans-lore:
       - "<gray>Currently banned players"
@@ -177,20 +165,6 @@ gui:
     resetprofile-lore:
       - "<gray>Restore your real name and skin"
     close: "<red>Close"
-  serverinfo:
-    version: "<aqua>Version"
-    system: "<aqua>System"
-    worlds: "<aqua>Worlds"
-    tps: "<aqua>TPS"
-    memory: "<aqua>Memory"
-    players: "<aqua>Players"
-    uptime: "<aqua>Uptime"
-    back: "<gray>Back"
-    close: "<red>Close"
-    optimize: "<aqua>Optimize server"
-    optimize-current: "<red>Current — View: <view>  Sim: <sim>"
-    optimize-recommended: "<green>Recommended (<ram> GB) — View: <view>  Sim: <sim>"
-    optimize-hint: "<gray>Click to apply"
   confirm:
     confirm: "<green>Confirm"
     confirm-lore:

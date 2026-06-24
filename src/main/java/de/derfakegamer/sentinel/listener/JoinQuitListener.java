@@ -17,12 +17,9 @@ public final class JoinQuitListener implements Listener {
     public void onJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         plugin.vanish().applyOnJoin(player);
-        plugin.players().startSession(player.getUniqueId());
 
         // Populate the online-player cache now that the player has been fully admitted
-        // (past ban/maintenance checks).  playtime is 0 intentionally — the live session
-        // playtime is not committed until quit; callers needing accurate playtime must
-        // use PlayerDirectory#playtime(UUID).
+        // (past ban/maintenance checks).
         long now = System.currentTimeMillis();
         String ip = player.getAddress() != null
                 ? player.getAddress().getAddress().getHostAddress()
@@ -36,7 +33,6 @@ public final class JoinQuitListener implements Listener {
     public void onQuit(PlayerQuitEvent event) {
         plugin.staffChat().clear(event.getPlayer().getUniqueId());
         plugin.chatModeration().forget(event.getPlayer().getUniqueId());
-        plugin.players().endSession(event.getPlayer().getUniqueId());
         plugin.players().evict(event.getPlayer().getUniqueId(), event.getPlayer().getName());
     }
 }

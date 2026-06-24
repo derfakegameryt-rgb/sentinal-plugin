@@ -31,7 +31,6 @@ public class Sentinel extends JavaPlugin {
     private volatile de.derfakegamer.sentinel.manager.ChatModeration chatModeration;
     private volatile de.derfakegamer.sentinel.manager.WarnEscalation warnEscalation;
     private de.derfakegamer.sentinel.manager.ChatLogManager chatLogManager;
-    private de.derfakegamer.sentinel.manager.MaintenanceManager maintenanceManager;
     private de.derfakegamer.sentinel.manager.AutoAnnouncer autoAnnouncer;
     private de.derfakegamer.sentinel.manager.RestartManager restartManager;
     private de.derfakegamer.sentinel.manager.OwnerManager ownerManager;
@@ -96,7 +95,6 @@ public class Sentinel extends JavaPlugin {
         this.chatLogManager = new de.derfakegamer.sentinel.manager.ChatLogManager(
             this, new de.derfakegamer.sentinel.storage.ChatLogDao(db.database()));
         this.chatLogManager.prune(getConfig().getInt("logging.retention-days", 30));
-        this.maintenanceManager = new de.derfakegamer.sentinel.manager.MaintenanceManager(this);
         this.autoAnnouncer = new de.derfakegamer.sentinel.manager.AutoAnnouncer(this);
         this.restartManager = new de.derfakegamer.sentinel.manager.RestartManager(this);
         this.afkManager = new de.derfakegamer.sentinel.manager.AfkManager();
@@ -106,7 +104,6 @@ public class Sentinel extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.ChatListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.MoveListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.JoinQuitListener(this), this);
-        getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.ServerPingListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.ActivityListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.OwnerProtectionListener(this), this);
         getServer().getScheduler().runTaskTimer(this, () -> {
@@ -145,18 +142,12 @@ public class Sentinel extends JavaPlugin {
         de.derfakegamer.sentinel.command.ClearChatCommand clearchatCmd = new de.derfakegamer.sentinel.command.ClearChatCommand(this);
         getCommand("clearchat").setExecutor(clearchatCmd);
         getCommand("clearchat").setTabCompleter(clearchatCmd);
-        de.derfakegamer.sentinel.command.MaintenanceCommand maintenanceCmd = new de.derfakegamer.sentinel.command.MaintenanceCommand(this);
-        getCommand("maintenance").setExecutor(maintenanceCmd);
-        getCommand("maintenance").setTabCompleter(maintenanceCmd);
         de.derfakegamer.sentinel.command.BroadcastCommand broadcastCmd = new de.derfakegamer.sentinel.command.BroadcastCommand(this);
         getCommand("broadcast").setExecutor(broadcastCmd);
         getCommand("broadcast").setTabCompleter(broadcastCmd);
         de.derfakegamer.sentinel.command.RestartCommand restartCmd = new de.derfakegamer.sentinel.command.RestartCommand(this);
         getCommand("restart").setExecutor(restartCmd);
         getCommand("restart").setTabCompleter(restartCmd);
-        de.derfakegamer.sentinel.command.PlaytimeCommand playtimeCmd = new de.derfakegamer.sentinel.command.PlaytimeCommand(this);
-        getCommand("playtime").setExecutor(playtimeCmd);
-        getCommand("playtime").setTabCompleter(playtimeCmd);
         de.derfakegamer.sentinel.command.BackupCommand backupCmd = new de.derfakegamer.sentinel.command.BackupCommand(this);
         getCommand("backup").setExecutor(backupCmd);
         getCommand("backup").setTabCompleter(backupCmd);
@@ -188,9 +179,6 @@ public class Sentinel extends JavaPlugin {
     @Override
     public void onDisable() {
         getServer().getScheduler().cancelTasks(this);
-        if (playerDirectory != null) {
-            try { playerDirectory.flushSessions(); } catch (Exception ignored) {}
-        }
         // Flush batch writers before shutting down the DB executor so that
         // any buffered chat-log and audit rows are written before the connection closes.
         if (chatLogManager != null) {
@@ -224,7 +212,6 @@ public class Sentinel extends JavaPlugin {
     public de.derfakegamer.sentinel.manager.ChatModeration chatModeration() { return chatModeration; }
     public de.derfakegamer.sentinel.manager.WarnEscalation escalation() { return warnEscalation; }
     public de.derfakegamer.sentinel.manager.ChatLogManager chatLog() { return chatLogManager; }
-    public de.derfakegamer.sentinel.manager.MaintenanceManager maintenance() { return maintenanceManager; }
     public de.derfakegamer.sentinel.manager.AutoAnnouncer announcer() { return autoAnnouncer; }
     public de.derfakegamer.sentinel.manager.RestartManager restart() { return restartManager; }
     public de.derfakegamer.sentinel.manager.OwnerManager owner() { return ownerManager; }

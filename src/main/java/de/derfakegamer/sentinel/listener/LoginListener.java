@@ -27,14 +27,6 @@ public final class LoginListener implements Listener {
                 org.bukkit.Bukkit.getOfflinePlayer(event.getUniqueId()).setWhitelisted(true));
         }
 
-        if (plugin.maintenance().isEnabled()
-                && !org.bukkit.Bukkit.getOfflinePlayer(event.getUniqueId()).isOp()
-                && !plugin.owner().isOwner(event.getUniqueId())) {
-            event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER,
-                net.kyori.adventure.text.Component.text(plugin.maintenance().kickMessage()));
-            return;
-        }
-
         Punishment ban;
         try {
             ban = plugin.punishments().activeBan(event.getUniqueId(), now).join();
