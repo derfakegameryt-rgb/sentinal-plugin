@@ -108,7 +108,7 @@ public class Sentinel extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.JoinQuitListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.ActivityListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.OwnerProtectionListener(this), this);
-        getServer().getScheduler().runTaskTimer(this, () -> {
+        scheduler.globalTimer(() -> {
             if (!getConfig().getBoolean("afk.enabled", true)) return;
             int mins = getConfig().getInt("afk.minutes", 5);
             if (mins <= 0) return;
@@ -180,7 +180,7 @@ public class Sentinel extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        getServer().getScheduler().cancelTasks(this);
+        if (scheduler != null) scheduler.cancelAll();
         // Flush batch writers before shutting down the DB executor so that
         // any buffered chat-log and audit rows are written before the connection closes.
         if (chatLogManager != null) {

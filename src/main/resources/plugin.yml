@@ -2,6 +2,7 @@ name: Sentinel
 version: '2.7.0'
 main: de.derfakegamer.sentinel.Sentinel
 api-version: '1.21'
+folia-supported: true
 author: DerFakeGamer
 softdepend: [PlaceholderAPI]
 commands:
