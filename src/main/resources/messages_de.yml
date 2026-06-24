@@ -90,6 +90,7 @@ profile-reset: "<#60A5FA><player></#60A5FA><gray>s Name und Skin wurden zurückg
 gui-notes-title: "<#3B82F6>Sentinel · Notizen · <player>"
 enter-note: "<#60A5FA>Tippe die Notiz in den Chat, oder tippe <white>cancel<#60A5FA>."
 note-added: "<#60A5FA>Notiz hinzugefügt."
+note-deleted: "<#60A5FA>Notiz gelöscht."
 notes-empty: "<gray>Noch keine Notizen. Klicke auf das Buch, um eine hinzuzufügen."
 gui-alts-title: "<#3B82F6>Sentinel · Alts · <player>"
 alts-empty: "<gray>Keine bekannten Alt-Konten (keine gemeinsame IP)."
