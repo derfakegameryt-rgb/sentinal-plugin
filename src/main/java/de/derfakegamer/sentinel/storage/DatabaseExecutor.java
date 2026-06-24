@@ -32,6 +32,10 @@ public final class DatabaseExecutor {
     /** Number of reader threads for MySQL. Matches the backend's reader-pool size. */
     private static final int READER_THREADS = 4;
 
+    /** Total write attempts on transient (busy/locked) failures = 1 + WRITE_RETRIES. */
+    private static final int WRITE_RETRIES = 3;
+    private static final long[] WRITE_BACKOFF_MS = {50L, 100L, 200L};
+
     private final Database database;
     private final Logger logger;
     private final Plugin plugin;
@@ -104,7 +108,7 @@ public final class DatabaseExecutor {
             try {
                 database.ensureValid();
                 database.bind(database.connection());
-                work.run();
+                runWithRetry(() -> { work.run(); return null; });
             } catch (Throwable t) {
                 logger.log(Level.SEVERE, "DB write failed (operation dropped)", t);
             } finally {
@@ -128,7 +132,7 @@ public final class DatabaseExecutor {
             try {
                 database.ensureValid();
                 database.bind(database.connection());
-                f.complete(work.call());
+                f.complete(runWithRetry(work));
             } catch (Throwable t) {
                 logger.log(Level.SEVERE, "DB write failed", t);
                 f.completeExceptionally(t);
@@ -137,6 +141,54 @@ public final class DatabaseExecutor {
             }
         });
         return f;
+    }
+
+    /**
+     * Runs a write, retrying ONLY on transient failures (SQLITE_BUSY / SQLITE_LOCKED) with a short
+     * backoff. A transient failure means the statement never acquired the lock and so did not modify
+     * the database — re-running it cannot double-apply. Non-transient errors (constraint, syntax, I/O)
+     * are rethrown immediately. Runs on the single writer thread, so the backoff only briefly delays
+     * later queued writes — never the server tick.
+     *
+     * <p>Caveat for multi-statement batches: a JDBC {@code executeBatch()} that fails busy/locked
+     * part-way is re-run whole, which could re-insert the already-applied rows. This is harmless for
+     * the only batched writers here (audit + chat-log: append-only, AUTOINCREMENT, no unique key — at
+     * worst a duplicate log row) and is effectively unreachable on SQLite anyway (busy_timeout blocks
+     * rather than returning BUSY). Do NOT route a batch into a uniquely-constrained or partially-
+     * committed table through this retry without making the batch itself idempotent/transactional.
+     */
+    private <T> T runWithRetry(Callable<T> work) throws Exception {
+        int attempt = 0;
+        while (true) {
+            try {
+                return work.call();
+            } catch (Exception e) {
+                if (!isTransient(e) || attempt >= WRITE_RETRIES) throw e;
+                try {
+                    Thread.sleep(WRITE_BACKOFF_MS[attempt]);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    throw e; // abort the retry; surface the original failure
+                }
+                attempt++;
+            }
+        }
+    }
+
+    /** True for SQLite "database is busy/locked" conditions, which are safe and worthwhile to retry. */
+    static boolean isTransient(Throwable t) {
+        for (Throwable c = t; c != null; c = c.getCause()) {
+            if (c instanceof java.sql.SQLException sql) {
+                int code = sql.getErrorCode();
+                if (code == 5 || code == 6) return true; // SQLITE_BUSY / SQLITE_LOCKED
+            }
+            String msg = c.getMessage();
+            if (msg != null) {
+                String m = msg.toLowerCase(java.util.Locale.ROOT);
+                if (m.contains("busy") || m.contains("locked")) return true;
+            }
+        }
+        return false;
     }
 
     /** Delivers the result on the GLOBAL region (server-wide side effects). Inline if no scheduler. */

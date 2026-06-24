@@ -255,4 +255,27 @@ class ConfigValidatorTest {
         assertTrue(hasWarningContaining("appeals.url"), "Expected warning for non-http appeals.url");
     }
 
+    // -----------------------------------------------------------------------
+    // 10. Clamp out-of-range numbers to defaults
+    // -----------------------------------------------------------------------
+    @Test void negativeBackupKeepIsClampedToDefault() {
+        var cfg = load("backup:\n  keep: -1\n");
+        ConfigValidator.validate(cfg, log);
+        assertEquals(5, cfg.getInt("backup.keep"), "negative value must be clamped to the default");
+    }
+
+    @Test void validIntValueIsNotMutated() {
+        var cfg = load("backup:\n  keep: 3\n");
+        ConfigValidator.validate(cfg, log);
+        assertEquals(3, cfg.getInt("backup.keep"), "valid value must be left untouched");
+        assertEquals(0, warningCount());
+    }
+
+    @Test void enabledZeroIntervalIsClampedToDefault() {
+        var cfg = load("announcements:\n  enabled: true\n  interval-seconds: 0\n");
+        ConfigValidator.validate(cfg, log);
+        assertEquals(300L, cfg.getLong("announcements.interval-seconds"),
+                "non-positive interval must be clamped to the default");
+    }
+
 }

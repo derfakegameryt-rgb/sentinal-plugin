@@ -87,6 +87,7 @@ public final class ConfigValidator {
         if (value < 0) {
             log.warning("Sentinel config: " + key + " is " + value
                     + " — must be 0 or greater; using default (" + defaultVal + ") instead.");
+            cfg.set(key, defaultVal); // clamp in-memory so downstream reads get the safe value
         }
     }
 
@@ -96,7 +97,8 @@ public final class ConfigValidator {
         long interval = cfg.getLong("announcements.interval-seconds", 300L);
         if (interval <= 0) {
             log.warning("Sentinel config: announcements.enabled is true but announcements.interval-seconds is "
-                    + interval + " — must be > 0 for announcements to run.");
+                    + interval + " — must be > 0; using default (300) instead.");
+            cfg.set("announcements.interval-seconds", 300L); // clamp in-memory
         }
     }
 

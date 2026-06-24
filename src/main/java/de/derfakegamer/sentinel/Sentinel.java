@@ -309,9 +309,24 @@ public class Sentinel extends JavaPlugin {
         onDisk.setDefaults(defaults);
         onDisk.options().copyDefaults(true);
         try {
-            onDisk.save(file);
+            saveYamlAtomically(onDisk, file);
         } catch (java.io.IOException e) {
             getLogger().warning("Could not migrate " + name + ": " + e.getMessage());
+        }
+    }
+
+    /** Saves {@code cfg} to {@code dest} atomically: write a sibling temp file, then move it into place.
+     *  A crash or full disk mid-write can never truncate the admin's real file. */
+    static void saveYamlAtomically(org.bukkit.configuration.file.FileConfiguration cfg, File dest) throws java.io.IOException {
+        File tmp = new File(dest.getParentFile(), dest.getName() + ".tmp");
+        cfg.save(tmp);
+        try {
+            java.nio.file.Files.move(tmp.toPath(), dest.toPath(),
+                java.nio.file.StandardCopyOption.ATOMIC_MOVE, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        } catch (java.nio.file.AtomicMoveNotSupportedException e) {
+            java.nio.file.Files.move(tmp.toPath(), dest.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        } finally {
+            java.nio.file.Files.deleteIfExists(tmp.toPath());
         }
     }
 

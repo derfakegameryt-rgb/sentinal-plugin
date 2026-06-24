@@ -271,6 +271,49 @@ class DatabaseExecutorTest {
     }
 
     // -------------------------------------------------------------------------
+    // Bounded retry for transient DB write failures
+    // -------------------------------------------------------------------------
+
+    @Test void writeRetriesTransientFailureThenSucceeds() throws Exception {
+        AtomicInteger calls = new AtomicInteger();
+        Integer result = exec.submitWrite(() -> {
+            if (calls.incrementAndGet() < 3) throw new java.sql.SQLException("database is locked", "SQLITE", 5);
+            return 42;
+        }).get(5, TimeUnit.SECONDS);
+        assertEquals(42, result);
+        assertEquals(3, calls.get(), "two transient failures then success = 3 attempts");
+    }
+
+    @Test void writeDoesNotRetryNonTransientFailure() {
+        AtomicInteger calls = new AtomicInteger();
+        CompletableFuture<Object> f = exec.submitWrite(() -> {
+            calls.incrementAndGet();
+            throw new java.sql.SQLException("UNIQUE constraint failed", "23000", 19);
+        });
+        assertThrows(ExecutionException.class, () -> f.get(5, TimeUnit.SECONDS));
+        assertEquals(1, calls.get(), "non-transient failure must not be retried");
+    }
+
+    @Test void writeGivesUpAfterRetryBudgetExhausted() {
+        AtomicInteger calls = new AtomicInteger();
+        CompletableFuture<Object> f = exec.submitWrite(() -> {
+            calls.incrementAndGet();
+            throw new java.sql.SQLException("database is busy", "SQLITE", 5);
+        });
+        assertThrows(ExecutionException.class, () -> f.get(5, TimeUnit.SECONDS));
+        assertEquals(4, calls.get(), "1 initial attempt + 3 retries = 4 attempts");
+    }
+
+    @Test void isTransientDetectsBusyAndLocked() {
+        assertTrue(DatabaseExecutor.isTransient(new java.sql.SQLException("x", "y", 5)));
+        assertTrue(DatabaseExecutor.isTransient(new java.sql.SQLException("x", "y", 6)));
+        assertTrue(DatabaseExecutor.isTransient(new java.sql.SQLException("database is locked")));
+        assertTrue(DatabaseExecutor.isTransient(new RuntimeException(new java.sql.SQLException("BUSY", "y", 5))));
+        assertFalse(DatabaseExecutor.isTransient(new RuntimeException("nope")));
+        assertFalse(DatabaseExecutor.isTransient(new java.sql.SQLException("UNIQUE constraint failed", "23000", 19)));
+    }
+
+    // -------------------------------------------------------------------------
     // 3-arg callback overload tests (error path + success path)
     // -------------------------------------------------------------------------
 
