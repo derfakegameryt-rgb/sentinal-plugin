@@ -20,7 +20,7 @@ A full audit of `config.yml` keys against actual code reads found the config oth
 - Target Minecraft 1.21 (Paper/Folia), Java 21, Gradle + shadow. `spotlessCheck` runs in `build` and FAILS on unused imports (4-space indent, no reformatting of untouched code).
 - No new dependencies. The `/report` and `/rules` commands and their behaviour are NOT touched.
 - All scheduling via `plugin.scheduler()`. `onDisable` already cancels all tasks via `scheduler.cancelAll()`.
-- `MessagesLanguageTest` rule: every top-level STRING key in `messages.yml` must exist in `messages_de.yml`; nested `gui.*` may be English-only. The removed keys (`gui.announce-*`) are nested `gui.*` and exist only in `messages.yml`, so removing them keeps that test green.
+- `MessagesLanguageTest` rule: every top-level STRING key in `messages.yml` must exist in `messages_de.yml`; nested `gui.*` may be English-only. The removed keys (`gui.panel.announce-*`) are nested `gui.*` and exist only in `messages.yml`, so removing them keeps that test green.
 - Version bumped to **3.1.6** in BOTH `build.gradle.kts` (line 8) and `src/main/resources/plugin.yml` (line 2) as the final step.
 - Note: removing a key from the bundled `config.yml` does NOT remove it from a server's existing on-disk `config.yml` (Bukkit never deletes extra keys); the removed keys simply become harmless leftovers there. This change only cleans the shipped defaults.
 
@@ -40,7 +40,7 @@ A full audit of `config.yml` keys against actual code reads found the config oth
 
 **`src/main/resources/config.yml`:** delete the entire `announcements:` block.
 
-**`src/main/resources/messages.yml`:** delete the `gui.announce-on`, `gui.announce-off`, and `gui.announce-lore` keys. (`messages_de.yml` has no announce keys — no change there.)
+**`src/main/resources/messages.yml`:** delete the `gui.panel.announce-on`, `gui.panel.announce-off`, and `gui.panel.announce-lore` keys. (`messages_de.yml` has no announce keys — no change there.)
 
 **Tests:**
 - `AdminPanelGuiTest`: remove assertions about the announcements toggle button / its slot.
