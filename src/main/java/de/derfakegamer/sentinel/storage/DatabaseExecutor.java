@@ -90,7 +90,7 @@ public final class DatabaseExecutor {
                 database.ensureValid();
                 conn = pooledReader ? database.acquire() : database.connection();
                 database.bind(conn);
-                f.complete(work.call());
+                f.complete(runWithRetry(work));
             } catch (Throwable t) {
                 logger.log(Level.SEVERE, "DB read failed", t);
                 f.completeExceptionally(t);
