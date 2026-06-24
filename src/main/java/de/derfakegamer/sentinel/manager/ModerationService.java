@@ -15,18 +15,15 @@ public final class ModerationService {
     public ModerationService(Sentinel plugin) { this.plugin = plugin; }
 
     /**
-     * Hops to the main server thread and runs {@code sideEffects}, returning a future that
-     * completes after the runnable finishes. If already on the main thread, runs inline.
+     * Runs {@code sideEffects} on the GLOBAL region thread and completes the returned future after it.
+     * Broadcasts and other server-wide work go here; single-player work is scheduled onto that
+     * player's entity scheduler from inside the block (see {@link #apply}).
      */
-    private CompletableFuture<Void> onMain(Runnable sideEffects) {
+    private CompletableFuture<Void> onGlobal(Runnable sideEffects) {
         CompletableFuture<Void> f = new CompletableFuture<>();
-        if (plugin.getServer().isPrimaryThread()) {
+        plugin.scheduler().runGlobal(() -> {
             try { sideEffects.run(); } finally { f.complete(null); }
-        } else {
-            plugin.getServer().getScheduler().runTask(plugin, () -> {
-                try { sideEffects.run(); } finally { f.complete(null); }
-            });
-        }
+        });
         return f;
     }
 
@@ -53,7 +50,7 @@ public final class ModerationService {
                 // Covert: only notify staff on the main thread, no public broadcast, no kick.
                 net.kyori.adventure.text.Component staffMsg =
                     plugin.messages().plain("shadowmuted", "player", targetName, "reason", reason);
-                return onMain(() -> notifyStaff(staffMsg))
+                return onGlobal(() -> notifyStaff(staffMsg))
                     .thenApply(v -> true);
             }
 
@@ -69,23 +66,25 @@ public final class ModerationService {
             long now = System.currentTimeMillis();
             String dur = de.derfakegamer.sentinel.util.TimeFormat.until(expiresAt, now);
 
-            // All Bukkit side-effects (broadcast, kick, sendMessage) must run on the main thread.
-            return onMain(() -> {
+            // Broadcast on the global region; per-player kick/message on the player's entity region.
+            return onGlobal(() -> {
                 Bukkit.broadcast(plugin.messages().prefixed(key, "player", targetName, "reason", reason));
 
                 Player online = Bukkit.getPlayer(targetId);
                 if (online != null) {
-                    switch (type) {
-                        case BAN, IPBAN -> {
-                            String url = plugin.getConfig().getString("appeals.url", "");
-                            String appealSuffix = url.isBlank() ? "" : "\n\nAppeal at: " + url;
-                            online.kick(plugin.messages().plain("ban-screen", "reason", reason, "duration", dur, "appeal", appealSuffix));
+                    plugin.scheduler().runForEntity(online, () -> {
+                        switch (type) {
+                            case BAN, IPBAN -> {
+                                String url = plugin.getConfig().getString("appeals.url", "");
+                                String appealSuffix = url.isBlank() ? "" : "\n\nAppeal at: " + url;
+                                online.kick(plugin.messages().plain("ban-screen", "reason", reason, "duration", dur, "appeal", appealSuffix));
+                            }
+                            case KICK -> online.kick(plugin.messages().plain("kick-screen", "reason", reason));
+                            case MUTE -> online.sendMessage(plugin.messages().prefixed("you-were-muted", "reason", reason, "duration", dur));
+                            case WARN -> online.sendMessage(plugin.messages().prefixed("you-were-warned", "reason", reason));
+                            default -> {}
                         }
-                        case KICK -> online.kick(plugin.messages().plain("kick-screen", "reason", reason));
-                        case MUTE -> online.sendMessage(plugin.messages().prefixed("you-were-muted", "reason", reason, "duration", dur));
-                        case WARN -> online.sendMessage(plugin.messages().prefixed("you-were-warned", "reason", reason));
-                        default -> {}
-                    }
+                    });
                 }
             }).thenCompose(v -> {
                 if (type == PunishmentType.WARN) {
@@ -109,7 +108,7 @@ public final class ModerationService {
         return plugin.punishments().unban(targetId, issuerName, now)
             .thenCompose(ok -> {
                 if (ok) plugin.audit().record(issuerName, "UNBAN", targetName, "");
-                return onMain(() -> {
+                return onGlobal(() -> {
                     if (ok) Bukkit.broadcast(plugin.messages().prefixed("unbanned", "player", targetName, "reason", ""));
                 })
                 .thenApply(v -> ok);
@@ -121,7 +120,7 @@ public final class ModerationService {
         return plugin.punishments().unmute(targetId, issuerName, now)
             .thenCompose(ok -> {
                 if (ok) plugin.audit().record(issuerName, "UNMUTE", targetName, "");
-                return onMain(() -> {
+                return onGlobal(() -> {
                     if (ok) Bukkit.broadcast(plugin.messages().prefixed("unmuted", "player", targetName, "reason", ""));
                 })
                 .thenApply(v -> ok);
@@ -139,7 +138,7 @@ public final class ModerationService {
             .thenCompose(ok -> {
                 if (ok) plugin.audit().record(issuerName, "UNSHADOWMUTE", targetName, "");
                 net.kyori.adventure.text.Component msg = plugin.messages().plain("unshadowmuted", "player", targetName);
-                return onMain(() -> { if (ok) notifyStaff(msg); })
+                return onGlobal(() -> { if (ok) notifyStaff(msg); })
                     .thenApply(v -> ok);
             });
     }

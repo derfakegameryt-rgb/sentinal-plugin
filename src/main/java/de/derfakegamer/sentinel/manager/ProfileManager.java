@@ -53,20 +53,24 @@ public final class ProfileManager {
     /** Force other clients to re-track the target so the new name/skin renders. Main thread only. */
     private void resend(org.bukkit.entity.Player target) {
         for (org.bukkit.entity.Player o : org.bukkit.Bukkit.getOnlinePlayers()) {
-            if (!o.equals(target)) o.hidePlayer(plugin, target);
-        }
-        org.bukkit.Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            for (org.bukkit.entity.Player o : org.bukkit.Bukkit.getOnlinePlayers()) {
-                if (!o.equals(target)) o.showPlayer(plugin, target);
+            if (!o.equals(target)) {
+                org.bukkit.entity.Player viewer = o;
+                plugin.scheduler().runForEntity(viewer, () -> viewer.hidePlayer(plugin, target));
             }
-        }, 2L);
+        }
+        for (org.bukkit.entity.Player o : org.bukkit.Bukkit.getOnlinePlayers()) {
+            if (!o.equals(target)) {
+                org.bukkit.entity.Player viewer = o;
+                plugin.scheduler().runForEntityLater(viewer, () -> viewer.showPlayer(plugin, target), 2L);
+            }
+        }
     }
 
     public void setName(org.bukkit.entity.Player target, String name, String staff) {
         java.util.UUID id = target.getUniqueId();
         long now = System.currentTimeMillis();
         // find + upsert on the single writer thread so the existing skin override is preserved atomically.
-        plugin.db().callback(plugin.db().submitWrite(() -> {
+        plugin.db().callbackFor(target, plugin.db().submitWrite(() -> {
             de.derfakegamer.sentinel.model.ProfileOverride existing = dao.find(id);
             String sv = existing != null ? existing.skinValue() : null;
             String ss = existing != null ? existing.skinSignature() : null;
@@ -82,16 +86,16 @@ public final class ProfileManager {
     public void setSkin(org.bukkit.entity.Player target, String sourceName, String staff,
                         java.util.function.Consumer<Boolean> done) {
         java.util.UUID id = target.getUniqueId();
-        org.bukkit.Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+        plugin.scheduler().runAsync(() -> {
             PlayerProfile src = org.bukkit.Bukkit.createProfile(sourceName);
             boolean ok = src.complete(true);
             ProfileProperty tex = ok ? texturesOf(src) : null;
-            org.bukkit.Bukkit.getScheduler().runTask(plugin, () -> {
+            plugin.scheduler().runGlobal(() -> {
                 org.bukkit.entity.Player t = org.bukkit.Bukkit.getPlayer(id);
                 if (t == null || !t.isOnline() || tex == null) { done.accept(false); return; }
                 long now = System.currentTimeMillis();
                 // find + upsert on the single writer thread so the existing name override is preserved atomically.
-                plugin.db().callback(plugin.db().submitWrite(() -> {
+                plugin.db().callbackFor(t, plugin.db().submitWrite(() -> {
                     de.derfakegamer.sentinel.model.ProfileOverride existing = dao.find(id);
                     String nm = existing != null ? existing.displayName() : null;
                     dao.upsert(new de.derfakegamer.sentinel.model.ProfileOverride(
@@ -111,22 +115,24 @@ public final class ProfileManager {
         java.util.UUID id = target.getUniqueId();
         String realName = target.getName();
         plugin.db().execute(() -> dao.delete(id));
-        org.bukkit.Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+        plugin.scheduler().runAsync(() -> {
             PlayerProfile real = org.bukkit.Bukkit.createProfile(id, realName);
             real.complete(true);
             ProfileProperty tex = texturesOf(real);
-            org.bukkit.Bukkit.getScheduler().runTask(plugin, () -> {
+            plugin.scheduler().runGlobal(() -> {
                 org.bukkit.entity.Player t = org.bukkit.Bukkit.getPlayer(id);
                 if (t == null) return;
-                PlayerProfile profile = t.getPlayerProfile();
-                profile.setName(realName);
-                profile.getProperties().removeIf(p -> "textures".equals(p.getName()));
-                if (tex != null) profile.setProperty(tex);
-                t.setPlayerProfile(profile);
-                t.playerListName(null);
-                t.displayName(null);
-                resend(t);
-                plugin.audit().record(staff, "RESETPROFILE", realName, "");
+                plugin.scheduler().runForEntity(t, () -> {
+                    PlayerProfile profile = t.getPlayerProfile();
+                    profile.setName(realName);
+                    profile.getProperties().removeIf(p -> "textures".equals(p.getName()));
+                    if (tex != null) profile.setProperty(tex);
+                    t.setPlayerProfile(profile);
+                    t.playerListName(null);
+                    t.displayName(null);
+                    resend(t);
+                    plugin.audit().record(staff, "RESETPROFILE", realName, "");
+                });
             });
         });
     }

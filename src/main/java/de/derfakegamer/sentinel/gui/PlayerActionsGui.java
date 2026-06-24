@@ -247,7 +247,7 @@ public final class PlayerActionsGui extends Gui {
                     return;
                 }
                 boolean makeOp = !target.isOp();
-                target.setOp(makeOp);
+                plugin.scheduler().runGlobal(() -> target.setOp(makeOp));
                 mod.sendMessage(plugin.messages().prefixed(makeOp ? "opped" : "deopped", "player", name()));
                 mod.closeInventory();
             }
