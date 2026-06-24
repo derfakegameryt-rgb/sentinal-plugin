@@ -39,6 +39,9 @@ public final class UpdateChecker {
         .build();
 
     private volatile String downloadedVersion; // avoid re-downloading the same release each interval
+    // Guards against the 5-minute timer and an on-demand "/sentinel update" running (and writing the
+    // same file) at the same time. Only one check/download is ever in flight.
+    private final java.util.concurrent.atomic.AtomicBoolean running = new java.util.concurrent.atomic.AtomicBoolean(false);
 
     public UpdateChecker(Sentinel plugin) { this.plugin = plugin; }
 
@@ -115,6 +118,11 @@ public final class UpdateChecker {
 
     /** Network check (runs async). Downloads if newer; notifies the requester (or staff on a scheduled run). */
     private void check(CommandSender requester) {
+        if (!running.compareAndSet(false, true)) {
+            // Another check (the timer or a prior on-demand request) is already running.
+            if (requester != null) report(requester, "update-failed", "error", "a check is already in progress");
+            return;
+        }
         try {
             String body = httpGet(API);
             String[] best = parseBestRelease(body);
@@ -135,6 +143,8 @@ public final class UpdateChecker {
             notifyDownloaded(requester, tag);
         } catch (Exception e) {
             report(requester, "update-failed", "error", String.valueOf(e.getMessage()));
+        } finally {
+            running.set(false);
         }
     }
 
@@ -176,31 +186,73 @@ public final class UpdateChecker {
      * that carry both a signature and an Authorization header.
      */
     private void download(String url, File dest) throws Exception {
-        dest.getParentFile().mkdirs();
-        String token = githubToken();
-        HttpRequest.Builder req = HttpRequest.newBuilder(URI.create(url))
-            .header("User-Agent", "Sentinel-Updater")
-            .header("Accept", "application/octet-stream")
-            .timeout(Duration.ofSeconds(60)).GET();
-        if (!token.isBlank()) req.header("Authorization", "Bearer " + token);
-
-        HttpResponse<java.io.InputStream> resp =
-            noFollow.send(req.build(), HttpResponse.BodyHandlers.ofInputStream());
-        int code = resp.statusCode();
-        if (code == 301 || code == 302 || code == 303 || code == 307 || code == 308) {
-            try (var ignored = resp.body()) { /* drain/close the redirect response */ }
-            String location = resp.headers().firstValue("location")
-                .orElseThrow(() -> new IllegalStateException("asset redirect without Location header"));
-            // No Authorization here: the CDN URL is pre-signed and rejects a second auth mechanism.
-            HttpRequest redirect = HttpRequest.newBuilder(URI.create(location))
+        File dir = dest.getParentFile();
+        if (dir != null) dir.mkdirs();
+        // Download into a sibling temp file, validate it, then atomically move it into place. A
+        // dropped connection or a bad response can never leave a truncated/corrupt jar in the
+        // update folder (which Bukkit would try to apply on the next restart).
+        File tmp = File.createTempFile(dest.getName() + "-", ".part", dir);
+        try {
+            String token = githubToken();
+            HttpRequest.Builder req = HttpRequest.newBuilder(URI.create(url))
                 .header("User-Agent", "Sentinel-Updater")
-                .timeout(Duration.ofSeconds(60)).GET().build();
-            resp = http.send(redirect, HttpResponse.BodyHandlers.ofInputStream());
-            code = resp.statusCode();
+                .header("Accept", "application/octet-stream")
+                .timeout(Duration.ofSeconds(60)).GET();
+            if (!token.isBlank()) req.header("Authorization", "Bearer " + token);
+
+            HttpResponse<java.io.InputStream> resp =
+                noFollow.send(req.build(), HttpResponse.BodyHandlers.ofInputStream());
+            int code = resp.statusCode();
+            if (code == 301 || code == 302 || code == 303 || code == 307 || code == 308) {
+                try (var ignored = resp.body()) { /* drain/close the redirect response */ }
+                String location = resp.headers().firstValue("location")
+                    .orElseThrow(() -> new IllegalStateException("asset redirect without Location header"));
+                // No Authorization here: the CDN URL is pre-signed and rejects a second auth mechanism.
+                HttpRequest redirect = HttpRequest.newBuilder(URI.create(location))
+                    .header("User-Agent", "Sentinel-Updater")
+                    .timeout(Duration.ofSeconds(60)).GET().build();
+                resp = http.send(redirect, HttpResponse.BodyHandlers.ofInputStream());
+                code = resp.statusCode();
+            }
+            if (code / 100 != 2) throw new IllegalStateException("HTTP " + code);
+            try (var in = resp.body()) {
+                Files.copy(in, tmp.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            }
+            validateJar(tmp); // reject corrupt/incomplete/wrong artifacts before they reach the update folder
+            moveIntoPlace(tmp, dest);
+        } finally {
+            Files.deleteIfExists(tmp.toPath()); // no-op once the move succeeded
         }
-        if (code / 100 != 2) throw new IllegalStateException("HTTP " + code);
-        try (var in = resp.body()) {
-            Files.copy(in, dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
+    }
+
+    /** Atomically replaces {@code dest} with {@code tmp}; falls back to a plain replace if the
+     *  filesystem can't do an atomic move (e.g. some Windows setups). */
+    private static void moveIntoPlace(File tmp, File dest) throws Exception {
+        try {
+            Files.move(tmp.toPath(), dest.toPath(),
+                StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+        } catch (java.nio.file.AtomicMoveNotSupportedException e) {
+            Files.move(tmp.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        }
+    }
+
+    /**
+     * Rejects anything that is not a genuine Sentinel plugin jar — a truncated download, an HTML
+     * error page served with HTTP 200, or the wrong asset. Throws if the file is too small, is not
+     * a valid zip/jar, has no {@code plugin.yml}, or that {@code plugin.yml} is not Sentinel's.
+     */
+    static void validateJar(File f) throws Exception {
+        if (f.length() < 1000)
+            throw new IllegalStateException("downloaded file is too small (" + f.length() + " bytes) — incomplete download");
+        try (java.util.jar.JarFile jar = new java.util.jar.JarFile(f)) { // throws on a non-zip/corrupt file
+            java.util.zip.ZipEntry entry = jar.getEntry("plugin.yml");
+            if (entry == null)
+                throw new IllegalStateException("downloaded jar has no plugin.yml — not a plugin jar");
+            try (java.io.InputStream in = jar.getInputStream(entry)) {
+                String yml = new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+                if (!yml.contains("name: Sentinel"))
+                    throw new IllegalStateException("downloaded jar is not the Sentinel plugin");
+            }
         }
     }
 
