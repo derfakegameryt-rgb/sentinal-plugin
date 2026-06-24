@@ -9,7 +9,7 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 
 public final class AdminPanelGui extends Gui {
     // Row 1 (general): operators, whitelist
-    private static final int OPS = 11, WHITELIST = 12;
+    private static final int OPS = 10, WHITELIST = 11;
     // Row 2 (moderation): bans, mutes, reports, appeals, audit, announcements toggle
     private static final int BANS = 19, MUTES = 20, REPORTS = 21, APPEALS = 22, AUDIT = 23, ANNOUNCE = 24;
     // Row 3 (player tools): player manager, vanish, staff chat, self name/skin/reset
