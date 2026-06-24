@@ -17,6 +17,7 @@ public final class JoinQuitListener implements Listener {
     public void onJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         plugin.vanish().applyOnJoin(player);
+        plugin.profile().applyNameOnJoin(player); // re-apply a stored display-name override (tab/chat)
 
         // Populate the online-player cache now that the player has been fully admitted
         // (past ban/maintenance checks).

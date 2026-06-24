@@ -22,10 +22,10 @@ class ProfileLoginListenerTest {
     void teardown() { MockBukkit.unmock(); }
 
     @Test
-    void loginListenerAppliesStoredOverride() throws Exception {
+    void loginListenerAppliesStoredSkinButNotName() throws Exception {
         UUID id = UUID.randomUUID();
         plugin.db().execute(() -> new de.derfakegamer.sentinel.storage.ProfileOverrideDao(plugin.db().database())
-            .upsert(new de.derfakegamer.sentinel.model.ProfileOverride(id, "Nicked", null, null, "Admin", 1L)));
+            .upsert(new de.derfakegamer.sentinel.model.ProfileOverride(id, "Nicked", "SKINVALUE", "SKINSIG", "Admin", 1L)));
         Thread.sleep(200);
 
         PlayerProfile profile = server.createProfile(id, "RealName");
@@ -34,6 +34,12 @@ class ProfileLoginListenerTest {
 
         new LoginListener(plugin).onPreLogin(event);
 
-        assertEquals("Nicked", event.getPlayerProfile().getName());
+        // the stored skin is applied to the login profile...
+        boolean hasSkin = event.getPlayerProfile().getProperties().stream()
+            .anyMatch(p -> "textures".equals(p.getName()) && "SKINVALUE".equals(p.getValue()));
+        assertTrue(hasSkin, "login must apply the stored skin override");
+        // ...but the account name is never changed (otherwise the server caches it and vanilla
+        // shows "(formerly known as …)" on the next rejoin)
+        assertEquals("RealName", event.getPlayerProfile().getName());
     }
 }
