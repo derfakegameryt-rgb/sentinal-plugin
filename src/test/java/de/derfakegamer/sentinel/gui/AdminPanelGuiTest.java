@@ -26,16 +26,6 @@ class AdminPanelGuiTest {
             assertNotNull(gui.getInventory().getItem(slot), "section button at " + slot);
     }
 
-    @Test void serverInfoOpensFromPanel() {
-        PlayerMock op = server.addPlayer("Admin"); op.setOp(true);
-        AdminPanelGui gui = new AdminPanelGui(plugin);
-        gui.open(op);
-        InventoryClickEvent ev = ConfirmGuiTest.clickSlot(op, gui, 10); // Server Info
-        gui.onClick(ev);
-        assertTrue(ev.isCancelled());
-        assertInstanceOf(ServerInfoGui.class, op.getOpenInventory().getTopInventory().getHolder());
-    }
-
     @Test void hubHasPlayerManagerVanishStaffChat() {
         PlayerMock p = server.addPlayer();
         AdminPanelGui gui = new AdminPanelGui(plugin);

@@ -8,8 +8,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 
 public final class AdminPanelGui extends Gui {
-    // Row 1 (general): server info, operators, whitelist, playtime
-    private static final int INFO = 10, OPS = 11, WHITELIST = 12, STATS = 13;
+    // Row 1 (general): operators, whitelist, playtime
+    private static final int OPS = 11, WHITELIST = 12, STATS = 13;
     // Row 2 (moderation): bans, mutes, reports, appeals, audit, announcements toggle
     private static final int BANS = 19, MUTES = 20, REPORTS = 21, APPEALS = 22, AUDIT = 23, ANNOUNCE = 24;
     // Row 3 (player tools): player manager, vanish, staff chat, self name/skin/reset
@@ -19,7 +19,6 @@ public final class AdminPanelGui extends Gui {
     public AdminPanelGui(Sentinel plugin) {
         super(plugin);
         this.inventory = Bukkit.createInventory(this, 54, plugin.messages().plain("gui-panel-title"));
-        inventory.setItem(INFO,      button(Material.COMPARATOR,    "gui.panel.info",           "gui.panel.info-lore"));
         inventory.setItem(OPS,       button(Material.PLAYER_HEAD,   "gui.panel.ops",            "gui.panel.ops-lore"));
         inventory.setItem(WHITELIST, button(Material.NAME_TAG,      "gui.panel.whitelist",      "gui.panel.whitelist-lore"));
         inventory.setItem(STATS,     button(Material.CLOCK,         "gui.panel.stats",          "gui.panel.stats-lore"));
@@ -57,7 +56,6 @@ public final class AdminPanelGui extends Gui {
         event.setCancelled(true);
         Player p = (Player) event.getWhoClicked();
         switch (event.getRawSlot()) {
-            case INFO -> new ServerInfoGui(plugin).open(p);
             case OPS -> new OperatorsGui(plugin, 0).open(p);
             case BANS -> ActiveBansGui.open(plugin, p, 0);
             case MUTES -> ActiveMutesGui.open(plugin, p, 0);

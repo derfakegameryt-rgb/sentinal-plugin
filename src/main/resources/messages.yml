@@ -42,7 +42,6 @@ bad-duration: "<red>Invalid duration. Try again from the menu."
 gui-history-title: "<#3B82F6>Sentinel · History · <player>"
 gui-players-title: "<#3B82F6>Sentinel · Players"
 gui-panel-title: "<#3B82F6>Sentinel · Admin Panel"
-gui-serverinfo-title: "<#3B82F6>Sentinel · Server Info"
 gui-operators-title: "<#3B82F6>Sentinel · Operators"
 opped: "<#60A5FA><player></#60A5FA> <gray>is now an operator."
 deopped: "<#60A5FA><player></#60A5FA> <gray>is no longer an operator."
@@ -109,7 +108,6 @@ gui-audit-title: "<#3B82F6>Sentinel · Audit Log"
 gui-modstats-title: "<#3B82F6>Sentinel · Mod Stats"
 db-error: "<red>Something went wrong — please try again in a moment."
 cooldown: "<red>Please wait <white><seconds></white>s before doing that again."
-optimize-applied: "<#60A5FA>Server optimised — view-distance <white><view></white>, simulation-distance <white><sim></white>."
 
 afk-now: "<#60A5FA><player></#60A5FA> <gray>is now AFK."
 afk-back: "<#60A5FA><player></#60A5FA> <gray>is no longer AFK."
@@ -123,9 +121,6 @@ whitelist-off: "<#60A5FA>Whitelist is now <white>OFF<#60A5FA>."
 
 gui:
   panel:
-    info: "<aqua>Server Info"
-    info-lore:
-      - "<gray>Specs, TPS, memory, uptime"
     ops: "<aqua>Operators"
     ops-lore:
       - "<gray>Everyone with OP"
@@ -177,20 +172,6 @@ gui:
     resetprofile-lore:
       - "<gray>Restore your real name and skin"
     close: "<red>Close"
-  serverinfo:
-    version: "<aqua>Version"
-    system: "<aqua>System"
-    worlds: "<aqua>Worlds"
-    tps: "<aqua>TPS"
-    memory: "<aqua>Memory"
-    players: "<aqua>Players"
-    uptime: "<aqua>Uptime"
-    back: "<gray>Back"
-    close: "<red>Close"
-    optimize: "<aqua>Optimize server"
-    optimize-current: "<red>Current — View: <view>  Sim: <sim>"
-    optimize-recommended: "<green>Recommended (<ram> GB) — View: <view>  Sim: <sim>"
-    optimize-hint: "<gray>Click to apply"
   confirm:
     confirm: "<green>Confirm"
     confirm-lore:
