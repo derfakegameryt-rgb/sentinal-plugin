@@ -44,6 +44,8 @@ class InvseeGuiTest {
         gui.getInventory().setItem(27, new ItemStack(Material.GOLD_INGOT));
 
         gui.onClose(new InventoryCloseEvent(mod.openInventory(gui.getInventory())));
+        // onClose schedules the write-back via runForEntity; pump the scheduler so it runs.
+        server.getScheduler().performTicks(1);
 
         assertEquals(Material.GOLD_INGOT, target.getInventory().getItem(0).getType());
     }

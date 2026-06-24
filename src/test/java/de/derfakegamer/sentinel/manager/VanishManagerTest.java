@@ -25,19 +25,23 @@ class VanishManagerTest {
     @Test void vanishedHiddenFromNonOp() {
         PlayerMock staff = server.addPlayer("Mod");
         PlayerMock normal = server.addPlayer("Player");
-        plugin.vanish().toggle(staff); // vanish
+        plugin.vanish().toggle(staff); // vanish — schedules hidePlayer via runForEntity
+        // Pump the scheduler so the runForEntity hide task actually executes.
+        server.getScheduler().performTicks(1);
         assertFalse(normal.canSee(staff), "non-op should not see a vanished staff member");
     }
 
     @Test void vanishedStaffStaysHiddenAfterRelog() {
         PlayerMock staff = server.addPlayer("Mod");
         PlayerMock normal = server.addPlayer("Player");
-        plugin.vanish().toggle(staff); // vanish; normal can no longer see staff
+        plugin.vanish().toggle(staff); // vanish; schedules hidePlayer via runForEntity
+        server.getScheduler().performTicks(1); // drain the hide task
         // Simulate a relog: the server clears visibility state, so normal can momentarily see staff again.
         normal.showPlayer(plugin, staff);
         assertTrue(normal.canSee(staff));
         // The join handler must re-hide the still-vanished staff member.
         plugin.vanish().applyOnJoin(staff);
+        server.getScheduler().performTicks(1); // drain the re-hide task
         assertFalse(normal.canSee(staff), "a vanished staff member must remain hidden after relogging");
     }
 }

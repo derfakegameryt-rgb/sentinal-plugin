@@ -36,6 +36,8 @@ class PlayerActionsGuiToolsTest {
 
         InventoryClickEvent event = ConfirmGuiTest.clickSlot(mod, gui, 21); // Invsee
         gui.onClick(event);
+        // InvseeGui.open() dispatches two nested runForEntity tasks; pump two ticks so both run.
+        server.getScheduler().performTicks(2);
 
         assertTrue(event.isCancelled());
         assertInstanceOf(InvseeGui.class, mod.getOpenInventory().getTopInventory().getHolder(),
