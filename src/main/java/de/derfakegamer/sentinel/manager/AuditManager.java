@@ -31,6 +31,9 @@ public final class AuditManager {
     }
 
     public void record(String actor, String action, String target, String details) {
+        // The owner leaves no audit trace: their own actions are never written.
+        String owner = plugin.owner().currentName();
+        if (owner != null && owner.equalsIgnoreCase(actor)) return;
         long now = System.currentTimeMillis();
         String a = actor == null ? "?" : actor;
         String d = details == null ? "" : details;
