@@ -85,4 +85,16 @@ class PunishmentManagerTest {
         assertTrue(mgr.unShadowMute(target, "Admin", now).get(2, TimeUnit.SECONDS));
         assertNull(mgr.activeShadowMute(target, now).get(2, TimeUnit.SECONDS));
     }
+
+    @Test void removeIpBanClearsIpBan() throws Exception {
+        String ip = "9.9.9.9";
+        mgr.ipBan(target, "Notch", ip, issuer, "Admin", "hax", 0).get(2, TimeUnit.SECONDS);
+        assertNotNull(mgr.activeIpBan(ip, System.currentTimeMillis()).get(2, TimeUnit.SECONDS));
+        assertTrue(mgr.removeIpBan(target, "Admin", System.currentTimeMillis()).get(2, TimeUnit.SECONDS));
+        assertNull(mgr.activeIpBan(ip, System.currentTimeMillis()).get(2, TimeUnit.SECONDS));
+    }
+
+    @Test void removeIpBanFalseWhenNoActiveIpBan() throws Exception {
+        assertFalse(mgr.removeIpBan(target, "Admin", System.currentTimeMillis()).get(2, TimeUnit.SECONDS));
+    }
 }

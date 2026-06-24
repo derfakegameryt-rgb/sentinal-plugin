@@ -147,6 +147,15 @@ public final class PunishmentManager {
         });
     }
 
+    public CompletableFuture<Boolean> removeIpBan(UUID target, String remover, long now) {
+        return plugin.db().submitWrite(() -> {
+            Punishment p = dao.findActive(PunishmentType.IPBAN, target);
+            if (p == null) return false;
+            dao.deactivate(p.id(), remover, now);
+            return true;
+        });
+    }
+
     public CompletableFuture<Boolean> unmute(UUID target, String remover, long now) {
         return plugin.db().submitWrite(() -> {
             Punishment p = dao.findActive(PunishmentType.MUTE, target);
