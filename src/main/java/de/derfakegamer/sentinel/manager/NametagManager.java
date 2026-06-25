@@ -98,7 +98,7 @@ public final class NametagManager {
                     removeDisplay(player.getUniqueId());
                     return;
                 }
-                Component text = Component.text(name);
+                Component text = ProfileManager.renderName(name); // MiniMessage colour support
                 TextDisplay existing = display(player.getUniqueId());
                 // Reuse only if it is STILL mounted; a death/respawn/world-change detaches it, leaving a
                 // stale entity that must be cleared and respawned rather than silently updated in place.

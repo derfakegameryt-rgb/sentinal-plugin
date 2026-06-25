@@ -6,6 +6,8 @@ exempt: []          # list of UUIDs that can never be punished
 # Height (in blocks) of the floating custom name above a renamed player's head. Tune this if the
 # name sits too low or too high for your server's resource pack / player model (try 0.0 to 1.0).
 nametag-height: 0.3
+# Warn online staff (permission sentinel.ban) when a joining player shares an IP with a banned account.
+alt-alerts: true
 report:
   cooldown-seconds: 30  # how long a non-staff player must wait between /report uses (0 = disabled)
 reasons:            # the 5 presets shown in the Reason GUI

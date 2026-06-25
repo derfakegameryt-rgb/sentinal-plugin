@@ -31,6 +31,15 @@ class PunishmentManagerTest {
         assertNotNull(mgr.activeBan(target, System.currentTimeMillis()).get(2, TimeUnit.SECONDS));
     }
 
+    @Test void activeBansAmongReturnsOnlyBanned() throws Exception {
+        UUID banned = UUID.randomUUID();
+        UUID clean = UUID.randomUUID();
+        mgr.ban(banned, "Evil", issuer, "Admin", "ban evasion", 0).get(2, TimeUnit.SECONDS);
+        Set<UUID> result = mgr.activeBansAmong(java.util.List.of(banned, clean), System.currentTimeMillis())
+            .get(2, TimeUnit.SECONDS);
+        assertEquals(Set.of(banned), result, "only the banned account is flagged (alt-detection core)");
+    }
+
     @Test void exemptCannotBeBanned() throws Exception {
         UUID exemptId = UUID.randomUUID();
         // Construct a manager with this UUID in the exempt set, sharing the plugin's executor and DB

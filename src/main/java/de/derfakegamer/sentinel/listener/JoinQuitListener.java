@@ -15,8 +15,9 @@ public final class JoinQuitListener implements Listener {
 
     /** Vanilla-style yellow "<name> joined/left the game" broadcast for a chosen name. */
     public static net.kyori.adventure.text.Component nameMessage(String key, String name) {
+        // The name keeps its own MiniMessage colour; the surrounding "joined/left the game" stays yellow.
         return net.kyori.adventure.text.Component
-            .translatable(key, net.kyori.adventure.text.Component.text(name))
+            .translatable(key, de.derfakegamer.sentinel.manager.ProfileManager.renderName(name))
             .color(net.kyori.adventure.text.format.NamedTextColor.YELLOW);
     }
 

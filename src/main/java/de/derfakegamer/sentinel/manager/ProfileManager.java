@@ -15,6 +15,19 @@ import java.util.regex.Pattern;
 public final class ProfileManager {
     private static final Pattern NAME = Pattern.compile("^[A-Za-z0-9_]{1,16}$");
 
+    // Cosmetic tags ONLY (colour/gradient/rainbow/decorations/reset). Deliberately excludes <click>,
+    // <hover>, <insertion> etc. so a staff-set name can never become an interactive component for every
+    // player. Both validation and rendering use this same instance, so what passes is exactly what shows.
+    private static final net.kyori.adventure.text.minimessage.MiniMessage NAME_MM =
+        net.kyori.adventure.text.minimessage.MiniMessage.builder()
+            .tags(net.kyori.adventure.text.minimessage.tag.resolver.TagResolver.resolver(
+                net.kyori.adventure.text.minimessage.tag.standard.StandardTags.color(),
+                net.kyori.adventure.text.minimessage.tag.standard.StandardTags.decorations(),
+                net.kyori.adventure.text.minimessage.tag.standard.StandardTags.gradient(),
+                net.kyori.adventure.text.minimessage.tag.standard.StandardTags.rainbow(),
+                net.kyori.adventure.text.minimessage.tag.standard.StandardTags.reset()))
+            .build();
+
     private final Sentinel plugin;
     private final ProfileOverrideDao dao;
 
@@ -34,8 +47,31 @@ public final class ProfileManager {
         this.dao = dao;
     }
 
-    /** A display name valid for the above-head profile name: 1–16 of [A-Za-z0-9_], no colour. */
-    public static boolean isValidName(String s) { return s != null && NAME.matcher(s).matches(); }
+    /**
+     * Valid iff the VISIBLE text (after stripping any MiniMessage colour/format tags) is 1–16 of
+     * [A-Za-z0-9_]. Colour tags are allowed — e.g. {@code <red>King}, {@code <gradient:#f00:#00f>Hero}
+     * — so names stay recognisable while supporting colour. The raw input is length-bounded and must
+     * parse as MiniMessage.
+     */
+    public static boolean isValidName(String s) {
+        if (s == null || s.isEmpty() || s.length() > 96) return false;
+        try {
+            String plain = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText()
+                .serialize(NAME_MM.deserialize(s));
+            return NAME.matcher(plain).matches();
+        } catch (Throwable t) {
+            return false; // malformed MiniMessage
+        }
+    }
+
+    /** Renders an override name (cosmetic MiniMessage only); falls back to plain text on a parse error. */
+    public static net.kyori.adventure.text.Component renderName(String name) {
+        try {
+            return NAME_MM.deserialize(name);
+        } catch (Throwable t) {
+            return net.kyori.adventure.text.Component.text(name);
+        }
+    }
 
     /** The Mojang "textures" property of a (completed) profile, or null if absent. */
     static ProfileProperty texturesOf(PlayerProfile profile) {
@@ -60,8 +96,8 @@ public final class ProfileManager {
             target.setPlayerProfile(profile);
         }
         if (name != null) {
-            target.playerListName(net.kyori.adventure.text.Component.text(name));
-            target.displayName(net.kyori.adventure.text.Component.text(name));
+            target.playerListName(renderName(name));
+            target.displayName(renderName(name));
         }
         if (skinValue != null) resend(target); // re-render the skin for other players
     }

@@ -116,6 +116,18 @@ public final class PunishmentManager {
         return plugin.db().submitWrite(() -> activeOrExpire(PunishmentType.BAN, target, now));
     }
 
+    /** Of the given players, the subset with an active (non-expired) BAN. One DB read, no writes. */
+    public CompletableFuture<java.util.Set<UUID>> activeBansAmong(java.util.Collection<UUID> targets, long now) {
+        return plugin.db().submit(() -> {
+            java.util.Set<UUID> banned = new java.util.HashSet<>();
+            for (UUID id : targets) {
+                Punishment p = dao.findActive(PunishmentType.BAN, id);
+                if (p != null && !p.isExpired(now)) banned.add(id);
+            }
+            return banned;
+        });
+    }
+
     public CompletableFuture<Punishment> activeMute(UUID target, long now) {
         return plugin.db().submitWrite(() ->
             muteCache.get(target, k -> Optional.ofNullable(activeOrExpire(PunishmentType.MUTE, k, now)))

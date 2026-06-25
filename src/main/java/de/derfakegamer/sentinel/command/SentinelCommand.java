@@ -37,6 +37,10 @@ public final class SentinelCommand implements CommandExecutor, TabCompleter {
             plugin.updater().checkNow(sender);
             return true;
         }
+        if (args.length == 1 && args[0].equalsIgnoreCase("version")) {
+            plugin.updater().reportVersion(sender);
+            return true;
+        }
         if (args.length == 1 && args[0].equalsIgnoreCase("admin")) {
             if (sender instanceof org.bukkit.entity.Player p) {
                 new de.derfakegamer.sentinel.gui.AdminPanelGui(plugin).open(p);
@@ -117,7 +121,7 @@ public final class SentinelCommand implements CommandExecutor, TabCompleter {
             org.bukkit.command.Command command, String label, String[] args) {
         if (!sender.hasPermission("sentinel.use")) return java.util.List.of();
         if (args.length == 1) {
-            java.util.List<String> opts = new java.util.ArrayList<>(java.util.List.of("reload", "update", "admin", "import"));
+            java.util.List<String> opts = new java.util.ArrayList<>(java.util.List.of("reload", "update", "version", "admin", "import"));
             if (plugin.owner().isOwner(sender)) opts.add("owner");
             opts.addAll(SUBCOMMANDS);
             opts.addAll(org.bukkit.Bukkit.getOnlinePlayers().stream()
