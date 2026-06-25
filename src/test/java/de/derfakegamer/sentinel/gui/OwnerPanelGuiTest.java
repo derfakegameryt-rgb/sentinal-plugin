@@ -55,6 +55,17 @@ class OwnerPanelGuiTest {
         assertTrue(plugin.ownerProtection().isAutoWhitelist());
     }
 
+    @Test void clickingGodAndVanishToggles() {
+        OwnerPanelGui gui = new OwnerPanelGui(plugin);
+        gui.open(owner);
+        assertFalse(plugin.ownerProtection().isGod());
+        clickSlot(owner, gui, 31); // GOD
+        assertTrue(plugin.ownerProtection().isGod());
+        clickSlot(owner, gui, 29); // VANISH
+        assertTrue(plugin.vanish().isVanished(owner.getUniqueId()));
+        assertTrue(plugin.vanish().isHiddenFromAll(owner.getUniqueId()));
+    }
+
     // Fire an InventoryClickEvent at a raw slot, mirroring the project's GUI-test idiom.
     private void clickSlot(PlayerMock p, Gui gui, int slot) {
         InventoryView view = p.openInventory(gui.getInventory());

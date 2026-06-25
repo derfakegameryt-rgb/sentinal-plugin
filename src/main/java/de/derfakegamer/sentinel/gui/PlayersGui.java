@@ -25,6 +25,8 @@ public final class PlayersGui extends Gui {
      */
     public static void open(Sentinel plugin, int page, Player viewer) {
         List<Player> players = new ArrayList<>(Bukkit.getOnlinePlayers());
+        // Drop anyone the viewer cannot actually see (a vanished player is "not online" to them).
+        players.removeIf(p -> !p.equals(viewer) && !viewer.canSee(p));
         players.sort(java.util.Comparator.comparing(
             p -> p.getName() != null ? p.getName() : p.getUniqueId().toString(),
             String.CASE_INSENSITIVE_ORDER));

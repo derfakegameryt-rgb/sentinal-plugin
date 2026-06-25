@@ -14,7 +14,7 @@ public final class JoinQuitListener implements Listener {
     public JoinQuitListener(Sentinel plugin) { this.plugin = plugin; }
 
     /** Vanilla-style yellow "<name> joined/left the game" broadcast for a chosen name. */
-    static net.kyori.adventure.text.Component nameMessage(String key, String name) {
+    public static net.kyori.adventure.text.Component nameMessage(String key, String name) {
         return net.kyori.adventure.text.Component
             .translatable(key, net.kyori.adventure.text.Component.text(name))
             .color(net.kyori.adventure.text.format.NamedTextColor.YELLOW);
@@ -28,6 +28,8 @@ public final class JoinQuitListener implements Listener {
 
         String overrideName = plugin.profile().overrideJoinName(player.getUniqueId());
         if (overrideName != null) event.joinMessage(nameMessage("multiplayer.player.joined", overrideName));
+        // An owner-tier vanished player slips in silently — they already "left" when they vanished.
+        if (plugin.vanish().isHiddenFromAll(player.getUniqueId())) event.joinMessage(null);
 
         // Populate the online-player cache now that the player has been fully admitted
         // (past ban/maintenance checks).
@@ -46,6 +48,8 @@ public final class JoinQuitListener implements Listener {
         java.util.UUID id = event.getPlayer().getUniqueId();
         String overrideName = plugin.profile().overrideJoinName(id);
         if (overrideName != null) event.quitMessage(nameMessage("multiplayer.player.left", overrideName));
+        // An owner-tier vanished player disconnects silently — they already "left" when they vanished.
+        if (plugin.vanish().isHiddenFromAll(id)) event.quitMessage(null);
         plugin.staffChat().clear(id);
         plugin.chatModeration().forget(id);
         plugin.players().evict(id, event.getPlayer().getName());
