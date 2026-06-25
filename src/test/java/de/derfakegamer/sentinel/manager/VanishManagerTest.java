@@ -47,6 +47,23 @@ class VanishManagerTest {
         assertFalse(plugin.vanish().isHiddenFromAll(owner.getUniqueId()));
     }
 
+    @Test void ownerVanishBroadcastsFakeLeaveToOwnerToo() {
+        PlayerMock owner = new PlayerMock(server, "DerFakeGamer", plugin.owner().uuid());
+        server.addPlayer(owner);
+        while (owner.nextComponentMessage() != null) { /* drain join noise */ }
+        plugin.vanish().toggleOwner(owner);                            // ON -> fake leave
+        net.kyori.adventure.text.Component msg = owner.nextComponentMessage();
+        assertNotNull(msg, "the owner must see the fake leave message, even alone");
+        assertInstanceOf(net.kyori.adventure.text.TranslatableComponent.class, msg);
+        assertEquals("multiplayer.player.left",
+            ((net.kyori.adventure.text.TranslatableComponent) msg).key());
+        plugin.vanish().toggleOwner(owner);                            // OFF -> fake join
+        net.kyori.adventure.text.Component back = owner.nextComponentMessage();
+        assertInstanceOf(net.kyori.adventure.text.TranslatableComponent.class, back);
+        assertEquals("multiplayer.player.joined",
+            ((net.kyori.adventure.text.TranslatableComponent) back).key());
+    }
+
     @Test void adminVanishStillVisibleToOps() {
         PlayerMock staff = server.addPlayer("Mod");
         PlayerMock admin = server.addPlayer("Admin");

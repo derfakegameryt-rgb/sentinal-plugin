@@ -23,8 +23,8 @@ Add four owner-only stealth/safety capabilities, plus one improvement to the exi
 A second, stronger vanish for the owner — hidden from **everyone** (including ops/other admins), unlike admin vanish (hidden from non-ops only).
 
 - **State:** in-memory in `VanishManager`. The owner's UUID goes in the existing `vanished` set (so `isVanished` / GUI filtering work uniformly) **and** a new `hideFromOps` set (the "hide from all, including ops" tier). Not persisted — vanish is a live presence state, and the owner is offline across a restart anyway.
-- **Toggle ON →** hide from every online player; broadcast a fake **leave** message to everyone except the owner, using the owner's display-name override (nick) if set, else the real name.
-- **Toggle OFF →** show to everyone; broadcast a fake **join** message (same name resolution).
+- **Toggle ON →** hide from every online player; broadcast a fake **leave** message to **everyone, the owner included** (so a lone owner still sees it and gets their own "left the game" line), using the owner's display-name override (nick) if set, else the real name.
+- **Toggle OFF →** show to everyone; broadcast a fake **join** message to everyone (same name resolution).
 - **Tab list:** `hidePlayer` already removes the owner from every viewer's tab list — no separate handling.
 - **Player-manager hiding:** `PlayersGui` filters out any player the viewer cannot see (`!viewer.canSee(p)`); `PlayerActionsGui.open` blocks opening an online target the viewer cannot see ("that entity does not exist"). A fully-hidden owner is therefore absent from the list and un-openable — as if offline.
 - **Relog while vanished:** `JoinQuitListener` suppresses the real join/quit broadcast (`event.joinMessage(null)` / `quitMessage(null)`) when the player is owner-tier vanished, and `applyOnJoin` re-hides them from all.
