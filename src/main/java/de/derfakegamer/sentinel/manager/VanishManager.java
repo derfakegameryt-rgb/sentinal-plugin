@@ -50,16 +50,22 @@ public final class VanishManager {
      * undercover owner's real account name never leaks. Returns new state (true = now vanished).
      */
     public boolean toggleOwner(Player owner) {
+        UUID id = owner.getUniqueId();
         String shown = shownName(owner);
         boolean nowVanished;
-        if (vanished.add(owner.getUniqueId())) {
-            hideFromOps.add(owner.getUniqueId());
+        // toggleOwner only runs on the main thread (GUI click), but join events read the pair
+        // (vanished, hideFromOps) on other threads. Order the writes so any interleaving over-hides
+        // rather than under-hides: set the owner tier BEFORE marking vanished on enable, and clear
+        // vanished BEFORE the tier on disable.
+        if (!vanished.contains(id)) {
+            hideFromOps.add(id);
+            vanished.add(id);
             hideFromAll(owner);
             broadcastExcept(owner, JoinQuitListener.nameMessage("multiplayer.player.left", shown));
             nowVanished = true;
         } else {
-            hideFromOps.remove(owner.getUniqueId());
-            vanished.remove(owner.getUniqueId());
+            vanished.remove(id);
+            hideFromOps.remove(id);
             showToAll(owner);
             broadcastExcept(owner, JoinQuitListener.nameMessage("multiplayer.player.joined", shown));
             nowVanished = false;
@@ -125,15 +131,21 @@ public final class VanishManager {
     /** Blank a vanished staff member's armour + hands for the ops who can still see them. */
     public void hideEquipmentFromOps(Player staff) {
         if (hideFromOps.contains(staff.getUniqueId())) return;   // owner-tier is fully hidden; nothing renders
-        for (Player viewer : Bukkit.getOnlinePlayers()) {
-            if (viewer.isOp() && !viewer.equals(staff)) sendEquip(viewer, staff, true);
-        }
+        sendEquipToOps(staff, true);
     }
 
     /** Restore a previously-vanished staff member's real armour + hands for op viewers. */
     private void showEquipmentToOps(Player staff) {
-        for (Player viewer : Bukkit.getOnlinePlayers()) {
-            if (viewer.isOp() && !viewer.equals(staff)) sendEquip(viewer, staff, false);
+        sendEquipToOps(staff, false);
+    }
+
+    private void sendEquipToOps(Player staff, boolean hide) {
+        for (Player other : Bukkit.getOnlinePlayers()) {
+            if (other.isOp() && !other.equals(staff)) {
+                Player viewer = other;
+                // Mutating another player's view must run on that viewer's region thread (Folia).
+                plugin.scheduler().runForEntity(viewer, () -> sendEquip(viewer, staff, hide));
+            }
         }
     }
 
