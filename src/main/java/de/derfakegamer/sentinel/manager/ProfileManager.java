@@ -47,28 +47,23 @@ public final class ProfileManager {
 
     /**
      * Applies a name/skin override to the (online) player. Main thread only.
-     * The name is set on the live profile so it shows ABOVE THE HEAD (and on tab + chat); the skin
-     * swaps the texture property. Both then require a hide/show resend for other clients to re-render.
-     * Only the LIVE profile is changed (mid-session) — the login profile name is left untouched (see
-     * {@link #applyOnLogin}), so the server never caches the override name at login.
+     * The name is display-only here — tab + chat. The above-head name CANNOT be changed on the live
+     * profile (it is bound to the GameProfile name set at login), so it is rendered separately by
+     * {@link NametagManager} (a floating TextDisplay). The skin swaps the texture property and needs a
+     * hide/show resend for other clients to re-render.
      */
     private void applyLive(org.bukkit.entity.Player target, String name, String skinValue, String skinSig) {
-        if (name != null || skinValue != null) {
-            // Keep the player's current textures unless a new skin is being applied.
-            ProfileProperty tex = skinValue != null
-                ? new ProfileProperty("textures", skinValue, skinSig)
-                : texturesOf(target.getPlayerProfile());
-            // A fresh profile carrying the override name (or the real account name) above the head.
-            PlayerProfile profile = org.bukkit.Bukkit.createProfile(
-                target.getUniqueId(), name != null ? name : target.getName());
-            if (tex != null) profile.setProperty(tex);
+        if (skinValue != null) {
+            PlayerProfile profile = target.getPlayerProfile();
+            profile.getProperties().removeIf(p -> "textures".equals(p.getName()));
+            profile.setProperty(new ProfileProperty("textures", skinValue, skinSig));
             target.setPlayerProfile(profile);
         }
         if (name != null) {
             target.playerListName(net.kyori.adventure.text.Component.text(name));
             target.displayName(net.kyori.adventure.text.Component.text(name));
         }
-        if (name != null || skinValue != null) resend(target); // re-render name/skin for other players
+        if (skinValue != null) resend(target); // re-render the skin for other players
     }
 
     /** Force other clients to re-track the target so the new name/skin renders. Main thread only. */
@@ -101,6 +96,7 @@ public final class ProfileManager {
             if (!target.isOnline()) return;
             applyLive(target, name, skin[0], skin[1]);
             joinNames.put(id, name); // keep the join/quit broadcast consistent with a mid-session rename
+            plugin.nametags().refresh(target); // float the new name above the head (overhead can't change live)
             plugin.audit().record(staff, "SETNAME", target.getName(), name);
         });
     }
@@ -137,15 +133,13 @@ public final class ProfileManager {
         java.util.UUID id = target.getUniqueId();
         String realName = target.getName(); // the account name was never changed, so this is real
         plugin.db().execute(() -> dao.delete(id));
-        // Immediate, network-FREE revert: real name above the head + cleared tab/chat overlay. This must
-        // not depend on the Mojang skin fetch below — otherwise a network blip would leave the player
-        // stuck with the override name. The real skin is restored best-effort right after.
+        // Immediate, network-FREE revert: clear the tab/chat overlay and drop the floating nametag (which
+        // restores the vanilla above-head name). This must not depend on the Mojang skin fetch below.
         plugin.scheduler().runForEntity(target, () -> {
             target.playerListName(null);
             target.displayName(null);
             joinNames.remove(id);
-            target.setPlayerProfile(org.bukkit.Bukkit.createProfile(id, realName));
-            resend(target);
+            plugin.nametags().refresh(target); // override gone -> removes the floating name, vanilla returns
             plugin.audit().record(staff, "RESETPROFILE", realName, "");
         });
         // Best-effort: fetch and restore the real skin (network). The name is already correct if this
@@ -206,6 +200,7 @@ public final class ProfileManager {
         plugin.db().callbackFor(player, plugin.db().submit(() -> dao.find(id)), o -> {
             if (o == null || o.displayName() == null || !player.isOnline()) return;
             applyLive(player, o.displayName(), o.skinValue(), o.skinSignature());
+            plugin.nametags().refresh(player); // restore the floating above-head name after a relog
         });
     }
 }

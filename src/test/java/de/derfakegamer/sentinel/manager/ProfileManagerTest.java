@@ -52,26 +52,49 @@ class ProfileManagerTest {
             return c == null ? null : PlainTextComponentSerializer.plainText().serialize(c);
         }
 
-        @Test void setNameChangesTheAboveHeadProfileName() throws Exception {
-            PlayerMock p = server.addPlayer("RealName");
-            plugin.profile().setName(p, "Renamed", "Admin");
-            flush();
-            assertEquals("Renamed", p.getPlayerProfile().getName(),
-                "setName must change the profile (above-head) name, not just tab/chat");
-            assertEquals("Renamed", plain(p.playerListName()), "tab name also updated");
-            assertEquals("Renamed", plain(p.displayName()), "chat name also updated");
+        // The floating TextDisplay can't be asserted under MockBukkit (no TextDisplayMock); the
+        // no-nametag team membership is the testable proxy for "custom name active / vanilla hidden".
+        private org.bukkit.scoreboard.Team nickTeam() {
+            return server.getScoreboardManager().getMainScoreboard().getTeam("sentinel_nick");
         }
 
-        @Test void resetRestoresTheRealAboveHeadName() throws Exception {
+        @Test void setNameUpdatesTabChatAndHidesTheVanillaNametag() throws Exception {
             PlayerMock p = server.addPlayer("RealName");
             plugin.profile().setName(p, "Renamed", "Admin");
             flush();
-            assertEquals("Renamed", p.getPlayerProfile().getName());
+            assertEquals("Renamed", plain(p.playerListName()), "tab name updated");
+            assertEquals("Renamed", plain(p.displayName()), "chat name updated");
+            org.bukkit.scoreboard.Team team = nickTeam();
+            assertNotNull(team, "the no-nametag team must exist");
+            assertTrue(team.hasEntry("RealName"), "player joins the no-nametag team so the vanilla name is hidden");
+            assertEquals(org.bukkit.scoreboard.Team.OptionStatus.NEVER,
+                team.getOption(org.bukkit.scoreboard.Team.Option.NAME_TAG_VISIBILITY),
+                "the team must suppress the vanilla above-head name");
+        }
+
+        @Test void resetRemovesTheFloatingNametag() throws Exception {
+            PlayerMock p = server.addPlayer("RealName");
+            plugin.profile().setName(p, "Renamed", "Admin");
+            flush();
+            assertTrue(nickTeam().hasEntry("RealName"));
 
             plugin.profile().reset(p, "Admin");
             flush();
-            assertEquals("RealName", p.getPlayerProfile().getName(),
-                "reset must put the real account name back above the head");
+            assertFalse(nickTeam() != null && nickTeam().hasEntry("RealName"),
+                "reset restores the vanilla nametag (player leaves the no-nametag team)");
+            assertNotEquals("Renamed", plain(p.playerListName()), "tab override cleared");
+        }
+
+        @Test void vanishHidesTheFloatingNametag() throws Exception {
+            PlayerMock p = server.addPlayer("RealName");
+            p.setOp(true);
+            plugin.profile().setName(p, "Renamed", "Admin");
+            flush();
+            assertTrue(nickTeam().hasEntry("RealName"), "nametag shown before vanish");
+
+            plugin.vanish().toggle(p); // a vanished player must have no floating name betraying them
+            flush();
+            assertFalse(nickTeam().hasEntry("RealName"), "vanish hides the floating nametag");
         }
     }
 }

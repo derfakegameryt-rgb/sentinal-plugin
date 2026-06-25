@@ -44,6 +44,7 @@ public final class VanishManager {
             restorePotionParticles(staff);
             nowVanished = false;
         }
+        plugin.nametags().refresh(staff); // hide the floating nametag while vanished, restore when visible
         return nowVanished;
     }
 
@@ -74,6 +75,7 @@ public final class VanishManager {
             nowVanished = false;
         }
         plugin.ownerProtection().persistVanish(nowVanished);   // survive a restart (re-armed in load())
+        plugin.nametags().refresh(owner); // an undercover owner must never have a floating name betraying them
         return nowVanished;
     }
 

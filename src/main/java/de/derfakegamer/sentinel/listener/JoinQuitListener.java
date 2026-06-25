@@ -50,6 +50,7 @@ public final class JoinQuitListener implements Listener {
         if (overrideName != null) event.quitMessage(nameMessage("multiplayer.player.left", overrideName));
         // An owner-tier vanished player disconnects silently — they already "left" when they vanished.
         if (plugin.vanish().isHiddenFromAll(id)) event.quitMessage(null);
+        plugin.nametags().handleQuit(event.getPlayer()); // remove the floating nametag entity + team entry
         plugin.staffChat().clear(id);
         plugin.chatModeration().forget(id);
         plugin.players().evict(id, event.getPlayer().getName());

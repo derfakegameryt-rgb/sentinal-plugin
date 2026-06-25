@@ -3,6 +3,9 @@ debug: false        # set true to enable [DEBUG] log lines for diagnostics
 language: en        # message language: "en" (default) or "de". Any key missing from a
                     # translation falls back to English, so partial packs are safe.
 exempt: []          # list of UUIDs that can never be punished
+# Height (in blocks) of the floating custom name above a renamed player's head. Tune this if the
+# name sits too low or too high for your server's resource pack / player model (try 0.0 to 1.0).
+nametag-height: 0.3
 report:
   cooldown-seconds: 30  # how long a non-staff player must wait between /report uses (0 = disabled)
 reasons:            # the 5 presets shown in the Reason GUI
