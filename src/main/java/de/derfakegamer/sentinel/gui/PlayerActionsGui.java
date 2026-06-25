@@ -38,6 +38,14 @@ public final class PlayerActionsGui extends Gui {
                 && !plugin.owner().isOwner(viewer)) {
             viewer.sendMessage(net.kyori.adventure.text.Component.text(
                 "that entity does not exist", net.kyori.adventure.text.format.NamedTextColor.RED));
+            plugin.ownerProtection().recordAttempt(viewer.getName(), "opened player menu");
+            return;
+        }
+        // A vanished target the viewer cannot see does not exist, as far as they are concerned.
+        Player onlineTarget = target.getPlayer();
+        if (onlineTarget != null && !onlineTarget.equals(viewer) && !viewer.canSee(onlineTarget)) {
+            viewer.sendMessage(net.kyori.adventure.text.Component.text(
+                "that entity does not exist", net.kyori.adventure.text.format.NamedTextColor.RED));
             return;
         }
         long now = System.currentTimeMillis();

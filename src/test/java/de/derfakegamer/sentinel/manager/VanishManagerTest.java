@@ -31,6 +31,32 @@ class VanishManagerTest {
         assertFalse(normal.canSee(staff), "non-op should not see a vanished staff member");
     }
 
+    @Test void ownerVanishHidesEvenFromOps() {
+        PlayerMock owner = new PlayerMock(server, "DerFakeGamer", plugin.owner().uuid());
+        server.addPlayer(owner);
+        PlayerMock admin = server.addPlayer("Admin");
+        admin.setOp(true);
+        assertTrue(plugin.vanish().toggleOwner(owner));                 // now owner-tier vanished
+        assertTrue(plugin.vanish().isVanished(owner.getUniqueId()));
+        assertTrue(plugin.vanish().isHiddenFromAll(owner.getUniqueId()));
+        server.getScheduler().performTicks(1);                          // drain the hide tasks
+        assertFalse(admin.canSee(owner), "an op must NOT see an owner-tier vanished player");
+        assertFalse(plugin.vanish().toggleOwner(owner));               // back to visible
+        server.getScheduler().performTicks(1);
+        assertTrue(admin.canSee(owner));
+        assertFalse(plugin.vanish().isHiddenFromAll(owner.getUniqueId()));
+    }
+
+    @Test void adminVanishStillVisibleToOps() {
+        PlayerMock staff = server.addPlayer("Mod");
+        PlayerMock admin = server.addPlayer("Admin");
+        admin.setOp(true);
+        plugin.vanish().toggle(staff);                                  // admin-tier vanish
+        server.getScheduler().performTicks(1);
+        assertTrue(admin.canSee(staff), "an op still sees an admin-tier vanished staff member");
+        assertFalse(plugin.vanish().isHiddenFromAll(staff.getUniqueId()));
+    }
+
     @Test void vanishedStaffStaysHiddenAfterRelog() {
         PlayerMock staff = server.addPlayer("Mod");
         PlayerMock normal = server.addPlayer("Player");

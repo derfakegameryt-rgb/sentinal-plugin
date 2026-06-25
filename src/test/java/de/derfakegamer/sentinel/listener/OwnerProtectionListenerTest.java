@@ -55,4 +55,18 @@ class OwnerProtectionListenerTest {
         plugin.ownerProtection().setEnabled(true);
         assertFalse(fire(owner, "/kill DerFakeGamer"));
     }
+    @Test void blockingRecordsAnAttempt() {
+        plugin.ownerProtection().setEnabled(true);
+        assertTrue(plugin.ownerProtection().recentAttempts().isEmpty());
+        fire(attacker, "/ban DerFakeGamer");
+        var attempts = plugin.ownerProtection().recentAttempts();
+        assertEquals(1, attempts.size());
+        assertEquals("Mallory", attempts.get(0).who());
+        assertEquals("/ban DerFakeGamer", attempts.get(0).detail());
+    }
+    @Test void allowedCommandRecordsNothing() {
+        plugin.ownerProtection().setEnabled(true);
+        fire(attacker, "/spawn");
+        assertTrue(plugin.ownerProtection().recentAttempts().isEmpty());
+    }
 }

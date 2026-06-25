@@ -13,7 +13,14 @@ public final class OwnerProtectionManager {
     private volatile boolean protect;
     private volatile boolean autoUnban;
     private volatile boolean autoWhitelist;
+    private volatile boolean god;
     private volatile String ownerName;
+
+    /** A blocked attempt to target the owner: who tried, what they ran, and when. */
+    public record Attempt(String who, String detail, long at) {}
+
+    private static final int MAX_ATTEMPTS = 30;
+    private final java.util.Deque<Attempt> attempts = new java.util.concurrent.ConcurrentLinkedDeque<>();
 
     public OwnerProtectionManager(Sentinel plugin) { this.plugin = plugin; }
 
@@ -50,9 +57,10 @@ public final class OwnerProtectionManager {
             plugin.db().submit(() -> new boolean[]{
                 "true".equalsIgnoreCase(dao.get("owner_protect", "false")),
                 "true".equalsIgnoreCase(dao.get("owner_auto_unban", "false")),
-                "true".equalsIgnoreCase(dao.get("owner_auto_whitelist", "false"))
+                "true".equalsIgnoreCase(dao.get("owner_auto_whitelist", "false")),
+                "true".equalsIgnoreCase(dao.get("owner_god", "false"))
             }).thenAccept(v -> {
-                protect = v[0]; autoUnban = v[1]; autoWhitelist = v[2];
+                protect = v[0]; autoUnban = v[1]; autoWhitelist = v[2]; god = v[3];
                 if (autoWhitelist) plugin.scheduler().runGlobal(this::whitelistOwnerNow);
             });
         } catch (Throwable t) { plugin.debug("owner load: " + t.getMessage()); }
@@ -61,10 +69,21 @@ public final class OwnerProtectionManager {
     public boolean isEnabled() { return protect; }
     public boolean isAutoUnban() { return autoUnban; }
     public boolean isAutoWhitelist() { return autoWhitelist; }
+    public boolean isGod() { return god; }
 
     public void setEnabled(boolean on) { this.protect = on; persist("owner_protect", on); }
     public void setAutoUnban(boolean on) { this.autoUnban = on; persist("owner_auto_unban", on); if (on) unbanOwnerNow(); }
     public void setAutoWhitelist(boolean on) { this.autoWhitelist = on; persist("owner_auto_whitelist", on); if (on) whitelistOwnerNow(); }
+    public void setGod(boolean on) { this.god = on; persist("owner_god", on); }
+
+    /** Record a blocked attempt to target the owner (newest first, capped at {@value #MAX_ATTEMPTS}). */
+    public void recordAttempt(String who, String detail) {
+        attempts.addFirst(new Attempt(who, detail, System.currentTimeMillis()));
+        while (attempts.size() > MAX_ATTEMPTS) attempts.removeLast();
+    }
+
+    /** Recent blocked attempts, newest first. */
+    public java.util.List<Attempt> recentAttempts() { return new java.util.ArrayList<>(attempts); }
 
     /** Current owner name, cached after first resolution (avoids a lookup on the command hot path). */
     public String ownerName() {
