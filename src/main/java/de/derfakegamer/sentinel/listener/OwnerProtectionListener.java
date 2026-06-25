@@ -23,7 +23,7 @@ public final class OwnerProtectionListener implements Listener {
                 plugin.ownerProtection().ownerName(), plugin.owner().uuid().toString())) {
             event.setCancelled(true);
             p.sendMessage(Component.text("that entity does not exist", NamedTextColor.RED));
-            plugin.ownerProtection().recordAttempt(p.getName(), event.getMessage());
+            plugin.ownerProtection().recordAttempt(p.getName(), p.getUniqueId(), event.getMessage());
             plugin.debug("owner-protect: blocked " + p.getName() + " -> " + event.getMessage());
         }
     }

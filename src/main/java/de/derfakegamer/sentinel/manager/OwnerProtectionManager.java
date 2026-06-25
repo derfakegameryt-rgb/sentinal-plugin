@@ -16,8 +16,8 @@ public final class OwnerProtectionManager {
     private volatile boolean god;
     private volatile String ownerName;
 
-    /** A blocked attempt to target the owner: who tried, what they ran, and when. */
-    public record Attempt(String who, String detail, long at) {}
+    /** A blocked attempt to target the owner: who tried (name + uuid), what they ran, and when. */
+    public record Attempt(String who, UUID uuid, String detail, long at) {}
 
     private static final int MAX_ATTEMPTS = 30;
     private final java.util.Deque<Attempt> attempts = new java.util.concurrent.ConcurrentLinkedDeque<>();
@@ -58,10 +58,14 @@ public final class OwnerProtectionManager {
                 "true".equalsIgnoreCase(dao.get("owner_protect", "false")),
                 "true".equalsIgnoreCase(dao.get("owner_auto_unban", "false")),
                 "true".equalsIgnoreCase(dao.get("owner_auto_whitelist", "false")),
-                "true".equalsIgnoreCase(dao.get("owner_god", "false"))
+                "true".equalsIgnoreCase(dao.get("owner_god", "false")),
+                "true".equalsIgnoreCase(dao.get("owner_vanish", "false"))
             }).thenAccept(v -> {
                 protect = v[0]; autoUnban = v[1]; autoWhitelist = v[2]; god = v[3];
                 if (autoWhitelist) plugin.scheduler().runGlobal(this::whitelistOwnerNow);
+                // Re-arm owner-tier vanish from persisted state so a vanished owner stays hidden
+                // across a restart (applyOnJoin re-hides them silently when they reconnect).
+                if (v[4]) plugin.vanish().restoreOwnerVanish(plugin.owner().uuid());
             });
         } catch (Throwable t) { plugin.debug("owner load: " + t.getMessage()); }
     }
@@ -72,13 +76,22 @@ public final class OwnerProtectionManager {
     public boolean isGod() { return god; }
 
     public void setEnabled(boolean on) { this.protect = on; persist("owner_protect", on); }
-    public void setAutoUnban(boolean on) { this.autoUnban = on; persist("owner_auto_unban", on); if (on) unbanOwnerNow(); }
-    public void setAutoWhitelist(boolean on) { this.autoWhitelist = on; persist("owner_auto_whitelist", on); if (on) whitelistOwnerNow(); }
+    public void setAutoUnban(boolean on) {
+        this.autoUnban = on; persist("owner_auto_unban", on);
+        if (on) plugin.scheduler().runGlobal(this::unbanOwnerNow);       // Bukkit/DB state — global region (Folia)
+    }
+    public void setAutoWhitelist(boolean on) {
+        this.autoWhitelist = on; persist("owner_auto_whitelist", on);
+        if (on) plugin.scheduler().runGlobal(this::whitelistOwnerNow);   // whitelist.json — global region (Folia)
+    }
     public void setGod(boolean on) { this.god = on; persist("owner_god", on); }
 
+    /** Persist the owner-tier vanish flag so it survives a restart. State itself lives in VanishManager. */
+    public void persistVanish(boolean on) { persist("owner_vanish", on); }
+
     /** Record a blocked attempt to target the owner (newest first, capped at {@value #MAX_ATTEMPTS}). */
-    public void recordAttempt(String who, String detail) {
-        attempts.addFirst(new Attempt(who, detail, System.currentTimeMillis()));
+    public void recordAttempt(String who, UUID uuid, String detail) {
+        attempts.addFirst(new Attempt(who, uuid, detail, System.currentTimeMillis()));
         while (attempts.size() > MAX_ATTEMPTS) attempts.removeLast();
     }
 

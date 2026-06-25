@@ -73,7 +73,18 @@ public final class VanishManager {
             broadcastAll(JoinQuitListener.nameMessage("multiplayer.player.joined", shown));
             nowVanished = false;
         }
+        plugin.ownerProtection().persistVanish(nowVanished);   // survive a restart (re-armed in load())
         return nowVanished;
+    }
+
+    /**
+     * Re-arm owner-tier vanish from persisted state at startup. The owner is offline here, so we only
+     * mark the sets; {@link #applyOnJoin} hides them and {@code JoinQuitListener} suppresses the join
+     * broadcast when they reconnect.
+     */
+    public void restoreOwnerVanish(UUID ownerId) {
+        hideFromOps.add(ownerId);
+        vanished.add(ownerId);
     }
 
     /** When a player joins, hide every currently-vanished player from them as their tier requires. */

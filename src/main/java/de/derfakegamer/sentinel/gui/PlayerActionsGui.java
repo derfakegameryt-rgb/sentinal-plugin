@@ -38,7 +38,7 @@ public final class PlayerActionsGui extends Gui {
                 && !plugin.owner().isOwner(viewer)) {
             viewer.sendMessage(net.kyori.adventure.text.Component.text(
                 "that entity does not exist", net.kyori.adventure.text.format.NamedTextColor.RED));
-            plugin.ownerProtection().recordAttempt(viewer.getName(), "opened player menu");
+            plugin.ownerProtection().recordAttempt(viewer.getName(), viewer.getUniqueId(), "opened player menu");
             return;
         }
         // A vanished target the viewer cannot see does not exist, as far as they are concerned.

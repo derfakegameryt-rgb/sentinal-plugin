@@ -22,7 +22,7 @@ Add four owner-only stealth/safety capabilities, plus one improvement to the exi
 
 A second, stronger vanish for the owner — hidden from **everyone** (including ops/other admins), unlike admin vanish (hidden from non-ops only).
 
-- **State:** in-memory in `VanishManager`. The owner's UUID goes in the existing `vanished` set (so `isVanished` / GUI filtering work uniformly) **and** a new `hideFromOps` set (the "hide from all, including ops" tier). Not persisted — vanish is a live presence state, and the owner is offline across a restart anyway.
+- **State:** in `VanishManager` — the owner's UUID goes in the existing `vanished` set (so `isVanished` / GUI filtering work uniformly) **and** a new `hideFromOps` set (the "hide from all, including ops" tier). **Persisted** as `owner_vanish` (v3.2.1): `toggleOwner` writes the flag and `OwnerProtectionManager.load` re-arms the sets via `restoreOwnerVanish` so a vanished owner stays hidden across a restart and rejoins silently (consistent with persisted god-mode/protection — no surprise re-appearance).
 - **Toggle ON →** hide from every online player; broadcast a fake **leave** message to **everyone, the owner included** (so a lone owner still sees it and gets their own "left the game" line), using the owner's display-name override (nick) if set, else the real name.
 - **Toggle OFF →** show to everyone; broadcast a fake **join** message to everyone (same name resolution).
 - **Tab list:** `hidePlayer` already removes the owner from every viewer's tab list — no separate handling.
@@ -44,7 +44,7 @@ Persisted toggle in `OwnerProtectionManager` (`owner_god`). `OwnerGodListener` c
 
 ## Item 4 — Targeting-Log ("who tried to hit me")
 
-`OwnerProtectionManager` keeps an in-memory ring buffer (capacity 30, newest first) of blocked attempts: `Attempt(who, detail, at)`.
+`OwnerProtectionManager` keeps an in-memory ring buffer (capacity 30, newest first) of blocked attempts: `Attempt(who, uuid, detail, at)` — the UUID lets the log GUI build heads via `getOfflinePlayer(uuid)` (no blocking name lookup).
 - `OwnerProtectionListener` records `(attacker, command line)` when it blocks a command targeting the owner.
 - `PlayerActionsGui.open` records `(viewer, "opened player menu")` when the owner-protection guard blocks opening the owner's actions GUI.
 - New `OwnerAttacksGui` lists the recent attempts (head + who + detail + relative time). Button in the Owner panel.
@@ -58,6 +58,15 @@ Existing: STATUS=4, PROTECT=20, AUTO_UNBAN=22, AUTO_WHITELIST=24, CLOSE=49. Add 
 ## Release
 
 After review and `./gradlew clean build` green: bump to 3.2.0, generic public release notes (e.g. "vanish now hides equipment; reliability") — **no owner/vanish-from-all/god-mode/targeting mention.**
+
+## Hardening (v3.2.1)
+
+Post-release adversarial audit of the whole owner menu produced these fixes (all covered by tests):
+
+- **Owner vanish persists** across restart (`owner_vanish`) so it no longer desyncs against persisted god-mode/protection.
+- **Folia safety:** `setAutoUnban` / `setAutoWhitelist` now dispatch their Bukkit/whitelist mutations via `scheduler().runGlobal` (were inline on the click thread).
+- **Targeting-log heads** resolve by UUID, removing a deprecated `getOfflinePlayer(String)` main-thread name lookup.
+- Confirmed clean: no owner action audits; god-mode covers PvP (`EntityDamageByEntityEvent` shares the parent handler list) and only the owner; ring buffer is capped + thread-safe; every vanish mutation runs per-region.
 
 ## Out of scope
 

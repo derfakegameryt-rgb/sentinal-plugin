@@ -64,6 +64,20 @@ class VanishManagerTest {
             ((net.kyori.adventure.text.TranslatableComponent) back).key());
     }
 
+    @Test void restoredOwnerVanishStaysHiddenOnJoin() {
+        java.util.UUID id = plugin.owner().uuid();
+        plugin.vanish().restoreOwnerVanish(id);                         // simulate persisted vanish after restart
+        assertTrue(plugin.vanish().isVanished(id));
+        assertTrue(plugin.vanish().isHiddenFromAll(id));
+        PlayerMock op = server.addPlayer("Op");
+        op.setOp(true);
+        PlayerMock owner = new PlayerMock(server, "DerFakeGamer", id);
+        server.addPlayer(owner);
+        plugin.vanish().applyOnJoin(owner);                            // the join hook re-hides the owner
+        server.getScheduler().performTicks(1);
+        assertFalse(op.canSee(owner), "a restored-vanished owner must be hidden again on reconnect");
+    }
+
     @Test void adminVanishStillVisibleToOps() {
         PlayerMock staff = server.addPlayer("Mod");
         PlayerMock admin = server.addPlayer("Admin");
