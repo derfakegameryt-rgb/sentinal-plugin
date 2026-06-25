@@ -1,5 +1,5 @@
 name: Sentinel
-version: '3.1.5'
+version: '3.1.6'
 main: de.derfakegamer.sentinel.Sentinel
 api-version: '1.21'
 folia-supported: true
