@@ -10,8 +10,8 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 public final class AdminPanelGui extends Gui {
     // Row 1 (general): operators, whitelist
     private static final int OPS = 10, WHITELIST = 11;
-    // Row 2 (moderation): bans, mutes, reports, appeals, audit, announcements toggle
-    private static final int BANS = 19, MUTES = 20, REPORTS = 21, APPEALS = 22, AUDIT = 23, ANNOUNCE = 24;
+    // Row 2 (moderation): bans, mutes, reports, appeals, audit
+    private static final int BANS = 19, MUTES = 20, REPORTS = 21, APPEALS = 22, AUDIT = 23;
     // Row 3 (player tools): player manager, vanish, staff chat, self name/skin/reset
     private static final int PLAYERS = 28, VANISH = 29, STAFFCHAT = 30, SETNAME = 31, SETSKIN = 32, RESETPROFILE = 33;
     private static final int CLOSE = 49;
@@ -26,7 +26,6 @@ public final class AdminPanelGui extends Gui {
         inventory.setItem(REPORTS,   button(Material.PAPER,         "gui.panel.reports",        "gui.panel.reports-lore"));
         inventory.setItem(APPEALS,   button(Material.WRITABLE_BOOK, "gui.panel.appeals",        "gui.panel.appeals-lore"));
         inventory.setItem(AUDIT,     button(Material.WRITABLE_BOOK, "gui.panel.audit",          "gui.panel.audit-lore"));
-        inventory.setItem(ANNOUNCE,  announceItem());
         inventory.setItem(PLAYERS,   button(Material.PLAYER_HEAD,   "gui.panel.player-manager", "gui.panel.player-manager-lore"));
         inventory.setItem(VANISH,    button(Material.ENDER_EYE,     "gui.panel.vanish",         "gui.panel.vanish-lore"));
         inventory.setItem(STAFFCHAT, button(Material.NETHER_STAR,   "gui.panel.staffchat",      "gui.panel.staffchat-lore"));
@@ -42,14 +41,6 @@ public final class AdminPanelGui extends Gui {
         return Items.button(m, plugin.messages().plain(nameKey), plugin.messages().list(loreKey));
     }
 
-    /** Toggle button for the recurring auto-announcements; reflects the current on/off state. */
-    private org.bukkit.inventory.ItemStack announceItem() {
-        boolean on = plugin.announcer().isEnabled();
-        return Items.button(Material.BELL,
-            plugin.messages().plain(on ? "gui.panel.announce-on" : "gui.panel.announce-off"),
-            plugin.messages().list("gui.panel.announce-lore"));
-    }
-
     @Override
     public void onClick(InventoryClickEvent event) {
         event.setCancelled(true);
@@ -62,11 +53,6 @@ public final class AdminPanelGui extends Gui {
             case WHITELIST -> new WhitelistGui(plugin, 0).open(p);
             case APPEALS -> AppealsGui.open(plugin, p, 0);
             case AUDIT -> AuditGui.open(plugin, p, 0);
-            case ANNOUNCE -> {
-                boolean on = !plugin.announcer().isEnabled();
-                plugin.announcer().setEnabled(on);
-                inventory.setItem(ANNOUNCE, announceItem());
-            }
             case PLAYERS -> PlayersGui.open(plugin, 0, p);
             case VANISH -> {
                 boolean v = plugin.vanish().toggle(p);

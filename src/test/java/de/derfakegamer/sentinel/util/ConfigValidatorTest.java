@@ -68,9 +68,6 @@ class ConfigValidatorTest {
                   keep: 5
                 logging:
                   retention-days: 30
-                announcements:
-                  enabled: false
-                  interval-seconds: 300
                 """;
         ConfigValidator.validate(load(yaml), log);
         assertEquals(0, warningCount(), "Expected no warnings for a valid config, got: " + records);
@@ -221,31 +218,6 @@ class ConfigValidatorTest {
     }
 
     // -----------------------------------------------------------------------
-    // 8. Announcements interval when enabled
-    // -----------------------------------------------------------------------
-    @Test
-    void announcementsEnabledZeroIntervalWarns() {
-        String yaml = """
-                announcements:
-                  enabled: true
-                  interval-seconds: 0
-                """;
-        ConfigValidator.validate(load(yaml), log);
-        assertTrue(hasWarningContaining("interval"), "Expected warning for zero interval when announcements enabled");
-    }
-
-    @Test
-    void announcementsDisabledZeroIntervalNoWarn() {
-        String yaml = """
-                announcements:
-                  enabled: false
-                  interval-seconds: 0
-                """;
-        ConfigValidator.validate(load(yaml), log);
-        assertEquals(0, warningCount(), "Announcements disabled — no interval warning expected");
-    }
-
-    // -----------------------------------------------------------------------
     // 9. appeals.url bad scheme warns
     // -----------------------------------------------------------------------
     @Test
@@ -269,13 +241,6 @@ class ConfigValidatorTest {
         ConfigValidator.validate(cfg, log);
         assertEquals(3, cfg.getInt("backup.keep"), "valid value must be left untouched");
         assertEquals(0, warningCount());
-    }
-
-    @Test void enabledZeroIntervalIsClampedToDefault() {
-        var cfg = load("announcements:\n  enabled: true\n  interval-seconds: 0\n");
-        ConfigValidator.validate(cfg, log);
-        assertEquals(300L, cfg.getLong("announcements.interval-seconds"),
-                "non-positive interval must be clamped to the default");
     }
 
 }

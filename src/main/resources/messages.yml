@@ -144,11 +144,6 @@ gui:
     modstats: "<aqua>Mod Stats"
     modstats-lore:
       - "<gray>Moderation statistics (30d)"
-    announce-on: "<green>Announcements: ON"
-    announce-off: "<red>Announcements: OFF"
-    announce-lore:
-      - "<gray>Recurring auto messages (e.g. /rules)"
-      - "<gray>Click to toggle"
     player-manager: "<aqua>Player Manager"
     player-manager-lore:
       - "<gray>Browse and manage players"

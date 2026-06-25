@@ -21,8 +21,8 @@ class AdminPanelGuiTest {
     @Test void panelIsADoubleChestWithSectionButtons() {
         AdminPanelGui gui = new AdminPanelGui(plugin);
         assertEquals(54, gui.getInventory().getSize(), "the hub must be a double chest (54 slots)");
-        // row 1 general (10-11), row 2 moderation (19-24), row 3 tools (28-30)
-        for (int slot : new int[]{10, 11, 19, 20, 21, 22, 23, 24, 28, 29, 30})
+        // row 1 general (10-11), row 2 moderation (19-23), row 3 tools (28-30)
+        for (int slot : new int[]{10, 11, 19, 20, 21, 22, 23, 28, 29, 30})
             assertNotNull(gui.getInventory().getItem(slot), "section button at " + slot);
         assertEquals(Material.PLAYER_HEAD, gui.getInventory().getItem(10).getType(), "Operators at slot 10");
         assertEquals(Material.NAME_TAG,    gui.getInventory().getItem(11).getType(), "Whitelist at slot 11");
@@ -126,18 +126,14 @@ class AdminPanelGuiTest {
         assertEquals("Renamed", stored.displayName());
     }
 
-    @Test void hubHasAuditAndAnnouncementsButtons() {
+    @Test void hubHasAuditButton() {
         PlayerMock p = server.addPlayer();
         AdminPanelGui gui = new AdminPanelGui(plugin);
         gui.open(p);
         var inv = p.getOpenInventory().getTopInventory();
         assertNotNull(inv.getItem(23), "Audit Log button must be at slot 23");
-        assertNotNull(inv.getItem(24), "Announcements toggle must be at slot 24");
         String auditName = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText()
             .serialize(inv.getItem(23).getItemMeta().displayName());
         assertTrue(auditName.contains("Audit Log"), "slot 23 must be Audit Log, got: " + auditName);
-        String announceName = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText()
-            .serialize(inv.getItem(24).getItemMeta().displayName());
-        assertTrue(announceName.contains("Announcements"), "slot 24 must be Announcements, got: " + announceName);
     }
 }

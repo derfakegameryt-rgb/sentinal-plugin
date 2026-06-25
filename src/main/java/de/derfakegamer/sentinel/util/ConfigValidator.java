@@ -25,7 +25,6 @@ public final class ConfigValidator {
         checkAppealsUrl(cfg, log);
         checkGuiSoundName(cfg, log);
         checkNonNegativeInts(cfg, log);
-        checkAnnouncementsInterval(cfg, log);
         checkWarnActions(cfg, log);
         checkScheduledTasks(cfg, log);
         checkExemptUuids(cfg, log);
@@ -88,17 +87,6 @@ public final class ConfigValidator {
             log.warning("Sentinel config: " + key + " is " + value
                     + " — must be 0 or greater; using default (" + defaultVal + ") instead.");
             cfg.set(key, defaultVal); // clamp in-memory so downstream reads get the safe value
-        }
-    }
-
-    // 5. announcements.interval-seconds when enabled
-    private static void checkAnnouncementsInterval(FileConfiguration cfg, Logger log) {
-        if (!cfg.getBoolean("announcements.enabled", false)) return;
-        long interval = cfg.getLong("announcements.interval-seconds", 300L);
-        if (interval <= 0) {
-            log.warning("Sentinel config: announcements.enabled is true but announcements.interval-seconds is "
-                    + interval + " — must be > 0; using default (300) instead.");
-            cfg.set("announcements.interval-seconds", 300L); // clamp in-memory
         }
     }
 
