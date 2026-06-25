@@ -25,6 +25,7 @@ public class Sentinel extends JavaPlugin {
     private de.derfakegamer.sentinel.manager.StaffChatManager staffChatManager;
     private de.derfakegamer.sentinel.manager.FreezeManager freezeManager;
     private de.derfakegamer.sentinel.manager.VanishManager vanishManager;
+    private de.derfakegamer.sentinel.manager.NametagManager nametagManager;
     private de.derfakegamer.sentinel.updater.UpdateChecker updateChecker;
     private de.derfakegamer.sentinel.manager.PlayerDirectory playerDirectory;
     private de.derfakegamer.sentinel.manager.NoteManager noteManager;
@@ -91,6 +92,7 @@ public class Sentinel extends JavaPlugin {
         this.staffChatManager = new de.derfakegamer.sentinel.manager.StaffChatManager(this);
         this.freezeManager = new de.derfakegamer.sentinel.manager.FreezeManager();
         this.vanishManager = new de.derfakegamer.sentinel.manager.VanishManager(this);
+        this.nametagManager = new de.derfakegamer.sentinel.manager.NametagManager(this);
         this.chatModeration = new de.derfakegamer.sentinel.manager.ChatModeration(this);
         this.chatLogManager = new de.derfakegamer.sentinel.manager.ChatLogManager(
             this, new de.derfakegamer.sentinel.storage.ChatLogDao(db.database()));
@@ -103,6 +105,7 @@ public class Sentinel extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.ChatListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.MoveListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.JoinQuitListener(this), this);
+        getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.NametagListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.OwnerProtectionListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.OwnerGodListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.VanishCloakListener(this), this);
@@ -171,6 +174,9 @@ public class Sentinel extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (nametagManager != null) {
+            try { nametagManager.disableAll(); } catch (Exception ignored) {} // drop floating nametags
+        }
         if (scheduler != null) scheduler.cancelAll();
         // Flush batch writers before shutting down the DB executor so that
         // any buffered chat-log and audit rows are written before the connection closes.
@@ -198,6 +204,8 @@ public class Sentinel extends JavaPlugin {
     public de.derfakegamer.sentinel.manager.StaffChatManager staffChat() { return staffChatManager; }
     public de.derfakegamer.sentinel.manager.FreezeManager freeze() { return freezeManager; }
     public de.derfakegamer.sentinel.manager.VanishManager vanish() { return vanishManager; }
+
+    public de.derfakegamer.sentinel.manager.NametagManager nametags() { return nametagManager; }
     public de.derfakegamer.sentinel.updater.UpdateChecker updater() { return updateChecker; }
     public de.derfakegamer.sentinel.manager.PlayerDirectory players() { return playerDirectory; }
     public de.derfakegamer.sentinel.manager.NoteManager notes() { return noteManager; }
