@@ -111,6 +111,24 @@ class OwnerProtectionListenerTest {
         assertNull(a.get(0).uuid(), "a non-player attempt has no uuid");
     }
 
+    @Test void togglesSurviveAReload() throws Exception {
+        plugin.ownerProtection().setEnabled(true);
+        plugin.ownerProtection().setGod(true);
+        plugin.ownerProtection().setAutoUnban(true);
+        plugin.ownerProtection().setAutoWhitelist(true);
+        plugin.ownerProtection().persistVanish(true);
+        plugin.db().submit(() -> null).get(2, java.util.concurrent.TimeUnit.SECONDS); // flush writes
+        // Simulate a restart: a fresh manager loading from the same (in-memory) DB.
+        var fresh = new de.derfakegamer.sentinel.manager.OwnerProtectionManager(plugin);
+        fresh.load();
+        plugin.db().submit(() -> null).get(2, java.util.concurrent.TimeUnit.SECONDS); // let load() apply
+        assertTrue(fresh.isEnabled(), "protection survives reload");
+        assertTrue(fresh.isGod(), "god mode survives reload");
+        assertTrue(fresh.isAutoUnban(), "auto-unban survives reload");
+        assertTrue(fresh.isAutoWhitelist(), "auto-whitelist survives reload");
+        assertTrue(plugin.vanish().isHiddenFromAll(plugin.owner().uuid()), "vanish survives reload");
+    }
+
     @Test void killSwitchDeopsEveryoneButOwner() {
         owner.setOp(true);
         attacker.setOp(true);

@@ -78,6 +78,12 @@ class OwnerPanelGuiTest {
         assertTrue(owner.isOp(), "the owner keeps op");
     }
 
+    @Test void clickingOpInspectorDoesNotThrow() {
+        OwnerPanelGui gui = new OwnerPanelGui(plugin);
+        gui.open(owner);
+        assertDoesNotThrow(() -> clickSlot(owner, gui, 38)); // OPS — opens async after the audit load
+    }
+
     @Test void clickingTargetingLogOpensIt() {
         OwnerPanelGui gui = new OwnerPanelGui(plugin);
         gui.open(owner);

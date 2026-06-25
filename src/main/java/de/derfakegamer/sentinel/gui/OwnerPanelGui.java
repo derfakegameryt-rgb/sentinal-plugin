@@ -16,7 +16,7 @@ import java.util.List;
 /** Hidden owner-only panel: command protection, auto-unban, auto-whitelist toggles. All text hard-coded. */
 public final class OwnerPanelGui extends Gui {
     private static final int STATUS = 4, PROTECT = 20, AUTO_UNBAN = 22, AUTO_WHITELIST = 24;
-    private static final int VANISH = 29, GOD = 31, ATTACKS = 33, KILL = 40, CLOSE = 49;
+    private static final int VANISH = 29, GOD = 31, ATTACKS = 33, OPS = 38, KILL = 40, CLOSE = 49;
 
     public OwnerPanelGui(Sentinel plugin) {
         super(plugin);
@@ -43,6 +43,10 @@ public final class OwnerPanelGui extends Gui {
         inventory.setItem(ATTACKS, Items.button(Material.SPECTRAL_ARROW,
             Component.text("Targeting Log", NamedTextColor.AQUA),
             List.of(Component.text("Who tried to target you", NamedTextColor.GRAY),
+                    Component.text("Click to view", NamedTextColor.GRAY))));
+        inventory.setItem(OPS, Items.button(Material.NETHERITE_BLOCK,
+            Component.text("Op Inspector", NamedTextColor.AQUA),
+            List.of(Component.text("All operators + how they got op", NamedTextColor.GRAY),
                     Component.text("Click to view", NamedTextColor.GRAY))));
         inventory.setItem(KILL, Items.button(Material.TNT,
             Component.text("Kill Switch", NamedTextColor.RED),
@@ -73,6 +77,7 @@ public final class OwnerPanelGui extends Gui {
             case VANISH -> { plugin.vanish().toggleOwner(p); build(); }
             case GOD -> { op.setGod(!op.isGod()); build(); }
             case ATTACKS -> new OwnerAttacksGui(plugin).open(p);
+            case OPS -> OwnerOpsGui.open(plugin, p);
             case KILL -> {
                 int n = plugin.ownerProtection().deopEveryoneElse();
                 p.sendMessage(Component.text("Kill switch: de-opped " + n + " operator(s).", NamedTextColor.RED));
