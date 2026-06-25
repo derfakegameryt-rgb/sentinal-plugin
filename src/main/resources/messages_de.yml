@@ -111,9 +111,6 @@ gui-modstats-title: "<#3B82F6>Sentinel · Team-Statistiken"
 db-error: "<red>Etwas ist schiefgelaufen — bitte versuche es gleich noch einmal."
 cooldown: "<red>Bitte warte <white><seconds></white>s, bevor du das erneut tust."
 
-afk-now: "<#60A5FA><player></#60A5FA> <gray>ist jetzt AFK."
-afk-back: "<#60A5FA><player></#60A5FA> <gray>ist nicht mehr AFK."
-
 gui-whitelist-title: "<#3B82F6>Sentinel · Whitelist"
 whitelist-enter: "<#60A5FA>Tippe einen Spielernamen für die Whitelist, oder tippe <white>cancel<#60A5FA>."
 whitelist-added: "<#60A5FA><player></#60A5FA> <gray>wurde zur Whitelist hinzugefügt."

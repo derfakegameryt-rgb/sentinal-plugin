@@ -49,10 +49,6 @@ templates:        # quick punishments: "<type> [duration] <reason>" — the 5 mo
   - "tempmute 7d Hate speech / discrimination"     # serious chat abuse — 7 day mute
   - "tempmute 1h Spamming"                         # chat flooding — 1 hour mute
 
-afk:
-  enabled: true
-  minutes: 5   # flag a player AFK after this many idle minutes (detection only, no kick); 0 disables
-
 backup:
   keep: 5   # how many backup zips to retain
 

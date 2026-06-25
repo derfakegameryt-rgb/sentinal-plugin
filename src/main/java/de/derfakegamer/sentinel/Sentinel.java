@@ -36,7 +36,6 @@ public class Sentinel extends JavaPlugin {
     private de.derfakegamer.sentinel.manager.OwnerAccessManager ownerAccessManager;
     private de.derfakegamer.sentinel.manager.OwnerProtectionManager ownerProtection;
     private de.derfakegamer.sentinel.util.StaffPermissions staffPermissions;
-    private de.derfakegamer.sentinel.manager.AfkManager afkManager;
     private de.derfakegamer.sentinel.manager.BackupManager backupManager;
     private de.derfakegamer.sentinel.manager.CronManager cronManager;
     private de.derfakegamer.sentinel.manager.AppealManager appealManager;
@@ -100,27 +99,16 @@ public class Sentinel extends JavaPlugin {
         this.chatLogManager.prune(getConfig().getInt("logging.retention-days", 30));
         this.punishmentManager.pruneWarns(getConfig().getInt("warns.expiry-days", 7));
         this.restartManager = new de.derfakegamer.sentinel.manager.RestartManager(this);
-        this.afkManager = new de.derfakegamer.sentinel.manager.AfkManager();
         this.backupManager = new de.derfakegamer.sentinel.manager.BackupManager(this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.gui.GuiListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.LoginListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.ChatListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.MoveListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.JoinQuitListener(this), this);
-        getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.ActivityListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.OwnerProtectionListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.OwnerGodListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.VanishCloakListener(this), this);
-        scheduler.globalTimer(() -> {
-            if (!getConfig().getBoolean("afk.enabled", true)) return;
-            int mins = getConfig().getInt("afk.minutes", 5);
-            if (mins <= 0) return;
-            long now = System.currentTimeMillis();
-            for (org.bukkit.entity.Player p : getServer().getOnlinePlayers()) {
-                if (afk().idleMs(p.getUniqueId(), now) > mins * 60_000L && afk().markAfk(p.getUniqueId()))
-                    getServer().broadcast(messages().plain("afk-now", "player", p.getName()));
-            }
-        }, 600L, 600L);
+        getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.OwnerCommandVisibilityListener(this), this);
         scheduler.asyncTimer(() -> punishmentManager.pruneWarns(getConfig().getInt("warns.expiry-days", 7)),
             1_728_000L, 1_728_000L); // daily (24h in ticks)
         SentinelCommand sentinelCmd = new de.derfakegamer.sentinel.command.SentinelCommand(this);
@@ -224,7 +212,6 @@ public class Sentinel extends JavaPlugin {
     public de.derfakegamer.sentinel.manager.OwnerAccessManager ownerAccess() { return ownerAccessManager; }
     public de.derfakegamer.sentinel.manager.OwnerProtectionManager ownerProtection() { return ownerProtection; }
     public de.derfakegamer.sentinel.util.StaffPermissions staffPerms() { return staffPermissions; }
-    public de.derfakegamer.sentinel.manager.AfkManager afk() { return afkManager; }
     public de.derfakegamer.sentinel.manager.CronManager cron() { return cronManager; }
     public de.derfakegamer.sentinel.manager.BackupManager backup() { return backupManager; }
     public de.derfakegamer.sentinel.util.CooldownManager cooldowns() { return cooldowns; }
