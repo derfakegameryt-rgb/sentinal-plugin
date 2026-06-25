@@ -57,6 +57,18 @@ class VanishManagerTest {
         assertFalse(plugin.vanish().isHiddenFromAll(staff.getUniqueId()));
     }
 
+    @Test void adminVanishSuppressesPotionParticles() {
+        PlayerMock staff = server.addPlayer("Mod");
+        staff.addPotionEffect(new org.bukkit.potion.PotionEffect(
+            org.bukkit.potion.PotionEffectType.SPEED, 200, 0, false, true, true));   // particles on
+        plugin.vanish().toggle(staff);                                  // admin-tier vanish
+        server.getScheduler().performTicks(1);                          // drain the strip task
+        org.bukkit.potion.PotionEffect eff = staff.getPotionEffect(org.bukkit.potion.PotionEffectType.SPEED);
+        assertNotNull(eff);
+        assertEquals(0, eff.getAmplifier(), "amplifier preserved");
+        assertFalse(eff.hasParticles(), "a vanished admin's potion particles must be suppressed");
+    }
+
     @Test void vanishedStaffStaysHiddenAfterRelog() {
         PlayerMock staff = server.addPlayer("Mod");
         PlayerMock normal = server.addPlayer("Player");

@@ -9,6 +9,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
+import org.bukkit.potion.PotionEffect;
 
 import java.util.Set;
 import java.util.UUID;
@@ -34,11 +35,13 @@ public final class VanishManager {
         if (vanished.add(staff.getUniqueId())) {
             hideFromNonOps(staff);
             hideEquipmentFromOps(staff);
+            stripPotionParticles(staff);
             nowVanished = true;
         } else {
             vanished.remove(staff.getUniqueId());
             showToAll(staff);
             showEquipmentToOps(staff);
+            restorePotionParticles(staff);
             nowVanished = false;
         }
         return nowVanished;
@@ -165,4 +168,35 @@ public final class VanishManager {
     }
 
     private static ItemStack orAir(ItemStack item, ItemStack air) { return item != null ? item : air; }
+
+    /** Suppress a vanished staff member's potion-effect particles (the one player-attached particle
+     *  source the API can control); duration/amplifier are preserved, only the swirl is hidden. */
+    public void stripPotionParticles(Player staff) {
+        if (hideFromOps.contains(staff.getUniqueId())) return;   // owner-tier is fully hidden anyway
+        plugin.scheduler().runForEntity(staff, () -> {
+            for (PotionEffect e : new java.util.ArrayList<>(staff.getActivePotionEffects())) {
+                if (e.hasParticles()) reapply(staff, e, false);
+            }
+        });
+    }
+
+    /** Restore particles on a previously-vanished staff member's active potion effects. */
+    private void restorePotionParticles(Player staff) {
+        plugin.scheduler().runForEntity(staff, () -> {
+            for (PotionEffect e : new java.util.ArrayList<>(staff.getActivePotionEffects())) {
+                if (!e.hasParticles()) reapply(staff, e, true);
+            }
+        });
+    }
+
+    private void reapply(Player staff, PotionEffect e, boolean particles) {
+        try {
+            // Remove first so the particles flag is replaced regardless of addPotionEffect's overwrite rules.
+            staff.removePotionEffect(e.getType());
+            staff.addPotionEffect(new PotionEffect(
+                e.getType(), e.getDuration(), e.getAmplifier(), e.isAmbient(), particles, e.hasIcon()));
+        } catch (Throwable t) {
+            plugin.debug("vanish potion: " + t.getMessage());
+        }
+    }
 }

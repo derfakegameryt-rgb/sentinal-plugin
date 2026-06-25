@@ -29,13 +29,14 @@ A second, stronger vanish for the owner — hidden from **everyone** (including 
 - **Player-manager hiding:** `PlayersGui` filters out any player the viewer cannot see (`!viewer.canSee(p)`); `PlayerActionsGui.open` blocks opening an online target the viewer cannot see ("that entity does not exist"). A fully-hidden owner is therefore absent from the list and un-openable — as if offline.
 - **Relog while vanished:** `JoinQuitListener` suppresses the real join/quit broadcast (`event.joinMessage(null)` / `quitMessage(null)`) when the player is owner-tier vanished, and `applyOnJoin` re-hides them from all.
 
-## Item 2 — Admin Vanish: hide armor + held items
+## Item 2 — Admin Vanish: clean appearance for ops (no armor / hand items / potion particles)
 
-The existing admin vanish (`AdminPanelGui` → `VanishManager.toggle`) hides the staff member from non-ops via `hidePlayer`. Ops still see them. When vanished, also blank the staff member's **armor + main/off hand** for the op viewers who can still see them.
+The existing admin vanish (`AdminPanelGui` → `VanishManager.toggle`) hides the staff member from non-ops via `hidePlayer`. **Decision (user):** ops keep seeing admin-vanished staff in-world, but as a "clean" plain player. Owner vanish is fully hidden from everyone, so it needs none of this.
 
-- `VanishManager.sendEquip(viewer, staff, hide)` sends `sendEquipmentChange` (AIR when hiding, the real items when restoring) for all six slots; wrapped in try/catch (defensive + safe under MockBukkit, which may not implement the packet).
-- Hide on vanish-ON (to ops) and on op-join; restore on vanish-OFF.
-- `VanishEquipmentListener` re-blanks on `PlayerArmorChangeEvent` / `PlayerItemHeldEvent` (next tick), because a real equipment change would otherwise overwrite the fake AIR for op viewers. Owner-tier (fully hidden) is skipped — no equipment is ever rendered.
+- **Armor + hands:** `VanishManager.sendEquip(viewer, staff, hide)` sends `sendEquipmentChange` (AIR when hiding, the real items when restoring) for all six slots. Each send runs on the viewer's region thread (`runForEntity`) for Folia safety, wrapped in try/catch (also safe under MockBukkit). Hide on vanish-ON (to ops) and on op-join; restore on vanish-OFF.
+- **Potion particles:** `VanishManager.stripPotionParticles` re-applies each active effect with `particles=false` (remove-then-add so the flag actually replaces; duration/amplifier/ambient/icon preserved). This is server-side global state, so it hides the swirl for every viewer. Restored on vanish-OFF.
+- `VanishCloakListener` re-applies both on the next tick after the relevant change: `PlayerArmorChangeEvent` / `PlayerItemHeldEvent` → re-blank equipment; `EntityPotionEffectEvent` (a freshly-added effect that still has particles) → re-strip. Owner-tier (fully hidden) is skipped throughout.
+- **Known limit (accepted):** transient, entity-action particles (crit/sprint/sweep) and most world-interaction **sounds** cannot be suppressed through the Paper API for a still-visible player; full suppression would require ProtocolLib (rejected — no new dependency).
 
 ## Item 3 — God-Mode (owner)
 
