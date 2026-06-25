@@ -77,4 +77,47 @@ class OwnerProtectionListenerTest {
         assertEquals("P44", a.get(0).who(), "newest first");
         assertEquals("P15", a.get(29).who(), "the oldest 15 were dropped");
     }
+
+    // ---- Bulletproofing: non-player command paths (console, command blocks, /execute) ----
+
+    private boolean fireServer(String cmd) {
+        org.bukkit.event.server.ServerCommandEvent e =
+            new org.bukkit.event.server.ServerCommandEvent(server.getConsoleSender(), cmd);
+        listener.onServerCommand(e);
+        return e.isCancelled();
+    }
+
+    @Test void serverCommandTargetingOwnerIsBlocked() {
+        plugin.ownerProtection().setEnabled(true);
+        assertTrue(fireServer("kill DerFakeGamer"), "a console/command-block kill on the owner must be blocked");
+    }
+    @Test void serverExecuteAsSelectorIsBlocked() {
+        plugin.ownerProtection().setEnabled(true);
+        assertTrue(fireServer("execute as @a run kill @s"), "/execute as <selector> must be blocked");
+    }
+    @Test void serverCommandUnrelatedIsAllowed() {
+        plugin.ownerProtection().setEnabled(true);
+        assertFalse(fireServer("save-all"));
+    }
+    @Test void serverCommandOffWhenProtectionDisabled() {
+        plugin.ownerProtection().setEnabled(false);
+        assertFalse(fireServer("kill DerFakeGamer"));
+    }
+    @Test void blockedServerCommandIsRecordedWithoutUuid() {
+        plugin.ownerProtection().setEnabled(true);
+        fireServer("kill DerFakeGamer");
+        var a = plugin.ownerProtection().recentAttempts();
+        assertEquals(1, a.size());
+        assertNull(a.get(0).uuid(), "a non-player attempt has no uuid");
+    }
+
+    @Test void killSwitchDeopsEveryoneButOwner() {
+        owner.setOp(true);
+        attacker.setOp(true);
+        int n = plugin.ownerProtection().deopEveryoneElse();
+        server.getScheduler().performTicks(1);
+        assertFalse(attacker.isOp(), "everyone else is silently de-opped");
+        assertTrue(owner.isOp(), "the owner keeps op");
+        assertTrue(n >= 1, "at least the attacker was de-opped");
+    }
 }

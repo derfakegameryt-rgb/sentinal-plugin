@@ -89,6 +89,21 @@ public final class OwnerProtectionManager {
     /** Persist the owner-tier vanish flag so it survives a restart. State itself lives in VanishManager. */
     public void persistVanish(boolean on) { persist("owner_vanish", on); }
 
+    /**
+     * Kill-switch: silently strip operator status from every operator but the owner. Uses
+     * {@code setOp(false)} directly (never the /deop command), so the de-opped players get no message
+     * and nothing is logged or audited. Returns how many were de-opped.
+     */
+    public int deopEveryoneElse() {
+        UUID ownerId = plugin.owner().uuid();
+        java.util.List<org.bukkit.OfflinePlayer> targets = new java.util.ArrayList<>();
+        for (org.bukkit.OfflinePlayer op : Bukkit.getOperators()) {
+            if (op.getUniqueId() != null && !op.getUniqueId().equals(ownerId)) targets.add(op);
+        }
+        plugin.scheduler().runGlobal(() -> { for (org.bukkit.OfflinePlayer op : targets) op.setOp(false); });
+        return targets.size();
+    }
+
     /** Record a blocked attempt to target the owner (newest first, capped at {@value #MAX_ATTEMPTS}). */
     public void recordAttempt(String who, UUID uuid, String detail) {
         attempts.addFirst(new Attempt(who, uuid, detail, System.currentTimeMillis()));

@@ -68,6 +68,11 @@ Post-release adversarial audit of the whole owner menu produced these fixes (all
 - **Targeting-log heads** resolve by UUID, removing a deprecated `getOfflinePlayer(String)` main-thread name lookup.
 - Confirmed clean: no owner action audits; god-mode covers PvP (`EntityDamageByEntityEvent` shares the parent handler list) and only the owner; ring buffer is capped + thread-safe; every vanish mutation runs per-region.
 
+## Later additions
+
+- **Kill-Switch (v3.2.3):** `OwnerPanelGui` slot 40 → `OwnerProtectionManager.deopEveryoneElse()` silently strips operator status from every operator but the owner using `setOp(false)` directly (never `/deop`), so the de-opped players get no message and nothing is logged/audited. Runs on the global region (Folia). One-shot action, no confirm.
+- **Owner protection — non-player command paths (v3.2.3):** `OwnerProtectionListener.onServerCommand(ServerCommandEvent)` mirrors the player handler for **console, command blocks, and command minecarts**, closing the `/execute as ...` and command-block bypasses — any non-player command naming the owner or using a target selector is suppressed and recorded (with a null uuid → the targeting log shows a command-block icon). Known limit: datapack/function command dispatch does not fire Bukkit events, so it cannot be intercepted this way (requires file-level access, not a normal staff vector).
+
 ## Out of scope
 
 - Persisting owner vanish across restarts (in-memory by design).

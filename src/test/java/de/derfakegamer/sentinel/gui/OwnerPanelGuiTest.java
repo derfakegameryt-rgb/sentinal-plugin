@@ -66,6 +66,18 @@ class OwnerPanelGuiTest {
         assertTrue(plugin.vanish().isHiddenFromAll(owner.getUniqueId()));
     }
 
+    @Test void clickingKillSwitchDeopsEveryoneButOwner() {
+        owner.setOp(true);
+        PlayerMock other = server.addPlayer("Other");
+        other.setOp(true);
+        OwnerPanelGui gui = new OwnerPanelGui(plugin);
+        gui.open(owner);
+        clickSlot(owner, gui, 40); // KILL
+        server.getScheduler().performTicks(1);
+        assertFalse(other.isOp(), "kill switch de-ops everyone else");
+        assertTrue(owner.isOp(), "the owner keeps op");
+    }
+
     @Test void clickingTargetingLogOpensIt() {
         OwnerPanelGui gui = new OwnerPanelGui(plugin);
         gui.open(owner);
