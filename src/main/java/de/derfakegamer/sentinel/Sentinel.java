@@ -29,7 +29,6 @@ public class Sentinel extends JavaPlugin {
     private de.derfakegamer.sentinel.manager.PlayerDirectory playerDirectory;
     private de.derfakegamer.sentinel.manager.NoteManager noteManager;
     private volatile de.derfakegamer.sentinel.manager.ChatModeration chatModeration;
-    private volatile de.derfakegamer.sentinel.manager.WarnEscalation warnEscalation;
     private de.derfakegamer.sentinel.manager.ChatLogManager chatLogManager;
     private de.derfakegamer.sentinel.manager.RestartManager restartManager;
     private de.derfakegamer.sentinel.manager.OwnerManager ownerManager;
@@ -93,7 +92,6 @@ public class Sentinel extends JavaPlugin {
         this.freezeManager = new de.derfakegamer.sentinel.manager.FreezeManager();
         this.vanishManager = new de.derfakegamer.sentinel.manager.VanishManager(this);
         this.chatModeration = new de.derfakegamer.sentinel.manager.ChatModeration(this);
-        this.warnEscalation = new de.derfakegamer.sentinel.manager.WarnEscalation(this);
         this.chatLogManager = new de.derfakegamer.sentinel.manager.ChatLogManager(
             this, new de.derfakegamer.sentinel.storage.ChatLogDao(db.database()));
         this.chatLogManager.prune(getConfig().getInt("logging.retention-days", 30));
@@ -205,7 +203,6 @@ public class Sentinel extends JavaPlugin {
     public de.derfakegamer.sentinel.manager.NoteManager notes() { return noteManager; }
     public de.derfakegamer.sentinel.manager.ProfileManager profile() { return profileManager; }
     public de.derfakegamer.sentinel.manager.ChatModeration chatModeration() { return chatModeration; }
-    public de.derfakegamer.sentinel.manager.WarnEscalation escalation() { return warnEscalation; }
     public de.derfakegamer.sentinel.manager.ChatLogManager chatLog() { return chatLogManager; }
     public de.derfakegamer.sentinel.manager.RestartManager restart() { return restartManager; }
     public de.derfakegamer.sentinel.manager.OwnerManager owner() { return ownerManager; }
@@ -232,7 +229,6 @@ public class Sentinel extends JavaPlugin {
         this.punishmentManager = new PunishmentManager(this, new PunishmentDao(db.database()), loadExempt());
         this.moderationService = new de.derfakegamer.sentinel.manager.ModerationService(this);
         this.chatModeration = new de.derfakegamer.sentinel.manager.ChatModeration(this);
-        this.warnEscalation = new de.derfakegamer.sentinel.manager.WarnEscalation(this);
     }
 
     /** Returns true if debug logging is currently enabled. */

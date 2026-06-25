@@ -32,9 +32,9 @@ class PunishmentCommandsTest {
     }
 
     /**
-     * Pumps the scheduler enough to flush all async hops: DB executor callback → onMain task →
-     * optional warnCount DB hop → optional escalation onMain task. 200 iterations × 5 ms gives
-     * up to 1 second of wall time which is ample for the in-memory SQLite executor.
+     * Pumps the scheduler enough to flush all async hops: DB executor callback → onMain task.
+     * 200 iterations × 5 ms gives up to 1 second of wall time which is ample for the in-memory
+     * SQLite executor.
      */
     private void drain() throws InterruptedException {
         for (int i = 0; i < 200; i++) {
