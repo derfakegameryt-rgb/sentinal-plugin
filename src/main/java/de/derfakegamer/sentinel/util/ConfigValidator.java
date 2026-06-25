@@ -1,11 +1,9 @@
 package de.derfakegamer.sentinel.util;
 
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -16,7 +14,6 @@ import java.util.regex.Pattern;
  */
 public final class ConfigValidator {
 
-    private static final Set<String> VALID_ACTIONS = Set.of("kick", "ban", "tempban", "mute", "tempmute");
     private static final Pattern TIME_PATTERN = Pattern.compile("^\\d{1,2}:\\d{2}$");
 
     private ConfigValidator() {}
@@ -25,7 +22,6 @@ public final class ConfigValidator {
         checkAppealsUrl(cfg, log);
         checkGuiSoundName(cfg, log);
         checkNonNegativeInts(cfg, log);
-        checkWarnActions(cfg, log);
         checkScheduledTasks(cfg, log);
         checkExemptUuids(cfg, log);
     }
@@ -89,55 +85,7 @@ public final class ConfigValidator {
         }
     }
 
-    // 6. warn-actions section
-    private static void checkWarnActions(FileConfiguration cfg, Logger log) {
-        ConfigurationSection section = cfg.getConfigurationSection("warn-actions");
-        if (section == null) return;
-        for (String key : section.getKeys(false)) {
-            String value = section.getString(key, "");
-            if (value == null || value.isBlank()) {
-                log.warning("Sentinel config: warn-actions." + key + " is blank — must be '<action> [duration] <reason>'.");
-                continue;
-            }
-            String[] parts = value.trim().split("\\s+");
-            if (parts.length < 2) {
-                log.warning("Sentinel config: warn-actions." + key
-                        + " is too short — must include an action and a reason: '" + value + "'.");
-                continue;
-            }
-            String action = parts[0].toLowerCase();
-            if (!VALID_ACTIONS.contains(action)) {
-                log.warning("Sentinel config: warn-actions." + key
-                        + " has unknown action '" + parts[0]
-                        + "' — must be one of: kick, ban, tempban, mute, tempmute.");
-                continue;
-            }
-            boolean needsDuration = action.equals("tempban") || action.equals("tempmute");
-            if (needsDuration) {
-                if (parts.length < 3) {
-                    log.warning("Sentinel config: warn-actions." + key
-                            + " — " + action + " requires a duration and a reason but none found: '" + value + "'.");
-                    continue;
-                }
-                try {
-                    DurationParser.parse(parts[1]);
-                } catch (IllegalArgumentException e) {
-                    log.warning("Sentinel config: warn-actions." + key
-                            + " — '" + parts[1] + "' is not a valid duration for " + action
-                            + " (e.g. 7d, 1h30m). Full value: '" + value + "'.");
-                    continue;
-                }
-                // parts[2..] must form the reason — at least one token needed
-                if (parts.length < 3 || parts[2].isBlank()) {
-                    log.warning("Sentinel config: warn-actions." + key
-                            + " — " + action + " is missing a reason after the duration: '" + value + "'.");
-                }
-            }
-            // For non-temp actions: parts[1..] is the reason — already guaranteed by length >= 2
-        }
-    }
-
-    // 7. scheduled-tasks list
+    // 6. scheduled-tasks list
     private static void checkScheduledTasks(FileConfiguration cfg, Logger log) {
         List<Map<?, ?>> tasks = cfg.getMapList("scheduled-tasks");
         for (int i = 0; i < tasks.size(); i++) {

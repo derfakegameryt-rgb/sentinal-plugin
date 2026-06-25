@@ -89,42 +89,7 @@ class ConfigValidatorTest {
     }
 
     // -----------------------------------------------------------------------
-    // 4. Bad warn-actions value warns
-    // -----------------------------------------------------------------------
-    @Test
-    void badWarnActionDurationWarns() {
-        String yaml = """
-                warn-actions:
-                  "3": "tempban notaduration Please read the rules"
-                """;
-        ConfigValidator.validate(load(yaml), log);
-        assertTrue(warningCount() > 0, "Expected a warning for invalid duration in warn-actions");
-    }
-
-    @Test
-    void validWarnActionNoWarn() {
-        String yaml = """
-                warn-actions:
-                  "1": "kick Please read the rules"
-                  "2": "tempban 7d Repeat offender"
-                  "3": "ban Severe violation"
-                """;
-        ConfigValidator.validate(load(yaml), log);
-        assertEquals(0, warningCount(), "Valid warn-actions should produce no warnings");
-    }
-
-    @Test
-    void unknownWarnActionTypeWarns() {
-        String yaml = """
-                warn-actions:
-                  "1": "jail 1h Bad player"
-                """;
-        ConfigValidator.validate(load(yaml), log);
-        assertTrue(warningCount() > 0, "Expected a warning for unknown action type");
-    }
-
-    // -----------------------------------------------------------------------
-    // 5. Bad exempt UUID warns
+    // 4. Bad exempt UUID warns
     // -----------------------------------------------------------------------
     @Test
     void badExemptUuidWarns() {

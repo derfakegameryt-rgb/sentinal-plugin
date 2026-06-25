@@ -55,14 +55,13 @@ class ModerationServiceTest {
         assertFalse(ok);
     }
 
-    @Test void warnEscalationAutoBansAtThreshold() throws Exception {
-        plugin.getConfig().set("warn-actions.2", "ban escalated for repeated warnings");
+    @Test void warningNeverAutoBans() throws Exception {
         UUID target = UUID.randomUUID();
         long now = System.currentTimeMillis();
-        await(server, plugin.moderation().apply(new UUID(0,0), "Admin", target, "Repeat", null, PunishmentType.WARN, 0, "w1"));
-        assertNull(plugin.punishments().activeBan(target, now).get(2, TimeUnit.SECONDS), "not banned after the first warning");
-        await(server, plugin.moderation().apply(new UUID(0,0), "Admin", target, "Repeat", null, PunishmentType.WARN, 0, "w2"));
-        assertNotNull(plugin.punishments().activeBan(target, now).get(2, TimeUnit.SECONDS), "auto-banned when warnings reach the threshold");
+        for (int i = 0; i < 6; i++)
+            await(server, plugin.moderation().apply(new UUID(0,0), "Admin", target, "Repeat", null, PunishmentType.WARN, 0, "w" + i));
+        assertNull(plugin.punishments().activeBan(target, now).get(2, TimeUnit.SECONDS),
+            "warnings must never escalate into an automatic ban");
     }
 
     /**

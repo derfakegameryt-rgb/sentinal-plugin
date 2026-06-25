@@ -86,20 +86,7 @@ public final class ModerationService {
                         }
                     });
                 }
-            }).thenCompose(v -> {
-                if (type == PunishmentType.WARN) {
-                    return plugin.punishments().warnCount(targetId).thenCompose(count -> {
-                        de.derfakegamer.sentinel.model.EscalationAction esc = plugin.escalation().actionFor(count);
-                        if (esc != null) {
-                            long escExpiresAt = esc.durationMs() == 0 ? 0 : System.currentTimeMillis() + esc.durationMs();
-                            return apply(issuerId, issuerName, targetId, targetName, ip, esc.type(), escExpiresAt, esc.reason())
-                                .thenApply(ignored -> true);
-                        }
-                        return CompletableFuture.completedFuture(true);
-                    });
-                }
-                return CompletableFuture.completedFuture(true);
-            });
+            }).thenApply(v -> true);
         });
     }
 
