@@ -47,22 +47,28 @@ public final class ProfileManager {
 
     /**
      * Applies a name/skin override to the (online) player. Main thread only.
-     * Names are display-only (tab + chat) — we never change the account/profile name, so the server
-     * never caches an override name and vanilla never shows "(formerly known as …)" on rejoin. Only
-     * the skin swaps a texture property on the profile (the real name is preserved).
+     * The name is set on the live profile so it shows ABOVE THE HEAD (and on tab + chat); the skin
+     * swaps the texture property. Both then require a hide/show resend for other clients to re-render.
+     * Only the LIVE profile is changed (mid-session) — the login profile name is left untouched (see
+     * {@link #applyOnLogin}), so the server never caches the override name at login.
      */
     private void applyLive(org.bukkit.entity.Player target, String name, String skinValue, String skinSig) {
-        if (skinValue != null) {
-            PlayerProfile profile = target.getPlayerProfile();
-            profile.getProperties().removeIf(p -> "textures".equals(p.getName()));
-            profile.setProperty(new ProfileProperty("textures", skinValue, skinSig));
+        if (name != null || skinValue != null) {
+            // Keep the player's current textures unless a new skin is being applied.
+            ProfileProperty tex = skinValue != null
+                ? new ProfileProperty("textures", skinValue, skinSig)
+                : texturesOf(target.getPlayerProfile());
+            // A fresh profile carrying the override name (or the real account name) above the head.
+            PlayerProfile profile = org.bukkit.Bukkit.createProfile(
+                target.getUniqueId(), name != null ? name : target.getName());
+            if (tex != null) profile.setProperty(tex);
             target.setPlayerProfile(profile);
         }
         if (name != null) {
             target.playerListName(net.kyori.adventure.text.Component.text(name));
             target.displayName(net.kyori.adventure.text.Component.text(name));
         }
-        if (skinValue != null) resend(target); // re-render the model for other players
+        if (name != null || skinValue != null) resend(target); // re-render name/skin for other players
     }
 
     /** Force other clients to re-track the target so the new name/skin renders. Main thread only. */
@@ -131,29 +137,39 @@ public final class ProfileManager {
         java.util.UUID id = target.getUniqueId();
         String realName = target.getName(); // the account name was never changed, so this is real
         plugin.db().execute(() -> dao.delete(id));
-        // Clear the tab/chat name overlay immediately — self-visible in the tab list right away.
+        // Immediate, network-FREE revert: real name above the head + cleared tab/chat overlay. This must
+        // not depend on the Mojang skin fetch below — otherwise a network blip would leave the player
+        // stuck with the override name. The real skin is restored best-effort right after.
         plugin.scheduler().runForEntity(target, () -> {
             target.playerListName(null);
             target.displayName(null);
             joinNames.remove(id);
+            target.setPlayerProfile(org.bukkit.Bukkit.createProfile(id, realName));
+            resend(target);
             plugin.audit().record(staff, "RESETPROFILE", realName, "");
         });
-        // Restore the real skin (textures only; the real name on the profile is untouched).
+        // Best-effort: fetch and restore the real skin (network). The name is already correct if this
+        // fails or returns nothing, so a failure just leaves the default skin until the next relog.
+        // Guarded so a failed/uncompletable fetch never throws uncaught into the scheduler thread.
         plugin.scheduler().runAsync(() -> {
-            PlayerProfile real = org.bukkit.Bukkit.createProfile(id, realName);
-            real.complete(true);
-            ProfileProperty tex = texturesOf(real);
-            plugin.scheduler().runGlobal(() -> {
-                org.bukkit.entity.Player t = org.bukkit.Bukkit.getPlayer(id);
-                if (t == null) return;
-                plugin.scheduler().runForEntity(t, () -> {
-                    PlayerProfile profile = t.getPlayerProfile();
-                    profile.getProperties().removeIf(p -> "textures".equals(p.getName()));
-                    if (tex != null) profile.setProperty(tex);
-                    t.setPlayerProfile(profile);
-                    resend(t);
+            try {
+                PlayerProfile real = org.bukkit.Bukkit.createProfile(id, realName);
+                if (!real.complete(true)) return;
+                ProfileProperty tex = texturesOf(real);
+                if (tex == null) return;
+                plugin.scheduler().runGlobal(() -> {
+                    org.bukkit.entity.Player t = org.bukkit.Bukkit.getPlayer(id);
+                    if (t == null) return;
+                    plugin.scheduler().runForEntity(t, () -> {
+                        PlayerProfile profile = org.bukkit.Bukkit.createProfile(id, realName);
+                        profile.setProperty(tex);
+                        t.setPlayerProfile(profile);
+                        resend(t);
+                    });
                 });
-            });
+            } catch (Exception e) {
+                plugin.getLogger().fine("skin restore on profile reset failed (name already reverted): " + e.getMessage());
+            }
         });
     }
 
@@ -180,13 +196,16 @@ public final class ProfileManager {
         event.setPlayerProfile(profile);
     }
 
-    /** Re-applies a stored display-name override to the tab/chat name once the player is online. */
+    /**
+     * Re-applies a stored display-name override once the player is online (above the head + tab + chat).
+     * Runs mid-session on join — NOT at login — because the login profile name is deliberately left as
+     * the real account name (see {@link #applyOnLogin}); the rename is applied here via a resend instead.
+     */
     public void applyNameOnJoin(org.bukkit.entity.Player player) {
         java.util.UUID id = player.getUniqueId();
         plugin.db().callbackFor(player, plugin.db().submit(() -> dao.find(id)), o -> {
             if (o == null || o.displayName() == null || !player.isOnline()) return;
-            player.playerListName(net.kyori.adventure.text.Component.text(o.displayName()));
-            player.displayName(net.kyori.adventure.text.Component.text(o.displayName()));
+            applyLive(player, o.displayName(), o.skinValue(), o.skinSignature());
         });
     }
 }
