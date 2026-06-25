@@ -13,11 +13,21 @@ public final class JoinQuitListener implements Listener {
 
     public JoinQuitListener(Sentinel plugin) { this.plugin = plugin; }
 
+    /** Vanilla-style yellow "<name> joined/left the game" broadcast for a chosen name. */
+    static net.kyori.adventure.text.Component nameMessage(String key, String name) {
+        return net.kyori.adventure.text.Component
+            .translatable(key, net.kyori.adventure.text.Component.text(name))
+            .color(net.kyori.adventure.text.format.NamedTextColor.YELLOW);
+    }
+
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         plugin.vanish().applyOnJoin(player);
         plugin.profile().applyNameOnJoin(player); // re-apply a stored display-name override (tab/chat)
+
+        String overrideName = plugin.profile().overrideJoinName(player.getUniqueId());
+        if (overrideName != null) event.joinMessage(nameMessage("multiplayer.player.joined", overrideName));
 
         // Populate the online-player cache now that the player has been fully admitted
         // (past ban/maintenance checks).
@@ -33,9 +43,13 @@ public final class JoinQuitListener implements Listener {
     /** Drop staff-chat mode when a player disconnects so it can't linger if the UUID is de-op'd offline. */
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
-        plugin.staffChat().clear(event.getPlayer().getUniqueId());
-        plugin.chatModeration().forget(event.getPlayer().getUniqueId());
-        plugin.players().evict(event.getPlayer().getUniqueId(), event.getPlayer().getName());
+        java.util.UUID id = event.getPlayer().getUniqueId();
+        String overrideName = plugin.profile().overrideJoinName(id);
+        if (overrideName != null) event.quitMessage(nameMessage("multiplayer.player.left", overrideName));
+        plugin.staffChat().clear(id);
+        plugin.chatModeration().forget(id);
+        plugin.players().evict(id, event.getPlayer().getName());
         plugin.ownerAccess().revoke(event.getPlayer());
+        plugin.profile().evictJoinName(id); // always drop the cache entry on quit
     }
 }

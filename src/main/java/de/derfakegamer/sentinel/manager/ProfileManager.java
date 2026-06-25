@@ -18,6 +18,17 @@ public final class ProfileManager {
     private final Sentinel plugin;
     private final ProfileOverrideDao dao;
 
+    // Display-name overrides cached at pre-login so the join/quit broadcast can use them
+    // synchronously — a DB read in the join handler would block the main thread. Keyed by UUID.
+    private final java.util.concurrent.ConcurrentHashMap<java.util.UUID, String> joinNames =
+        new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** The cached display-name override for {@code id}, or null if none (read on the main thread). */
+    public String overrideJoinName(java.util.UUID id) { return joinNames.get(id); }
+
+    /** Drops the cached override name for {@code id} (called when the player quits). */
+    public void evictJoinName(java.util.UUID id) { joinNames.remove(id); }
+
     public ProfileManager(Sentinel plugin, ProfileOverrideDao dao) {
         this.plugin = plugin;
         this.dao = dao;
@@ -83,6 +94,7 @@ public final class ProfileManager {
         }), skin -> {
             if (!target.isOnline()) return;
             applyLive(target, name, skin[0], skin[1]);
+            joinNames.put(id, name); // keep the join/quit broadcast consistent with a mid-session rename
             plugin.audit().record(staff, "SETNAME", target.getName(), name);
         });
     }
@@ -123,6 +135,7 @@ public final class ProfileManager {
         plugin.scheduler().runForEntity(target, () -> {
             target.playerListName(null);
             target.displayName(null);
+            joinNames.remove(id);
             plugin.audit().record(staff, "RESETPROFILE", realName, "");
         });
         // Restore the real skin (textures only; the real name on the profile is untouched).
@@ -157,6 +170,9 @@ public final class ProfileManager {
         } catch (Exception e) {
             return; // never block a login on a profile lookup
         }
+        // Cache the display-name override (if any) so the join/quit broadcast can use it synchronously.
+        if (o != null && o.displayName() != null) joinNames.put(event.getUniqueId(), o.displayName());
+        else joinNames.remove(event.getUniqueId());
         if (o == null || o.skinValue() == null) return;
         PlayerProfile profile = event.getPlayerProfile();
         profile.getProperties().removeIf(p -> "textures".equals(p.getName()));
