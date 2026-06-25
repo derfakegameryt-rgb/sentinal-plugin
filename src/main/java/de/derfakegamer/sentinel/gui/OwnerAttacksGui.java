@@ -24,7 +24,7 @@ public final class OwnerAttacksGui extends Gui {
         long now = System.currentTimeMillis();
         for (int i = 0; i < CAP && i < attempts.size(); i++) {
             OwnerProtectionManager.Attempt a = attempts.get(i);
-            inventory.setItem(i, Items.head(Bukkit.getOfflinePlayer(a.who()),
+            inventory.setItem(i, Items.head(Bukkit.getOfflinePlayer(a.uuid()),
                 Component.text(a.who(), NamedTextColor.RED),
                 List.of(Component.text(a.detail(), NamedTextColor.GRAY),
                         Component.text(ago(now - a.at()) + " ago", NamedTextColor.DARK_GRAY))));

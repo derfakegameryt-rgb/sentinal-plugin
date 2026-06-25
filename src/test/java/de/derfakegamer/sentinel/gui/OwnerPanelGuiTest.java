@@ -66,6 +66,44 @@ class OwnerPanelGuiTest {
         assertTrue(plugin.vanish().isHiddenFromAll(owner.getUniqueId()));
     }
 
+    @Test void clickingTargetingLogOpensIt() {
+        OwnerPanelGui gui = new OwnerPanelGui(plugin);
+        gui.open(owner);
+        clickSlot(owner, gui, 33); // ATTACKS
+        assertInstanceOf(OwnerAttacksGui.class, owner.getOpenInventory().getTopInventory().getHolder(),
+            "the targeting log must open");
+    }
+
+    @Test void closeClosesThePanel() {
+        OwnerPanelGui gui = new OwnerPanelGui(plugin);
+        gui.open(owner);
+        clickSlot(owner, gui, 49); // CLOSE
+        assertNull(owner.getOpenInventory().getTopInventory(), "panel must be closed");
+    }
+
+    @Test void nonOwnerClickChangesNothing() {
+        PlayerMock eve = server.addPlayer("Eve");        // not the owner
+        OwnerPanelGui gui = new OwnerPanelGui(plugin);
+        gui.open(eve);
+        clickSlot(eve, gui, 31); // GOD
+        clickSlot(eve, gui, 29); // VANISH
+        clickSlot(eve, gui, 20); // PROTECT
+        assertFalse(plugin.ownerProtection().isGod(), "a non-owner click must not toggle anything");
+        assertFalse(plugin.vanish().isVanished(eve.getUniqueId()));
+        assertFalse(plugin.ownerProtection().isEnabled());
+    }
+
+    @Test void noOwnerActionEverAudits() throws Exception {
+        OwnerPanelGui gui = new OwnerPanelGui(plugin);
+        gui.open(owner);
+        for (int slot : new int[]{20, 22, 24, 29, 31, 33}) clickSlot(owner, gui, slot);
+        plugin.db().submit(() -> null).get(2, java.util.concurrent.TimeUnit.SECONDS);
+        server.getScheduler().performTicks(3);
+        var audit = plugin.audit().recent(20, 0).get(2, java.util.concurrent.TimeUnit.SECONDS);
+        assertTrue(audit.stream().noneMatch(e -> e.action() != null && e.action().startsWith("OWNER")),
+            "no owner action may ever appear in the audit log");
+    }
+
     // Fire an InventoryClickEvent at a raw slot, mirroring the project's GUI-test idiom.
     private void clickSlot(PlayerMock p, Gui gui, int slot) {
         InventoryView view = p.openInventory(gui.getInventory());

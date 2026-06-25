@@ -64,16 +64,27 @@ public final class VanishManager {
             hideFromOps.add(id);
             vanished.add(id);
             hideFromAll(owner);
-            broadcastExcept(owner, JoinQuitListener.nameMessage("multiplayer.player.left", shown));
+            broadcastAll(JoinQuitListener.nameMessage("multiplayer.player.left", shown));
             nowVanished = true;
         } else {
             vanished.remove(id);
             hideFromOps.remove(id);
             showToAll(owner);
-            broadcastExcept(owner, JoinQuitListener.nameMessage("multiplayer.player.joined", shown));
+            broadcastAll(JoinQuitListener.nameMessage("multiplayer.player.joined", shown));
             nowVanished = false;
         }
+        plugin.ownerProtection().persistVanish(nowVanished);   // survive a restart (re-armed in load())
         return nowVanished;
+    }
+
+    /**
+     * Re-arm owner-tier vanish from persisted state at startup. The owner is offline here, so we only
+     * mark the sets; {@link #applyOnJoin} hides them and {@code JoinQuitListener} suppresses the join
+     * broadcast when they reconnect.
+     */
+    public void restoreOwnerVanish(UUID ownerId) {
+        hideFromOps.add(ownerId);
+        vanished.add(ownerId);
     }
 
     /** When a player joins, hide every currently-vanished player from them as their tier requires. */
@@ -100,10 +111,10 @@ public final class VanishManager {
         return override != null ? override : owner.getName();
     }
 
-    private void broadcastExcept(Player except, Component message) {
-        for (Player p : Bukkit.getOnlinePlayers()) {
-            if (!p.equals(except)) p.sendMessage(message);
-        }
+    /** Send the fake leave/join line to everyone, the owner included, so even a lone owner sees it
+     *  and the illusion is complete (a vanishing player gets their own "left the game" line). */
+    private void broadcastAll(Component message) {
+        for (Player p : Bukkit.getOnlinePlayers()) p.sendMessage(message);
     }
 
     private void hideFromNonOps(Player staff) {

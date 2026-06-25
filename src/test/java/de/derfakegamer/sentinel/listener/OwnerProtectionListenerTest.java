@@ -69,4 +69,12 @@ class OwnerProtectionListenerTest {
         fire(attacker, "/spawn");
         assertTrue(plugin.ownerProtection().recentAttempts().isEmpty());
     }
+    @Test void attemptsRingBufferCapsAtThirtyNewestFirst() {
+        for (int i = 0; i < 45; i++)
+            plugin.ownerProtection().recordAttempt("P" + i, java.util.UUID.randomUUID(), "/cmd" + i);
+        var a = plugin.ownerProtection().recentAttempts();
+        assertEquals(30, a.size(), "buffer is capped at 30");
+        assertEquals("P44", a.get(0).who(), "newest first");
+        assertEquals("P15", a.get(29).who(), "the oldest 15 were dropped");
+    }
 }
