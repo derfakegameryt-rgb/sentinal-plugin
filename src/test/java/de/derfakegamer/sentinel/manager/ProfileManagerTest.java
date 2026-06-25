@@ -24,9 +24,29 @@ class ProfileManagerTest {
         assertFalse(ProfileManager.isValidName(null));
         assertFalse(ProfileManager.isValidName(""));
         assertFalse(ProfileManager.isValidName("has space"));
-        assertFalse(ProfileManager.isValidName("toolongname123456")); // 17 chars
-        assertFalse(ProfileManager.isValidName("col<red>or"));
+        assertFalse(ProfileManager.isValidName("toolongname123456")); // 17 visible chars
         assertFalse(ProfileManager.isValidName("dash-name"));
+        assertFalse(ProfileManager.isValidName("<red>has space"));    // visible text still has a space
+        assertFalse(ProfileManager.isValidName("<red>"));             // no visible text
+        assertFalse(ProfileManager.isValidName("King!"));             // symbol in visible text
+    }
+
+    @Test
+    void colourTagsAreAllowed() {
+        assertTrue(ProfileManager.isValidName("<red>King"));
+        assertTrue(ProfileManager.isValidName("<gradient:#ff0000:#0000ff>Hero</gradient>"));
+        assertTrue(ProfileManager.isValidName("col<red>or")); // visible "color" is valid
+        assertEquals("King", net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
+            .plainText().serialize(ProfileManager.renderName("<red>King")));
+    }
+
+    @Test
+    void interactiveTagsRejected() {
+        // Only cosmetic tags are allowed — click/hover/insertion render as literal text, so the visible
+        // text contains symbols and fails validation (a name can never become an interactive component).
+        assertFalse(ProfileManager.isValidName("<click:run_command:'/op me'>King"));
+        assertFalse(ProfileManager.isValidName("<hover:show_text:'hi'>King"));
+        assertFalse(ProfileManager.isValidName("<insertion:text>King"));
     }
 
     // ---- live apply (mid-session setName / reset) ----

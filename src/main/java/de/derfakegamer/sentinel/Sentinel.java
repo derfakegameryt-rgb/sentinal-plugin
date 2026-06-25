@@ -106,6 +106,7 @@ public class Sentinel extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.MoveListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.JoinQuitListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.NametagListener(this), this);
+        getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.AltAlertListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.OwnerProtectionListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.OwnerGodListener(this), this);
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.VanishCloakListener(this), this);

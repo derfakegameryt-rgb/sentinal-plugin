@@ -138,13 +138,31 @@ public final class UpdateChecker {
     private String[] resolveLatest() throws Exception {
         try {
             String[] m = parseManifest(httpGet(MANIFEST));
-            if (m != null) return m;
+            if (m != null) return new String[]{m[0], m[1], m[2], "CDN"};
             plugin.getLogger().fine("Update CDN returned no usable manifest; falling back to GitHub.");
         } catch (Exception e) {
             plugin.getLogger().fine("Update CDN unreachable (" + e.getMessage() + "); falling back to GitHub.");
         }
         String[] best = parseBestRelease(httpGet(API)); // [tag, jarUrl] — GitHub has no sha256
-        return best == null ? null : new String[]{best[0], best[1], null};
+        return best == null ? null : new String[]{best[0], best[1], null, "GitHub"};
+    }
+
+    /** Replies with the running version and (after an async lookup) the latest version + its source. */
+    public void reportVersion(CommandSender requester) {
+        requester.sendMessage(plugin.messages().prefixed("version-current",
+            "version", plugin.getPluginMeta().getVersion()));
+        plugin.scheduler().runAsync(() -> {
+            try {
+                String[] r = resolveLatest();
+                if (r == null) { report(requester, "update-failed", "error", "no release found"); return; }
+                String latest = r[0];
+                String source = r.length > 3 && r[3] != null ? r[3] : "GitHub";
+                report(requester, isNewer(latest) ? "version-outdated" : "version-latest",
+                    "version", latest, "source", source);
+            } catch (Exception e) {
+                report(requester, "update-failed", "error", String.valueOf(e.getMessage()));
+            }
+        });
     }
 
     /** Network check (runs async). Downloads if newer; notifies the requester (or staff on a scheduled run). */
