@@ -42,6 +42,13 @@ class OwnerAttacksGuiTest {
         assertNotNull(gui.getInventory().getItem(1));
     }
 
+    @Test void consoleAttemptRendersWithoutPlayerHead() {
+        plugin.ownerProtection().recordAttempt("Command Block", null, "kill DerFakeGamer");
+        OwnerAttacksGui gui = new OwnerAttacksGui(plugin);
+        assertDoesNotThrow(() -> gui.open(owner));   // null uuid must not NPE the head lookup
+        assertNotNull(gui.getInventory().getItem(0));
+    }
+
     @Test void manyAttemptsRenderWithinCapWithoutError() {
         for (int i = 0; i < 60; i++) plugin.ownerProtection().recordAttempt("P" + i, UUID.randomUUID(), "/cmd" + i);
         OwnerAttacksGui gui = new OwnerAttacksGui(plugin);   // ring buffer caps at 30, GUI caps render at 45

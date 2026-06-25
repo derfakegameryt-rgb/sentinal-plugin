@@ -24,10 +24,13 @@ public final class OwnerAttacksGui extends Gui {
         long now = System.currentTimeMillis();
         for (int i = 0; i < CAP && i < attempts.size(); i++) {
             OwnerProtectionManager.Attempt a = attempts.get(i);
-            inventory.setItem(i, Items.head(Bukkit.getOfflinePlayer(a.uuid()),
-                Component.text(a.who(), NamedTextColor.RED),
-                List.of(Component.text(a.detail(), NamedTextColor.GRAY),
-                        Component.text(ago(now - a.at()) + " ago", NamedTextColor.DARK_GRAY))));
+            List<Component> lore = List.of(Component.text(a.detail(), NamedTextColor.GRAY),
+                Component.text(ago(now - a.at()) + " ago", NamedTextColor.DARK_GRAY));
+            Component title = Component.text(a.who(), NamedTextColor.RED);
+            // Console / command-block attempts have no player UUID — show a command-block icon, not a head.
+            inventory.setItem(i, a.uuid() != null
+                ? Items.head(Bukkit.getOfflinePlayer(a.uuid()), title, lore)
+                : Items.button(Material.COMMAND_BLOCK, title, lore));
         }
         if (attempts.isEmpty()) {
             inventory.setItem(22, Items.button(Material.PAPER,
