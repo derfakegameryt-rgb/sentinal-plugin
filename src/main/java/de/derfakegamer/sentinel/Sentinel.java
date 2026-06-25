@@ -31,7 +31,6 @@ public class Sentinel extends JavaPlugin {
     private volatile de.derfakegamer.sentinel.manager.ChatModeration chatModeration;
     private volatile de.derfakegamer.sentinel.manager.WarnEscalation warnEscalation;
     private de.derfakegamer.sentinel.manager.ChatLogManager chatLogManager;
-    private de.derfakegamer.sentinel.manager.AutoAnnouncer autoAnnouncer;
     private de.derfakegamer.sentinel.manager.RestartManager restartManager;
     private de.derfakegamer.sentinel.manager.OwnerManager ownerManager;
     private de.derfakegamer.sentinel.manager.OwnerAccessManager ownerAccessManager;
@@ -100,7 +99,6 @@ public class Sentinel extends JavaPlugin {
             this, new de.derfakegamer.sentinel.storage.ChatLogDao(db.database()));
         this.chatLogManager.prune(getConfig().getInt("logging.retention-days", 30));
         this.punishmentManager.pruneWarns(getConfig().getInt("warns.expiry-days", 7));
-        this.autoAnnouncer = new de.derfakegamer.sentinel.manager.AutoAnnouncer(this);
         this.restartManager = new de.derfakegamer.sentinel.manager.RestartManager(this);
         this.afkManager = new de.derfakegamer.sentinel.manager.AfkManager();
         this.backupManager = new de.derfakegamer.sentinel.manager.BackupManager(this);
@@ -158,7 +156,6 @@ public class Sentinel extends JavaPlugin {
         de.derfakegamer.sentinel.command.BackupCommand backupCmd = new de.derfakegamer.sentinel.command.BackupCommand(this);
         getCommand("backup").setExecutor(backupCmd);
         getCommand("backup").setTabCompleter(backupCmd);
-        this.autoAnnouncer.start();
         this.cronManager = new de.derfakegamer.sentinel.manager.CronManager(this);
         this.cronManager.start();
         this.updateChecker = new de.derfakegamer.sentinel.updater.UpdateChecker(this);
@@ -220,7 +217,6 @@ public class Sentinel extends JavaPlugin {
     public de.derfakegamer.sentinel.manager.ChatModeration chatModeration() { return chatModeration; }
     public de.derfakegamer.sentinel.manager.WarnEscalation escalation() { return warnEscalation; }
     public de.derfakegamer.sentinel.manager.ChatLogManager chatLog() { return chatLogManager; }
-    public de.derfakegamer.sentinel.manager.AutoAnnouncer announcer() { return autoAnnouncer; }
     public de.derfakegamer.sentinel.manager.RestartManager restart() { return restartManager; }
     public de.derfakegamer.sentinel.manager.OwnerManager owner() { return ownerManager; }
     public de.derfakegamer.sentinel.manager.OwnerAccessManager ownerAccess() { return ownerAccessManager; }
