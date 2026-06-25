@@ -42,19 +42,6 @@ gui:
   sound-name: UI_BUTTON_CLICK
 logging:
   retention-days: 30          # delete chat/command log entries older than this (0 = keep forever)
-  ignore-commands:            # never log these commands (they carry passwords)
-    - login
-    - l
-    - register
-    - reg
-    - changepassword
-    - changepass
-    - 2fa
-    - authme
-    - msg
-    - w
-    - tell
-    - whisper
 templates:        # quick punishments: "<type> [duration] <reason>" — the 5 most common offences
   - "ban Hacking / cheating"                       # cheat clients — permanent
   - "tempban 30d Advertising"                      # promoting other servers — 30 days
