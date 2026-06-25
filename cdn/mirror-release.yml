@@ -1,0 +1,80 @@
+# Mirrors each published release to the Vercel update CDN, so the plugin's update check never hits
+# GitHub's rate-limited api.github.com. Self-contained: it writes latest.json AND vercel.json inline,
+# so it runs even in a release-only repository with no source checked out.
+#
+# WHERE TO PUT THIS FILE:
+#   Copy it to ".github/workflows/mirror-release.yml" in the GitHub repo where your releases are
+#   published (the public release repo → fully automatic on every release). See cdn/SETUP.md.
+#
+# REQUIRED REPO SECRETS (Settings → Secrets and variables → Actions):
+#   VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID   — from the Vercel project (see SETUP.md)
+#   CDN_DOMAIN                                        — e.g. sentinel-updates.vercel.app (no https://)
+
+name: Mirror release to CDN
+
+on:
+  release:
+    types: [published]
+
+# Allow only one mirror at a time; a newer release supersedes an in-flight one.
+concurrency:
+  group: mirror-cdn
+  cancel-in-progress: true
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read          # gh release download
+    steps:
+      - name: Download the release jar
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          mkdir -p site
+          gh release download "$TAG" --repo "$REPO" --pattern '*.jar' --dir site --clobber
+          # Glob into an array — no `ls | head` (which trips SIGPIPE under `pipefail`). nullglob makes
+          # the array empty (not the literal pattern) when nothing matched.
+          shopt -s nullglob
+          jars=(site/*.jar)
+          if [ ${#jars[@]} -eq 0 ]; then echo "no jar asset on release $TAG" >&2; exit 1; fi
+          echo "JAR=$(basename "${jars[0]}")" >> "$GITHUB_ENV"
+
+      - name: Build latest.json + vercel.json
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+          CDN_DOMAIN: ${{ secrets.CDN_DOMAIN }}
+        run: |
+          set -euo pipefail
+          SHA=$(sha256sum "site/$JAR" | cut -d' ' -f1)
+          SIZE=$(stat -c%s "site/$JAR")
+          # Build the JSON with jq, NOT a heredoc: $TAG comes from the release name and must never be
+          # shell-interpolated (command-substitution → RCE in the runner) nor break JSON escaping.
+          jq -n --arg v "$TAG" --arg u "https://$CDN_DOMAIN/$JAR" --arg s "$SHA" --argjson sz "$SIZE" \
+            '{version: $v, url: $u, sha256: $s, size: $sz}' > site/latest.json
+          # Versioned jar names are content-stable, so cache them forever; latest.json must stay fresh.
+          cat > site/vercel.json <<'EOF'
+          {
+            "headers": [
+              { "source": "/(.*)\\.jar",
+                "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }] },
+              { "source": "/latest.json",
+                "headers": [{ "key": "Cache-Control", "value": "public, max-age=60" }] }
+            ]
+          }
+          EOF
+          echo "----- latest.json -----"; cat site/latest.json
+
+      - name: Deploy to Vercel (production)
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          set -euo pipefail
+          npm i -g vercel@latest
+          # VERCEL_ORG_ID / VERCEL_PROJECT_ID in the env link the deploy to the project (no `vercel link`).
+          vercel deploy ./site --prod --yes --token "$VERCEL_TOKEN"

@@ -1,0 +1,13 @@
+{
+  "//": "Reference copy of the Vercel static config. The GitHub Action (cdn/mirror-release.yml) writes this same file inline at deploy time, so you do NOT need to commit this when using the Action. It is provided for the alternative 'Vercel Git integration' deploy method, where this file must live at the root of the repo Vercel is connected to. Versioned jar names are content-stable -> cache forever; latest.json must stay fresh.",
+  "headers": [
+    {
+      "source": "/(.*)\\.jar",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+    },
+    {
+      "source": "/latest.json",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=60" }]
+    }
+  ]
+}

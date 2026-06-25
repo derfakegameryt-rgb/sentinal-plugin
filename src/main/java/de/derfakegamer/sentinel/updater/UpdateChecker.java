@@ -19,10 +19,17 @@ import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 
 public final class UpdateChecker {
-    // Pulls releases from the PUBLIC release repository. Public releases need no authentication, so
-    // the updater carries no token and no private-repo handling. We list ALL releases and pick the
-    // highest version ourselves — relying on GitHub's single "latest" flag is unreliable when
-    // several tags point at the same commit (it can surface an older tag) — see parseBestRelease.
+    // PRIMARY source: a Vercel static CDN that mirrors the latest release. Only the small version-check
+    // JSON (latest.json) and the jar are served here, so the update check never touches GitHub's
+    // rate-limited api.github.com in the normal path. If the CDN is unreachable or not yet populated,
+    // the GitHub fallback below carries it (see cdn/SETUP.md).
+    private static final String MANIFEST = "https://sentinal-plugin.vercel.app/latest.json";
+
+    // FALLBACK source: the PUBLIC release repository. Used automatically whenever the CDN is unreachable,
+    // not yet configured, or returns no usable manifest — so updates keep working no matter what. Public
+    // releases need no authentication, so the updater carries no token and no private-repo handling. We
+    // list ALL releases and pick the highest version ourselves — relying on GitHub's single "latest" flag
+    // is unreliable when several tags point at the same commit (it can surface an older tag).
     private static final String API =
         "https://api.github.com/repos/derfakegameryt-rgb/sentinal-plugin/releases?per_page=100";
 
@@ -104,6 +111,42 @@ public final class UpdateChecker {
         return bestTag == null ? null : new String[]{bestTag, bestUrl};
     }
 
+    /**
+     * Parses the Vercel CDN manifest ({@code latest.json}) into {@code [version, jarUrl, sha256OrNull]},
+     * or null if it lacks a {@code version} or {@code url}. The {@code sha256} field is optional — when
+     * present the download is byte-verified against it.
+     */
+    static String[] parseManifest(String json) {
+        JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+        String version = str(root, "version");
+        String url = str(root, "url");
+        if (version == null || url == null) return null;
+        return new String[]{version, url, str(root, "sha256")};
+    }
+
+    private static String str(JsonObject o, String key) {
+        return o.has(key) && !o.get(key).isJsonNull() ? o.get(key).getAsString() : null;
+    }
+
+    /**
+     * The newest release as {@code [version, jarUrl, sha256OrNull]}. Tries the Vercel CDN first (so the
+     * normal path never hits GitHub's rate-limited API); on ANY CDN failure — unreachable, non-2xx,
+     * unparseable, or missing fields — logs at FINE and falls back to the GitHub releases API, so
+     * updates keep working when the CDN is down or not yet configured. Returns null if neither yields
+     * a downloadable release.
+     */
+    private String[] resolveLatest() throws Exception {
+        try {
+            String[] m = parseManifest(httpGet(MANIFEST));
+            if (m != null) return m;
+            plugin.getLogger().fine("Update CDN returned no usable manifest; falling back to GitHub.");
+        } catch (Exception e) {
+            plugin.getLogger().fine("Update CDN unreachable (" + e.getMessage() + "); falling back to GitHub.");
+        }
+        String[] best = parseBestRelease(httpGet(API)); // [tag, jarUrl] — GitHub has no sha256
+        return best == null ? null : new String[]{best[0], best[1], null};
+    }
+
     /** Network check (runs async). Downloads if newer; notifies the requester (or staff on a scheduled run). */
     private void check(CommandSender requester) {
         if (!running.compareAndSet(false, true)) {
@@ -112,11 +155,11 @@ public final class UpdateChecker {
             return;
         }
         try {
-            String body = httpGet(API);
-            String[] best = parseBestRelease(body);
+            String[] best = resolveLatest();
             if (best == null) { report(requester, "update-failed", "error", "no downloadable release found"); return; }
             String tag = best[0];
             String jarUrl = best[1];
+            String sha256 = best[2];
 
             if (!isNewer(tag)) {
                 if (requester != null) report(requester, "update-up-to-date",
@@ -126,7 +169,7 @@ public final class UpdateChecker {
             if (tag.equals(downloadedVersion)) return; // already downloaded this release this session
 
             File dest = new File(Bukkit.getUpdateFolderFile(), plugin.pluginJar().getName());
-            download(jarUrl, dest);
+            download(jarUrl, dest, sha256);
             downloadedVersion = tag;
             notifyDownloaded(requester, tag);
         } catch (Exception e) {
@@ -156,7 +199,7 @@ public final class UpdateChecker {
      * then atomically moved into place — a dropped connection or a bad response can never leave a
      * truncated/corrupt jar in the update folder (which Bukkit would try to apply on the next restart).
      */
-    private void download(String url, File dest) throws Exception {
+    private void download(String url, File dest, String expectedSha256) throws Exception {
         File dir = dest.getParentFile();
         if (dir != null) dir.mkdirs();
         File tmp = File.createTempFile(dest.getName() + "-", ".part", dir);
@@ -170,11 +213,32 @@ public final class UpdateChecker {
             try (var in = resp.body()) {
                 Files.copy(in, tmp.toPath(), StandardCopyOption.REPLACE_EXISTING);
             }
+            // When the CDN manifest carries a sha256, byte-verify before anything else — catches an
+            // ACCIDENTALLY corrupt/truncated/stale mirror that validateJar's structural check could
+            // still pass. (It is NOT a defense against a malicious CDN: the hash and the url come from
+            // the same manifest, so whoever serves a bad jar serves a matching hash. The root of trust
+            // is the hardcoded MANIFEST/API HTTPS host.)
+            if (expectedSha256 != null) verifySha256(tmp, expectedSha256);
             validateJar(tmp); // reject corrupt/incomplete/wrong artifacts before they reach the update folder
             moveIntoPlace(tmp, dest);
         } finally {
             Files.deleteIfExists(tmp.toPath()); // no-op once the move succeeded
         }
+    }
+
+    /** Throws unless {@code f}'s SHA-256 equals {@code expectedHex} (case-insensitive). */
+    static void verifySha256(File f, String expectedHex) throws Exception {
+        java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
+        try (java.io.InputStream in = new java.io.BufferedInputStream(new java.io.FileInputStream(f))) {
+            byte[] buf = new byte[8192];
+            int n;
+            while ((n = in.read(buf)) > 0) md.update(buf, 0, n);
+        }
+        StringBuilder sb = new StringBuilder();
+        for (byte b : md.digest()) sb.append(String.format("%02x", b));
+        String actual = sb.toString();
+        if (!actual.equalsIgnoreCase(expectedHex.trim()))
+            throw new IllegalStateException("sha256 mismatch — expected " + expectedHex + " but got " + actual);
     }
 
     /** Atomically replaces {@code dest} with {@code tmp}; falls back to a plain replace if the

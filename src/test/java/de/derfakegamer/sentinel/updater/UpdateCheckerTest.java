@@ -91,4 +91,57 @@ class UpdateCheckerTest {
         assertFalse(checker.isNewer(running));      // same as running version
         assertFalse(checker.isNewer("v0.0.1"));     // older than any running version
     }
+
+    // ---- Vercel CDN manifest (primary source) ----
+
+    @Test void parsesManifest() {
+        String json = """
+            {"version":"v3.2.5","url":"https://cdn.example/sentinel.jar",
+             "sha256":"abc123","size":245678}""";
+        String[] m = UpdateChecker.parseManifest(json);
+        assertNotNull(m);
+        assertEquals("v3.2.5", m[0]);
+        assertEquals("https://cdn.example/sentinel.jar", m[1]);
+        assertEquals("abc123", m[2]);
+    }
+
+    @Test void manifestWithoutSha256ParsesWithNullHash() {
+        String[] m = UpdateChecker.parseManifest(
+            "{\"version\":\"v3.2.5\",\"url\":\"https://cdn.example/sentinel.jar\"}");
+        assertNotNull(m);
+        assertNull(m[2], "a manifest without sha256 yields a null hash (verification is skipped)");
+    }
+
+    @Test void manifestMissingVersionOrUrlReturnsNull() {
+        assertNull(UpdateChecker.parseManifest("{\"url\":\"https://cdn.example/sentinel.jar\"}"));
+        assertNull(UpdateChecker.parseManifest("{\"version\":\"v3.2.5\"}"));
+        assertNull(UpdateChecker.parseManifest("{}"));
+    }
+
+    // ---- sha256 download verification ----
+
+    @Test void verifySha256AcceptsMatchingDigest() throws Exception {
+        java.io.File f = java.io.File.createTempFile("sentinel-sha", ".bin");
+        f.deleteOnExit();
+        byte[] data = "hello sentinel".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        java.nio.file.Files.write(f.toPath(), data);
+        String expected = sha256Hex(data);
+        assertDoesNotThrow(() -> UpdateChecker.verifySha256(f, expected));
+        assertDoesNotThrow(() -> UpdateChecker.verifySha256(f, expected.toUpperCase()), "case-insensitive");
+    }
+
+    @Test void verifySha256RejectsMismatch() throws Exception {
+        java.io.File f = java.io.File.createTempFile("sentinel-sha", ".bin");
+        f.deleteOnExit();
+        java.nio.file.Files.write(f.toPath(), "real bytes".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        assertThrows(IllegalStateException.class,
+            () -> UpdateChecker.verifySha256(f, "0000000000000000000000000000000000000000000000000000000000000000"));
+    }
+
+    private static String sha256Hex(byte[] data) throws Exception {
+        byte[] d = java.security.MessageDigest.getInstance("SHA-256").digest(data);
+        StringBuilder sb = new StringBuilder();
+        for (byte b : d) sb.append(String.format("%02x", b));
+        return sb.toString();
+    }
 }
