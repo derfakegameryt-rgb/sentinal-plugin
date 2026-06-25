@@ -108,9 +108,6 @@ gui-modstats-title: "<#3B82F6>Sentinel · Mod Stats"
 db-error: "<red>Something went wrong — please try again in a moment."
 cooldown: "<red>Please wait <white><seconds></white>s before doing that again."
 
-afk-now: "<#60A5FA><player></#60A5FA> <gray>is now AFK."
-afk-back: "<#60A5FA><player></#60A5FA> <gray>is no longer AFK."
-
 gui-whitelist-title: "<#3B82F6>Sentinel · Whitelist"
 whitelist-enter: "<#60A5FA>Type a player name to whitelist, or type <white>cancel<#60A5FA>."
 whitelist-added: "<#60A5FA><player></#60A5FA> <gray>was added to the whitelist."

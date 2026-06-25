@@ -111,9 +111,11 @@ public final class VanishManager {
         return override != null ? override : owner.getName();
     }
 
-    /** Send the fake leave/join line to everyone, the owner included, so even a lone owner sees it
-     *  and the illusion is complete (a vanishing player gets their own "left the game" line). */
+    /** Send the fake leave/join line exactly like a real disconnect: to every player (the owner
+     *  included, so even a lone owner sees it) AND to the console — a genuine join/quit is logged to
+     *  the console, so the fake one must be too, or the missing console line is a tell. */
     private void broadcastAll(Component message) {
+        Bukkit.getConsoleSender().sendMessage(message);
         for (Player p : Bukkit.getOnlinePlayers()) p.sendMessage(message);
     }
 

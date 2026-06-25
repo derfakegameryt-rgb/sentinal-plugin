@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
  * omitted for that reason (they would require async DB access).
  *
  * Keys (player-scoped unless noted):
- *   vanished, frozen, afk, staffchat  -> "true" / "false"
+ *   vanished, frozen, staffchat  -> "true" / "false"
  */
 public final class SentinelExpansion extends PlaceholderExpansion {
     private final Sentinel plugin;
@@ -40,8 +40,6 @@ public final class SentinelExpansion extends PlaceholderExpansion {
                 return player == null ? "" : bool(plugin.vanish().isVanished(player.getUniqueId()));
             case "frozen":
                 return player == null ? "" : bool(plugin.freeze().isFrozen(player.getUniqueId()));
-            case "afk":
-                return player == null ? "" : bool(plugin.afk().isAfk(player.getUniqueId()));
             case "staffchat":
                 return player == null ? "" : bool(plugin.staffChat().isToggled(player.getUniqueId()));
             default:

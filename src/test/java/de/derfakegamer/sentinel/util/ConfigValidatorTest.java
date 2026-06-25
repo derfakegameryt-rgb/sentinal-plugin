@@ -62,8 +62,6 @@ class ConfigValidatorTest {
                   url: "https://example.com/appeals"
                 gui:
                   sound-name: ""
-                afk:
-                  minutes: 5
                 backup:
                   keep: 5
                 logging:

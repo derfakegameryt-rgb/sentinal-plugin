@@ -73,7 +73,6 @@ public final class ConfigValidator {
 
     // 4. Non-negative int fields
     private static void checkNonNegativeInts(FileConfiguration cfg, Logger log) {
-        checkNonNegativeInt(cfg, log, "afk.minutes", 5);
         checkNonNegativeInt(cfg, log, "backup.keep", 5);
         checkNonNegativeInt(cfg, log, "logging.retention-days", 30);
         checkNonNegativeInt(cfg, log, "warns.expiry-days", 7);

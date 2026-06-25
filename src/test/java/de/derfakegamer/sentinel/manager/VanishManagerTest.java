@@ -78,6 +78,17 @@ class VanishManagerTest {
         assertFalse(op.canSee(owner), "a restored-vanished owner must be hidden again on reconnect");
     }
 
+    @Test void ownerVanishFakeLeaveAlsoGoesToConsole() {
+        PlayerMock owner = new PlayerMock(server, "DerFakeGamer", plugin.owner().uuid());
+        server.addPlayer(owner);
+        var console = server.getConsoleSender();
+        while (console.nextComponentMessage() != null) { /* drain startup/join noise */ }
+        plugin.vanish().toggleOwner(owner);                            // fake leave -> players AND console
+        // Console was drained above, so any message now is the fake leave reaching the console
+        // (a real disconnect logs to console, so the fake one must too).
+        assertNotNull(console.nextComponentMessage(), "the fake leave must also reach the console");
+    }
+
     @Test void adminVanishStillVisibleToOps() {
         PlayerMock staff = server.addPlayer("Mod");
         PlayerMock admin = server.addPlayer("Admin");
