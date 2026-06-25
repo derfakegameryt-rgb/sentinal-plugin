@@ -1,10 +1,10 @@
-# Remove Announcements + Config Cleanup (v3.1.6) Implementation Plan
+# Announcements Removal + Join-Message Fix + Config Cleanup (v3.1.6) Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Remove the recurring auto-announcements feature end-to-end and delete unused keys from the bundled `config.yml`, leaving `/report` and `/rules` untouched.
+**Goal:** Remove the recurring auto-announcements feature end-to-end, make the join/quit broadcast use a player's display-name override (no real-name leak for undercover admins), and delete unused keys from the bundled `config.yml`. `/report` and `/rules` untouched.
 
-**Architecture:** Pure deletion. Remove the `AutoAnnouncer` manager and every reference to it (plugin wiring, admin-panel toggle button, config validator path, config block, message keys, tests), then drop the dead `logging.ignore-commands` config key. No new code.
+**Architecture:** Mostly deletion (announcements + dead config key) plus one focused fix: a synchronous override-name cache in `ProfileManager`, populated at pre-login, that lets `JoinQuitListener` rewrite the join/quit message with the display name. See `docs/superpowers/specs/2026-06-24-join-message-display-name-design.md`.
 
 **Tech Stack:** Java 21, Paper/Folia 1.21, Gradle + shadow, JUnit 5, MockBukkit.
 
