@@ -92,6 +92,35 @@ class UpdateCheckerTest {
         assertFalse(checker.isNewer("v0.0.1"));     // older than any running version
     }
 
+    // ---- "/sentinel update" must always reply, never stop silently after "checking…" ----
+
+    @Test void manualCheckRepliesWhenUpToDate() {
+        UpdateChecker checker = new UpdateChecker(plugin);
+        var p = server.addPlayer();
+        assertTrue(checker.handledWithoutDownload(p, plugin.getPluginMeta().getVersion()));
+        server.getScheduler().performTicks(2);
+        assertNotNull(p.nextComponentMessage(), "an up-to-date manual check must reply");
+    }
+
+    @Test void manualCheckRepliesWhenAlreadyDownloadedThisSession() {
+        // The bug: the silent scheduled check already downloaded a newer release (sets downloadedVersion),
+        // then a manual "/sentinel update" must still tell the player it's pending a restart — not go silent.
+        UpdateChecker checker = new UpdateChecker(plugin);
+        var p = server.addPlayer();
+        checker.downloadedVersion = "v999.0.0"; // pretend the background check already fetched it
+        assertTrue(checker.handledWithoutDownload(p, "v999.0.0"));
+        server.getScheduler().performTicks(2);
+        assertNotNull(p.nextComponentMessage(),
+            "an already-downloaded manual check must reply (not stop silently after 'checking')");
+    }
+
+    @Test void scheduledCheckStaysSilentWhenAlreadyDownloaded() {
+        UpdateChecker checker = new UpdateChecker(plugin);
+        checker.downloadedVersion = "v999.0.0";
+        assertTrue(checker.handledWithoutDownload(null, "v999.0.0"),
+            "the scheduled run (no requester) is still handled, just silently");
+    }
+
     // ---- Vercel CDN manifest (primary source) ----
 
     @Test void parsesManifest() {

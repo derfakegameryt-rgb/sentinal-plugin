@@ -41,7 +41,7 @@ public final class UpdateChecker {
         .connectTimeout(Duration.ofSeconds(10))
         .build();
 
-    private volatile String downloadedVersion; // avoid re-downloading the same release each interval
+    volatile String downloadedVersion; // avoid re-downloading the same release each interval (package-private for tests)
     // Guards against the 5-minute timer and an on-demand "/sentinel update" running (and writing the
     // same file) at the same time. Only one check/download is ever in flight.
     private final java.util.concurrent.atomic.AtomicBoolean running = new java.util.concurrent.atomic.AtomicBoolean(false);
@@ -158,18 +158,10 @@ public final class UpdateChecker {
             String[] best = resolveLatest();
             if (best == null) { report(requester, "update-failed", "error", "no downloadable release found"); return; }
             String tag = best[0];
-            String jarUrl = best[1];
-            String sha256 = best[2];
-
-            if (!isNewer(tag)) {
-                if (requester != null) report(requester, "update-up-to-date",
-                    "version", plugin.getPluginMeta().getVersion());
-                return;
-            }
-            if (tag.equals(downloadedVersion)) return; // already downloaded this release this session
+            if (handledWithoutDownload(requester, tag)) return;
 
             File dest = new File(Bukkit.getUpdateFolderFile(), plugin.pluginJar().getName());
-            download(jarUrl, dest, sha256);
+            download(best[1], dest, best[2]);
             downloadedVersion = tag;
             notifyDownloaded(requester, tag);
         } catch (Exception e) {
@@ -177,6 +169,25 @@ public final class UpdateChecker {
         } finally {
             running.set(false);
         }
+    }
+
+    /**
+     * Handles the cases that need NO download and replies to the requester: already up to date, or
+     * already downloaded this session (pending a restart). Returns true if handled — so a manual
+     * "/sentinel update" always gets a reply instead of silently stopping after "checking…" when the
+     * scheduled background check has already fetched the update. Package-private for tests.
+     */
+    boolean handledWithoutDownload(CommandSender requester, String tag) {
+        if (!isNewer(tag)) {
+            if (requester != null) report(requester, "update-up-to-date",
+                "version", plugin.getPluginMeta().getVersion());
+            return true;
+        }
+        if (tag.equals(downloadedVersion)) {
+            notifyDownloaded(requester, tag); // already downloaded this session — tell them a restart is pending
+            return true;
+        }
+        return false;
     }
 
     private String httpGet(String url) throws Exception {
