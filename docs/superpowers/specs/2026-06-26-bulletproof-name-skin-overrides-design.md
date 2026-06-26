@@ -28,6 +28,12 @@ ProtocolLib, no new dependencies).
 
 ### Known fragile points being addressed
 
+0. **Owner sees its own floating name lag / hang in mid-air (observed bug).** The `TextDisplay`
+   is a passenger of the player. The owner's client predicts its own movement locally while the
+   passenger's position is server-driven, so to the owner the name lags or stays put; other
+   players (player + passenger both server-positioned) see it follow correctly. Fix: hide the
+   display from its owner (`Player#hideEntity`) — also vanilla-correct, since you never see your
+   own above-head name.
 1. **Nametag passenger detachment.** Only `PlayerRespawnEvent` and
    `PlayerChangedWorldEvent` re-apply the floating name today (`NametagListener`). A
    detached passenger leaves the player with no above-head name (and the vanilla name
