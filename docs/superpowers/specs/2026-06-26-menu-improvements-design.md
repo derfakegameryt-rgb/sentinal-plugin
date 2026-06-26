@@ -10,11 +10,10 @@ Two related GUI improvements:
 1. **Admin Panel** — regroup the buttons into clean category rows and surface three
    existing tools that are currently not reachable from the panel (ModStats, ChatLog,
    Templates).
-2. **Owner Panel** — add a "Server control" group: Restart, Backup, and a new
-   Maintenance/Lockdown toggle.
+2. **Owner Panel** — add a "Server control" group: Restart and Backup.
 
-No change to existing behaviour of the tools themselves; this is menu wiring plus one
-net-new feature (maintenance mode).
+No change to existing behaviour of the tools themselves; this is purely menu wiring of
+existing managers.
 
 ## Background
 
@@ -27,7 +26,6 @@ net-new feature (maintenance mode).
   key-value store (`dao.set(key, value)`) loaded in `OwnerProtectionManager.load()`.
 - `RestartManager.schedule(int seconds)` / `cancel()` and
   `BackupManager.backup(CommandSender, long stamp)` already exist.
-- No maintenance/lockdown feature exists yet.
 
 ## Part A — Admin Panel regroup + new tools
 
@@ -69,47 +67,27 @@ owner style (no audit logging, owner-only guarded).
 - Click: `plugin.backup().backup(p, System.currentTimeMillis())`.
 - Send the owner a short confirmation message (hard-coded, owner style).
 
-### B3 — Maintenance / Lockdown (net-new feature)
-- A toggle styled like the other owner toggles (ON/green / OFF/red), persisted via the
-  `OwnerProtectionManager` key-value pattern under key `owner_maintenance`, loaded in
-  `OwnerProtectionManager.load()`.
-- New `OwnerProtectionManager` members: `volatile boolean maintenance`,
-  `boolean isMaintenance()`, `void setMaintenance(boolean on)` (sets + persists).
-- **Login gate:** in `LoginListener.onPreLogin`, when maintenance is ON and the joining
-  player is **not** the owner, `event.disallow(KICK_OTHER, <maintenance screen>)`. The
-  owner is always allowed in. Placed after the login is recorded (so the attempt is still
-  logged for alt detection) and before/independent of the ban evaluation.
-- **On enable:** kick all currently-online non-owner players (real lockdown), with the
-  same maintenance screen. Runs on the correct thread (entity/global per the Folia-aware
-  scheduler).
-- **Kick screen text:** a player-facing `messages.yml` key `maintenance-screen` (this text
-  IS visible to players, so it is localizable — unlike the owner panel's own labels).
-  Sensible default, e.g. "The server is under maintenance. Please try again later."
-
 ## What stays the same
 
 - Owner panel keeps its no-audit, hard-coded-label, owner-only-guarded character.
 - Admin panel keeps `messages.yml`-driven labels, border, fill, and close slot.
 - Existing tool behaviour (Restart, Backup, the GUIs being linked) is unchanged.
-- Maintenance does not bypass or alter the ban system; it is an independent gate.
+- No change to the login path or the ban system.
 
 ## Testing
 
 - **Unit (MockBukkit + JUnit 5, matching existing GUI/listener tests):**
-  - `OwnerProtectionManager`: `setMaintenance(true)` persists and is reloaded by `load()`;
-    default is OFF.
-  - `LoginListener`: with maintenance ON, a non-owner pre-login is disallowed
-    (`KICK_OTHER`); the owner pre-login is allowed; with maintenance OFF, both allowed.
   - Admin panel: clicking the new ModStats/ChatLog/Templates slots opens the right GUI
     (or at least does not error and is wired to the correct handler) — mirror existing
     `AdminPanelGui`-style coverage if present; otherwise a construction/wiring smoke test.
-- **Manual:** owner panel Restart (schedule + right-click cancel), Backup (file produced),
-  Maintenance (non-owner kicked on enable + blocked on login, owner unaffected, survives a
-  restart via persistence).
+- **Manual:** owner panel Restart (left-click schedule + right-click cancel) and Backup
+  (file produced); admin panel new buttons open the correct screens.
 
 ## Out of scope
 
 - The other owner-function bundles offered earlier (player control, self-buffs, stealth/
   surveillance) — only "Server control" was chosen.
+- **Maintenance / lockdown mode** — explicitly removed from scope; no login-path or
+  `OwnerProtectionManager` changes.
 - Adding Alts/Notes/Invsee to the admin top level.
 - Any redesign of the per-player GUIs themselves.
