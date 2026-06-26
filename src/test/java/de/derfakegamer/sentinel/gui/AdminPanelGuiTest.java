@@ -18,11 +18,18 @@ class AdminPanelGuiTest {
     @BeforeEach void setup() { server = MockBukkit.mock(); plugin = MockBukkit.load(Sentinel.class); }
     @AfterEach void teardown() { MockBukkit.unmock(); }
 
+    @Test void panelHasTheModStatsButton() {
+        AdminPanelGui gui = new AdminPanelGui(plugin);
+        org.bukkit.inventory.ItemStack item = gui.getInventory().getItem(29); // MODSTATS slot
+        assertNotNull(item, "ModStats button must be present");
+        assertEquals(Material.KNOWLEDGE_BOOK, item.getType(), "ModStats uses the knowledge book icon");
+    }
+
     @Test void panelIsADoubleChestWithSectionButtons() {
         AdminPanelGui gui = new AdminPanelGui(plugin);
         assertEquals(54, gui.getInventory().getSize(), "the hub must be a double chest (54 slots)");
-        // row 1 general (10-11), row 2 moderation (19-23), row 3 tools (28-30)
-        for (int slot : new int[]{10, 11, 19, 20, 21, 22, 23, 28, 29, 30})
+        // row 1 general (10-11), row 2 moderation (19-23), row 3 players/stats (28-29)
+        for (int slot : new int[]{10, 11, 19, 20, 21, 22, 23, 28, 29})
             assertNotNull(gui.getInventory().getItem(slot), "section button at " + slot);
         assertEquals(Material.PLAYER_HEAD, gui.getInventory().getItem(10).getType(), "Operators at slot 10");
         assertEquals(Material.NAME_TAG,    gui.getInventory().getItem(11).getType(), "Whitelist at slot 11");
@@ -33,10 +40,11 @@ class AdminPanelGuiTest {
         AdminPanelGui gui = new AdminPanelGui(plugin);
         gui.open(p);
         var inv = p.getOpenInventory().getTopInventory();
-        // Player tools row: Player Manager at slot 28, Vanish at 29, Staff Chat at 30
+        // Row 3: Player Manager at slot 28, ModStats at 29
+        // Row 4 (self/staff tools): Vanish at 37, Staff Chat at 38
         assertNotNull(inv.getItem(28), "Player Manager at slot 28");
-        assertNotNull(inv.getItem(29), "Vanish at slot 29");
-        assertNotNull(inv.getItem(30), "Staff Chat at slot 30");
+        assertNotNull(inv.getItem(37), "Vanish at slot 37");
+        assertNotNull(inv.getItem(38), "Staff Chat at slot 38");
 
         // Slot 28 must be specifically the Player Manager button (PLAYER_HEAD, name contains "Player Manager")
         var pmItem = inv.getItem(28);
@@ -63,7 +71,7 @@ class AdminPanelGuiTest {
         AdminPanelGui gui = new AdminPanelGui(plugin);
         gui.open(p);
         boolean before = plugin.vanish().isVanished(p.getUniqueId());
-        InventoryClickEvent ev = ConfirmGuiTest.clickSlot(p, gui, 29);
+        InventoryClickEvent ev = ConfirmGuiTest.clickSlot(p, gui, 37);
         gui.onClick(ev);
         assertTrue(ev.isCancelled());
         assertNotEquals(before, plugin.vanish().isVanished(p.getUniqueId()));
@@ -74,11 +82,11 @@ class AdminPanelGuiTest {
         AdminPanelGui gui = new AdminPanelGui(plugin);
         gui.open(p);
         boolean before = plugin.staffChat().isToggled(p.getUniqueId());
-        InventoryClickEvent ev = ConfirmGuiTest.clickSlot(p, gui, 30);
+        InventoryClickEvent ev = ConfirmGuiTest.clickSlot(p, gui, 38);
         gui.onClick(ev);
         assertTrue(ev.isCancelled());
         assertNotEquals(before, plugin.staffChat().isToggled(p.getUniqueId()),
-            "Staff-chat state must flip after clicking slot 30");
+            "Staff-chat state must flip after clicking slot 38");
     }
 
     @Test void playerManagerLabelSourcedFromMessagesYml() throws Exception {
@@ -103,16 +111,16 @@ class AdminPanelGuiTest {
 
     @Test void hasSelfProfileButtons() {
         AdminPanelGui gui = new AdminPanelGui(plugin);
-        assertEquals(Material.NAME_TAG,    gui.getInventory().getItem(31).getType(), "Set name at 31");
-        assertEquals(Material.PLAYER_HEAD, gui.getInventory().getItem(32).getType(), "Set skin at 32");
-        assertEquals(Material.WATER_BUCKET, gui.getInventory().getItem(33).getType(), "Reset profile at 33");
+        assertEquals(Material.NAME_TAG,     gui.getInventory().getItem(39).getType(), "Set name at 39");
+        assertEquals(Material.PLAYER_HEAD,  gui.getInventory().getItem(40).getType(), "Set skin at 40");
+        assertEquals(Material.WATER_BUCKET, gui.getInventory().getItem(41).getType(), "Reset profile at 41");
     }
 
     @Test void setNameStoresOverrideForTheClickingAdmin() throws Exception {
         PlayerMock admin = server.addPlayer("Admin"); admin.setOp(true);
         AdminPanelGui gui = new AdminPanelGui(plugin);
         gui.open(admin);
-        InventoryClickEvent ev = ConfirmGuiTest.clickSlot(admin, gui, 31); // Set name
+        InventoryClickEvent ev = ConfirmGuiTest.clickSlot(admin, gui, 39); // Set name
         gui.onClick(ev);
         // GUI prompts for chat input; supply it the way the chat-input flow consumes it:
         plugin.chatInput().consume(admin.getUniqueId()).accept("Renamed");

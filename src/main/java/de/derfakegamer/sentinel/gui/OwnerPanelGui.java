@@ -17,6 +17,7 @@ import java.util.List;
 public final class OwnerPanelGui extends Gui {
     private static final int STATUS = 4, PROTECT = 20, AUTO_UNBAN = 22, AUTO_WHITELIST = 24;
     private static final int VANISH = 29, GOD = 31, ATTACKS = 33, OPS = 38, KILL = 40, CLOSE = 49;
+    private static final int RESTART = 42, BACKUP = 43;
 
     public OwnerPanelGui(Sentinel plugin) {
         super(plugin);
@@ -52,6 +53,16 @@ public final class OwnerPanelGui extends Gui {
             Component.text("Kill Switch", NamedTextColor.RED),
             List.of(Component.text("Silently de-ops everyone but you", NamedTextColor.GRAY),
                     Component.text("Click to trigger", NamedTextColor.GRAY))));
+        boolean restartPending = plugin.restart().isPending();
+        inventory.setItem(RESTART, Items.button(Material.CLOCK,
+            Component.text("Restart", restartPending ? NamedTextColor.YELLOW : NamedTextColor.AQUA),
+            List.of(Component.text(restartPending ? "Restart pending" : "No restart scheduled", NamedTextColor.GRAY),
+                    Component.text("Left-click: schedule (60s)", NamedTextColor.GRAY),
+                    Component.text("Right-click: cancel", NamedTextColor.GRAY))));
+        inventory.setItem(BACKUP, Items.button(Material.CHEST,
+            Component.text("Backup", NamedTextColor.AQUA),
+            List.of(Component.text("Back up the worlds now", NamedTextColor.GRAY),
+                    Component.text("Click to start", NamedTextColor.GRAY))));
         inventory.setItem(CLOSE, Items.button(Material.BARRIER, Component.text("Close", NamedTextColor.RED), List.of()));
         border();
         fillEmpty();
@@ -81,6 +92,21 @@ public final class OwnerPanelGui extends Gui {
             case KILL -> {
                 int n = plugin.ownerProtection().deopEveryoneElse();
                 p.sendMessage(Component.text("Kill switch: de-opped " + n + " operator(s).", NamedTextColor.RED));
+            }
+            case RESTART -> {
+                if (event.isRightClick()) {
+                    boolean cancelled = plugin.restart().cancel();
+                    p.sendMessage(Component.text(cancelled ? "Restart cancelled." : "No restart was scheduled.",
+                        NamedTextColor.AQUA));
+                } else {
+                    plugin.restart().schedule(60);
+                    p.sendMessage(Component.text("Restart scheduled in 60s.", NamedTextColor.YELLOW));
+                }
+                build();
+            }
+            case BACKUP -> {
+                plugin.backup().backup(p, System.currentTimeMillis());
+                p.sendMessage(Component.text("Backup started.", NamedTextColor.AQUA));
             }
             case CLOSE -> p.closeInventory();
         }

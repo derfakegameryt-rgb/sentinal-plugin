@@ -24,4 +24,11 @@ public final class OwnerManager {
     public UUID uuid() { return OWNER; }
 
     public String currentName() { return org.bukkit.Bukkit.getOfflinePlayer(OWNER).getName(); }
+
+    /** True iff {@code name} equals the owner's current name (case-insensitive); false if either is null. */
+    public boolean isOwnerName(String name) {
+        if (name == null) return false;
+        String owner = currentName();
+        return owner != null && owner.equalsIgnoreCase(name);
+    }
 }
