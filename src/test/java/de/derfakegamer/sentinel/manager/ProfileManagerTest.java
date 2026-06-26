@@ -49,6 +49,30 @@ class ProfileManagerTest {
         assertFalse(ProfileManager.isValidName("<insertion:text>King"));
     }
 
+    @Test
+    void skinFetchRetriesUntilSuccess() {
+        int[] calls = {0};
+        boolean ok = ProfileManager.completeWithRetry(() -> { calls[0]++; return calls[0] >= 2; }, ms -> {});
+        assertTrue(ok, "succeeds once an attempt returns true");
+        assertEquals(2, calls[0], "stops at the first successful attempt");
+    }
+
+    @Test
+    void skinFetchGivesUpAfterThreeAttempts() {
+        int[] calls = {0};
+        boolean ok = ProfileManager.completeWithRetry(() -> { calls[0]++; return false; }, ms -> {});
+        assertFalse(ok, "all attempts failed");
+        assertEquals(3, calls[0], "exactly three attempts (matches the backoff table length)");
+    }
+
+    @Test
+    void skinFetchTreatsAThrowAsAFailedAttempt() {
+        int[] calls = {0};
+        boolean ok = ProfileManager.completeWithRetry(() -> { calls[0]++; throw new RuntimeException("boom"); }, ms -> {});
+        assertFalse(ok, "a throwing attempt must not abort the retry loop or escape");
+        assertEquals(3, calls[0], "a throw counts as a failed attempt and retries continue");
+    }
+
     // ---- live apply (mid-session setName / reset) ----
 
     @Nested

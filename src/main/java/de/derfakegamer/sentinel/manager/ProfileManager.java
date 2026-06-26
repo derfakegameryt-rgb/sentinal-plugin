@@ -15,6 +15,36 @@ import java.util.regex.Pattern;
 public final class ProfileManager {
     private static final Pattern NAME = Pattern.compile("^[A-Za-z0-9_]{1,16}$");
 
+    // ---- skin fetch retry (Mojang completion is a flaky network call) ----
+
+    /** One profile-completion attempt; returns true if the profile completed with usable textures. */
+    @FunctionalInterface
+    interface ProfileCompleter { boolean complete(); }
+
+    /** Pluggable sleep so tests run without real delays. */
+    @FunctionalInterface
+    interface Sleeper { void sleep(long millis) throws InterruptedException; }
+
+    // One entry per attempt; the value is the backoff slept BEFORE that attempt (so attempt 1 is immediate).
+    static final long[] SKIN_FETCH_BACKOFF_MS = {0L, 250L, 750L};
+
+    /**
+     * Completes a profile with up to {@link #SKIN_FETCH_BACKOFF_MS}.length attempts, sleeping the backoff
+     * before each retry. Async-only (it blocks the calling thread on the sleep). A throwing or false attempt
+     * is retried; returns true on the first success, false if every attempt fails or the thread is interrupted.
+     */
+    static boolean completeWithRetry(ProfileCompleter completer, Sleeper sleeper) {
+        for (long backoff : SKIN_FETCH_BACKOFF_MS) {
+            if (backoff > 0) {
+                try { sleeper.sleep(backoff); }
+                catch (InterruptedException e) { Thread.currentThread().interrupt(); return false; }
+            }
+            try { if (completer.complete()) return true; }
+            catch (Throwable ignored) { /* transient: fall through to the next attempt */ }
+        }
+        return false;
+    }
+
     // Cosmetic tags ONLY (colour/gradient/rainbow/decorations/reset). Deliberately excludes <click>,
     // <hover>, <insertion> etc. so a staff-set name can never become an interactive component for every
     // player. Both validation and rendering use this same instance, so what passes is exactly what shows.
