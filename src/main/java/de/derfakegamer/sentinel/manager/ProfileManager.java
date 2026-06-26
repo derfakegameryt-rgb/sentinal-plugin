@@ -51,19 +51,29 @@ public final class ProfileManager {
     record CachedTexture(String value, String signature, long fetchedAt) {}
 
     static final long SKIN_CACHE_TTL_MS = 5 * 60 * 1000L; // 5 minutes
+    // Above this many entries, a put first purges everything stale — bounds the map without a background
+    // task. The keyspace is skin-source names staff ever copy, so this cap is generous headroom.
+    static final int SKIN_CACHE_MAX = 256;
 
     private final java.util.concurrent.ConcurrentHashMap<String, CachedTexture> skinCache =
         new java.util.concurrent.ConcurrentHashMap<>();
 
     static boolean isFresh(long fetchedAt, long now) { return now - fetchedAt < SKIN_CACHE_TTL_MS; }
 
-    /** The cached textures for {@code key} if still fresh, else null. */
+    /** The cached textures for {@code key} if still fresh, else null. A stale entry is evicted on access. */
     CachedTexture cacheGet(String key, long now) {
         CachedTexture c = skinCache.get(key);
-        return (c != null && isFresh(c.fetchedAt(), now)) ? c : null;
+        if (c == null) return null;
+        if (isFresh(c.fetchedAt(), now)) return c;
+        skinCache.remove(key, c); // evict-on-read so stale entries don't linger
+        return null;
     }
 
     void cachePut(String key, String value, String signature, long now) {
+        // Bound growth: when the map gets large, drop every stale entry before inserting.
+        if (skinCache.size() >= SKIN_CACHE_MAX) {
+            skinCache.entrySet().removeIf(e -> !isFresh(e.getValue().fetchedAt(), now));
+        }
         skinCache.put(key, new CachedTexture(value, signature, now));
     }
 
@@ -88,11 +98,16 @@ public final class ProfileManager {
     private final java.util.concurrent.ConcurrentHashMap<java.util.UUID, String> joinNames =
         new java.util.concurrent.ConcurrentHashMap<>();
 
+    // Skin overrides {value, signature} cached at pre-login so the skin can be applied straight away on
+    // join — without a second DB round-trip — which minimises the brief real-skin pop-in. Keyed by UUID.
+    private final java.util.concurrent.ConcurrentHashMap<java.util.UUID, String[]> loginSkins =
+        new java.util.concurrent.ConcurrentHashMap<>();
+
     /** The cached display-name override for {@code id}, or null if none (read on the main thread). */
     public String overrideJoinName(java.util.UUID id) { return joinNames.get(id); }
 
-    /** Drops the cached override name for {@code id} (called when the player quits). */
-    public void evictJoinName(java.util.UUID id) { joinNames.remove(id); }
+    /** Drops the cached override (name + skin) for {@code id} (called when the player quits). */
+    public void evictJoinName(java.util.UUID id) { joinNames.remove(id); loginSkins.remove(id); }
 
     public ProfileManager(Sentinel plugin, ProfileOverrideDao dao) {
         this.plugin = plugin;
@@ -225,6 +240,7 @@ public final class ProfileManager {
                 }), nm -> {
                     if (!t.isOnline()) { done.accept(false); return; }
                     applyLive(t, nm, fv, fs);
+                    loginSkins.put(id, new String[]{fv, fs}); // keep the join-read cache in sync with a mid-session skin set
                     plugin.audit().record(staff, "SETSKIN", t.getName(), sourceName);
                     done.accept(true);
                 });
@@ -242,6 +258,7 @@ public final class ProfileManager {
             target.playerListName(null);
             target.displayName(null);
             joinNames.remove(id);
+            loginSkins.remove(id); // drop the cached skin too, so a stale entry can't be re-applied
             plugin.nametags().refresh(target); // override gone -> removes the floating name, vanilla returns
             plugin.audit().record(staff, "RESETPROFILE", realName, "");
         });
@@ -297,32 +314,65 @@ public final class ProfileManager {
      * the symptom is "took too long to log in" on every login that has a skin override. Both are applied
      * AFTER the player is online via {@link #applyOverrideOnJoin} (at the cost of a brief skin pop-in).
      */
+    // NOTE: LoginListener now calls lookupOverride() + cacheLogin() directly (so the lookup runs alongside
+    // the ban checks). This convenience wrapper — lookup-then-cache in one blocking call — is retained as a
+    // stable seam for the pre-login tests; keep it in step with that pair.
     public void applyOnLogin(org.bukkit.event.player.AsyncPlayerPreLoginEvent event) {
-        de.derfakegamer.sentinel.model.ProfileOverride o;
+        java.util.UUID id = event.getUniqueId();
         try {
-            o = plugin.db().submitWrite(() -> dao.find(event.getUniqueId())).join();
+            cacheLogin(id, lookupOverride(id).join());
         } catch (Exception e) {
-            return; // never block a login on a profile lookup
+            // never block a login on a profile lookup; leave the caches untouched (join falls back to a read)
         }
-        // Cache the display-name override (if any) so the join/quit broadcast can use it synchronously.
-        if (o != null && o.displayName() != null) joinNames.put(event.getUniqueId(), o.displayName());
-        else joinNames.remove(event.getUniqueId());
+    }
+
+    /**
+     * The stored override lookup as a future, so the login handler can run it alongside the ban checks.
+     * A pure read (no write), so it goes through {@code submit} → the reader pool, letting it run
+     * concurrently with the writer-bound ban checks on a backend with concurrent reads (MySQL).
+     */
+    public java.util.concurrent.CompletableFuture<de.derfakegamer.sentinel.model.ProfileOverride> lookupOverride(
+            java.util.UUID id) {
+        return plugin.db().submit(() -> dao.find(id));
+    }
+
+    /**
+     * Caches a pre-login override lookup so the join handler can apply it without a second DB round-trip:
+     * the display name (for the join/quit broadcast) and the skin {value, signature} (for an immediate
+     * skin apply on join). A null/empty field clears its cache entry.
+     */
+    public void cacheLogin(java.util.UUID id, de.derfakegamer.sentinel.model.ProfileOverride o) {
+        if (o != null && o.displayName() != null) joinNames.put(id, o.displayName());
+        else joinNames.remove(id);
+        if (o != null && o.skinValue() != null) loginSkins.put(id, new String[]{o.skinValue(), o.skinSignature()});
+        else loginSkins.remove(id);
     }
 
     /**
      * Re-applies a stored override (name AND skin) once the player is online. Runs on join — NOT at
      * login — because mutating the login profile is unsafe: a name change pollutes the account name
      * ("(formerly known as …)") and a skin change breaks the secure-profile handshake ("took too long
-     * to log in"). The skin is applied here via {@link #applyLive} (texture swap + resend), so it
-     * pops in a couple of ticks after join. The above-head floating name is restored too when present.
+     * to log in"). The skin is applied here via {@link #applyLive} (texture swap + resend).
+     *
+     * <p>Fast path: the override was cached at pre-login ({@link #cacheLogin}), so it is applied straight
+     * away with no DB round-trip — which keeps the real-skin pop-in to a minimum. Only when the cache has
+     * nothing (e.g. the pre-login lookup failed) does it fall back to an authoritative DB read.
      */
     public void applyOverrideOnJoin(org.bukkit.entity.Player player) {
         java.util.UUID id = player.getUniqueId();
+        String name = joinNames.get(id);
+        String[] skin = loginSkins.get(id);
+        if (name != null || skin != null) {
+            applyLive(player, name, skin != null ? skin[0] : null, skin != null ? skin[1] : null);
+            if (name != null) plugin.nametags().refresh(player); // restore floating name after relog
+            return;
+        }
+        // Cache miss (pre-login lookup did not complete) — read authoritatively as a fallback.
         plugin.db().callbackFor(player, plugin.db().submit(() -> dao.find(id)), o -> {
             if (o == null || !player.isOnline()) return;
             if (o.displayName() == null && o.skinValue() == null) return;
             applyLive(player, o.displayName(), o.skinValue(), o.skinSignature());
-            if (o.displayName() != null) plugin.nametags().refresh(player); // restore floating name after relog
+            if (o.displayName() != null) plugin.nametags().refresh(player);
         });
     }
 }

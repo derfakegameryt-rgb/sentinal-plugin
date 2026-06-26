@@ -195,5 +195,30 @@ class ProfileManagerTest {
             assertNotNull(tex, "a skin-only override must be applied after join");
             assertEquals("SKINVALUE", tex.getValue());
         }
+
+        @Test void skinOverrideIsAppliedFromTheLoginCacheWithoutADbRead() throws Exception {
+            PlayerMock p = server.addPlayer("RealName");
+            // Simulate the pre-login cache (what LoginListener populates via cacheLogin); NOTHING is
+            // written to the DB. The join handler must apply the skin straight from the cache — this is
+            // the fast path that keeps the real-skin pop-in to a minimum.
+            plugin.profile().cacheLogin(p.getUniqueId(), new de.derfakegamer.sentinel.model.ProfileOverride(
+                p.getUniqueId(), null, "CACHEDVALUE", "CACHEDSIG", "Admin", 1L));
+
+            plugin.profile().applyOverrideOnJoin(p);
+            flush();
+
+            com.destroystokyo.paper.profile.ProfileProperty tex =
+                ProfileManager.texturesOf(p.getPlayerProfile());
+            assertNotNull(tex, "skin from the pre-login cache must be applied on join (no DB read needed)");
+            assertEquals("CACHEDVALUE", tex.getValue());
+        }
+
+        @Test void staleTextureCacheEntryIsEvictedOnAccess() {
+            long t0 = 1_000L;
+            plugin.profile().cachePut("notch", "VAL", "SIG", t0);
+            assertNotNull(plugin.profile().cacheGet("notch", t0), "a fresh entry is returned");
+            assertNull(plugin.profile().cacheGet("notch", t0 + ProfileManager.SKIN_CACHE_TTL_MS),
+                "a stale entry returns null and is evicted on access");
+        }
     }
 }
