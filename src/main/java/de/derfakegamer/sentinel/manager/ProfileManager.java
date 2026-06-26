@@ -9,8 +9,9 @@ import java.util.regex.Pattern;
 
 /**
  * Applies and persists staff-set display-name / skin overrides via the Paper PlayerProfile API.
- * No NMS: live changes resend the player with hide/show; persisted overrides are written into the
- * login profile by {@link #applyOnLogin}.
+ * No NMS: live changes resend the player with hide/show. The login profile is never mutated (that
+ * breaks the secure-profile handshake / pollutes the account name); persisted overrides are
+ * re-applied after the player is online by {@link #applyOverrideOnJoin}.
  */
 public final class ProfileManager {
     private static final Pattern NAME = Pattern.compile("^[A-Za-z0-9_]{1,16}$");
@@ -270,10 +271,15 @@ public final class ProfileManager {
     }
 
     /**
-     * Writes a stored SKIN override into the login profile (async pre-login thread; blocking read
-     * OK). The name override is NOT applied here — changing the login profile name would make the
-     * server cache it and trigger vanilla's "(formerly known as …)" message; the display name is
-     * applied after the player is online via {@link #applyNameOnJoin}.
+     * Pre-login hook: caches the stored display-name override so the join/quit broadcast can use it
+     * synchronously. It deliberately does NOT touch the login profile.
+     *
+     * <p>Neither the name nor the SKIN is injected into the login profile here. The name is left alone
+     * because renaming the login profile makes the server cache it and triggers vanilla's
+     * "(formerly known as …)" message. The skin is left alone because replacing the {@code textures}
+     * property of the (signed) login profile breaks the joining player's own secure-profile handshake —
+     * the symptom is "took too long to log in" on every login that has a skin override. Both are applied
+     * AFTER the player is online via {@link #applyOverrideOnJoin} (at the cost of a brief skin pop-in).
      */
     public void applyOnLogin(org.bukkit.event.player.AsyncPlayerPreLoginEvent event) {
         de.derfakegamer.sentinel.model.ProfileOverride o;
@@ -285,24 +291,22 @@ public final class ProfileManager {
         // Cache the display-name override (if any) so the join/quit broadcast can use it synchronously.
         if (o != null && o.displayName() != null) joinNames.put(event.getUniqueId(), o.displayName());
         else joinNames.remove(event.getUniqueId());
-        if (o == null || o.skinValue() == null) return;
-        PlayerProfile profile = event.getPlayerProfile();
-        profile.getProperties().removeIf(p -> "textures".equals(p.getName()));
-        profile.setProperty(new ProfileProperty("textures", o.skinValue(), o.skinSignature()));
-        event.setPlayerProfile(profile);
     }
 
     /**
-     * Re-applies a stored display-name override once the player is online (above the head + tab + chat).
-     * Runs mid-session on join — NOT at login — because the login profile name is deliberately left as
-     * the real account name (see {@link #applyOnLogin}); the rename is applied here via a resend instead.
+     * Re-applies a stored override (name AND skin) once the player is online. Runs on join — NOT at
+     * login — because mutating the login profile is unsafe: a name change pollutes the account name
+     * ("(formerly known as …)") and a skin change breaks the secure-profile handshake ("took too long
+     * to log in"). The skin is applied here via {@link #applyLive} (texture swap + resend), so it
+     * pops in a couple of ticks after join. The above-head floating name is restored too when present.
      */
-    public void applyNameOnJoin(org.bukkit.entity.Player player) {
+    public void applyOverrideOnJoin(org.bukkit.entity.Player player) {
         java.util.UUID id = player.getUniqueId();
         plugin.db().callbackFor(player, plugin.db().submit(() -> dao.find(id)), o -> {
-            if (o == null || o.displayName() == null || !player.isOnline()) return;
+            if (o == null || !player.isOnline()) return;
+            if (o.displayName() == null && o.skinValue() == null) return;
             applyLive(player, o.displayName(), o.skinValue(), o.skinSignature());
-            plugin.nametags().refresh(player); // restore the floating above-head name after a relog
+            if (o.displayName() != null) plugin.nametags().refresh(player); // restore floating name after relog
         });
     }
 }

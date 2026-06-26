@@ -48,7 +48,7 @@ class ProfileApplyOnLoginTest {
     }
 
     @Test
-    void skinOverrideAppliesTexturesToLoginProfile() throws Exception {
+    void skinOverrideDoesNotMutateTheLoginProfile() throws Exception {
         UUID id = UUID.randomUUID();
         store(new de.derfakegamer.sentinel.model.ProfileOverride(id, null, "SKINVALUE", "SKINSIG", "Admin", 1L));
 
@@ -58,10 +58,11 @@ class ProfileApplyOnLoginTest {
 
         plugin.profile().applyOnLogin(event);
 
-        com.destroystokyo.paper.profile.ProfileProperty tex =
-            ProfileManager.texturesOf(event.getPlayerProfile());
-        assertNotNull(tex, "skin override must apply a textures property at login");
-        assertEquals("SKINVALUE", tex.getValue());
+        // The skin must NOT be injected into the login profile: replacing the textures property of the
+        // signed login profile breaks the player's own secure-profile handshake ("took too long to log
+        // in"). The skin is applied AFTER join instead (see ProfileManager#applyOverrideOnJoin).
+        assertNull(ProfileManager.texturesOf(event.getPlayerProfile()),
+            "a skin override must not touch the login profile");
         assertEquals("RealName", event.getPlayerProfile().getName(),
             "applying a skin must not change the account name");
     }

@@ -147,5 +147,24 @@ class ProfileManagerTest {
             flush();
             assertFalse(nickTeam().hasEntry("RealName"), "vanish hides the floating nametag");
         }
+
+        @Test void skinOnlyOverrideIsAppliedAfterJoin() throws Exception {
+            PlayerMock p = server.addPlayer("RealName");
+            // A skin-only override (no display name). The old code applied the skin only at pre-login,
+            // which broke the login handshake; it must now be applied on join instead — including when
+            // there is no name override (the case the old applyNameOnJoin skipped entirely).
+            plugin.db().execute(() -> new de.derfakegamer.sentinel.storage.ProfileOverrideDao(plugin.db().database())
+                .upsert(new de.derfakegamer.sentinel.model.ProfileOverride(
+                    p.getUniqueId(), null, "SKINVALUE", "SKINSIG", "Admin", 1L)));
+            flush();
+
+            plugin.profile().applyOverrideOnJoin(p);
+            flush();
+
+            com.destroystokyo.paper.profile.ProfileProperty tex =
+                ProfileManager.texturesOf(p.getPlayerProfile());
+            assertNotNull(tex, "a skin-only override must be applied after join");
+            assertEquals("SKINVALUE", tex.getValue());
+        }
     }
 }
