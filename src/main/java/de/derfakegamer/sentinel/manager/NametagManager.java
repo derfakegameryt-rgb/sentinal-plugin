@@ -37,10 +37,38 @@ public final class NametagManager {
     // player UUID -> the team it was on BEFORE we moved it to the no-nametag team, so a prefix/TAB
     // plugin's team membership is restored on reset (a player can be on only one team per scoreboard).
     private final ConcurrentHashMap<UUID, String> priorTeam = new ConcurrentHashMap<>();
+    private de.derfakegamer.sentinel.scheduler.TaskHandle reconcileTask; // ~2s self-heal of lost nametags
 
     public NametagManager(Sentinel plugin) {
         this.plugin = plugin;
         this.heightOffset = (float) plugin.getConfig().getDouble("nametag-height", 0.3);
+    }
+
+    /** Starts the ~2s self-healing pass; idempotent. Called once from plugin enable. */
+    public void startReconciliation() {
+        if (reconcileTask != null) return;
+        reconcileTask = plugin.scheduler().globalTimer(this::reconcileAll, 40L, 40L); // 40 ticks ~= 2s
+    }
+
+    /** Stops the self-healing pass; idempotent. Called from {@link #disableAll()}. */
+    public void stopReconciliation() {
+        de.derfakegamer.sentinel.scheduler.TaskHandle t = reconcileTask;
+        reconcileTask = null;
+        if (t != null) try { t.cancel(); } catch (Throwable ignored) { }
+    }
+
+    // Catch-all repair: for every nicked online player, re-run refresh() (remounts a detached/dead
+    // TextDisplay, re-asserts the no-nametag team, respects vanish) and re-assert the tab/chat name.
+    private void reconcileAll() {
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            if (plugin.profile().overrideJoinName(p.getUniqueId()) == null) continue;
+            try {
+                refresh(p);
+                plugin.profile().reassertNameDisplay(p);
+            } catch (Throwable t) {
+                plugin.getLogger().fine("nametag reconcile failed for " + p.getName() + ": " + t.getMessage());
+            }
+        }
     }
 
     /**
@@ -69,6 +97,7 @@ public final class NametagManager {
 
     /** Removes every floating name (called on plugin disable, best-effort and synchronous). */
     public void disableAll() {
+        stopReconciliation();
         for (UUID displayId : displays.values()) {
             try {
                 Entity e = Bukkit.getEntity(displayId);
@@ -114,6 +143,10 @@ public final class NametagManager {
                         new Vector3f(1f, 1f, 1f), new AxisAngle4f()));
                 });
                 player.addPassenger(td); // ride the player so it follows with no per-tick work
+                // The owner's own client predicts its movement locally while the passenger is server-driven,
+                // so to the owner the name would lag / hang in the air. Hide it from the owner (vanilla never
+                // shows you your own above-head name); everyone else sees it follow normally.
+                player.hideEntity(plugin, td);
                 displays.put(player.getUniqueId(), td.getUniqueId());
             } catch (Throwable t) {
                 plugin.getLogger().fine("nametag show failed for " + player.getName() + ": " + t.getMessage());

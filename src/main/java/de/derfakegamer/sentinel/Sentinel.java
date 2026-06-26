@@ -113,6 +113,7 @@ public class Sentinel extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new de.derfakegamer.sentinel.listener.OwnerCommandVisibilityListener(this), this);
         scheduler.asyncTimer(() -> punishmentManager.pruneWarns(getConfig().getInt("warns.expiry-days", 7)),
             1_728_000L, 1_728_000L); // daily (24h in ticks)
+        nametagManager.startReconciliation(); // ~2s self-heal of staff-set floating nametags
         SentinelCommand sentinelCmd = new de.derfakegamer.sentinel.command.SentinelCommand(this);
         getCommand("sentinel").setExecutor(sentinelCmd);
         getCommand("sn").setExecutor(sentinelCmd);

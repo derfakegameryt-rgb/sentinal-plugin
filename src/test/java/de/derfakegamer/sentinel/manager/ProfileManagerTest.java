@@ -49,6 +49,37 @@ class ProfileManagerTest {
         assertFalse(ProfileManager.isValidName("<insertion:text>King"));
     }
 
+    @Test
+    void skinFetchRetriesUntilSuccess() {
+        int[] calls = {0};
+        boolean ok = ProfileManager.completeWithRetry(() -> { calls[0]++; return calls[0] >= 2; }, ms -> {});
+        assertTrue(ok, "succeeds once an attempt returns true");
+        assertEquals(2, calls[0], "stops at the first successful attempt");
+    }
+
+    @Test
+    void skinFetchGivesUpAfterThreeAttempts() {
+        int[] calls = {0};
+        boolean ok = ProfileManager.completeWithRetry(() -> { calls[0]++; return false; }, ms -> {});
+        assertFalse(ok, "all attempts failed");
+        assertEquals(3, calls[0], "exactly three attempts (matches the backoff table length)");
+    }
+
+    @Test
+    void skinFetchTreatsAThrowAsAFailedAttempt() {
+        int[] calls = {0};
+        boolean ok = ProfileManager.completeWithRetry(() -> { calls[0]++; throw new RuntimeException("boom"); }, ms -> {});
+        assertFalse(ok, "a throwing attempt must not abort the retry loop or escape");
+        assertEquals(3, calls[0], "a throw counts as a failed attempt and retries continue");
+    }
+
+    @Test
+    void cachedSkinIsFreshOnlyWithinTtl() {
+        assertTrue(ProfileManager.isFresh(1_000L, 1_000L), "same instant is fresh");
+        assertTrue(ProfileManager.isFresh(1_000L, 1_000L + ProfileManager.SKIN_CACHE_TTL_MS - 1), "just inside the TTL is fresh");
+        assertFalse(ProfileManager.isFresh(1_000L, 1_000L + ProfileManager.SKIN_CACHE_TTL_MS), "at the TTL boundary it is stale");
+    }
+
     // ---- live apply (mid-session setName / reset) ----
 
     @Nested
@@ -115,6 +146,54 @@ class ProfileManagerTest {
             plugin.vanish().toggle(p); // a vanished player must have no floating name betraying them
             flush();
             assertFalse(nickTeam().hasEntry("RealName"), "vanish hides the floating nametag");
+        }
+
+        @Test void reconciliationReassertsAnOverwrittenTabName() throws Exception {
+            PlayerMock p = server.addPlayer("RealName");
+            plugin.profile().setName(p, "Renamed", "Admin");
+            flush();
+            // A TAB/prefix plugin clobbers the tab + chat name after we set it.
+            p.playerListName(net.kyori.adventure.text.Component.text("Hijacked"));
+            p.displayName(net.kyori.adventure.text.Component.text("Hijacked"));
+
+            plugin.profile().reassertNameDisplay(p); // what the reconciliation pass calls per player
+            flush();
+
+            assertEquals("Renamed", plain(p.playerListName()), "reconciliation restores the override tab name");
+            assertEquals("Renamed", plain(p.displayName()), "reconciliation restores the override chat name");
+        }
+
+        @Test void teleportKeepsTheCustomNametagActive() throws Exception {
+            PlayerMock p = server.addPlayer("RealName");
+            plugin.profile().setName(p, "Renamed", "Admin");
+            flush();
+            assertTrue(nickTeam().hasEntry("RealName"), "nametag active before teleport");
+
+            org.bukkit.Location to = p.getLocation().clone().add(1000, 0, 1000);
+            server.getPluginManager().callEvent(new org.bukkit.event.player.PlayerTeleportEvent(p, p.getLocation(), to));
+            flush();
+
+            assertTrue(nickTeam().hasEntry("RealName"),
+                "after a teleport the custom nametag is re-applied (vanilla stays suppressed)");
+        }
+
+        @Test void skinOnlyOverrideIsAppliedAfterJoin() throws Exception {
+            PlayerMock p = server.addPlayer("RealName");
+            // A skin-only override (no display name). The old code applied the skin only at pre-login,
+            // which broke the login handshake; it must now be applied on join instead — including when
+            // there is no name override (the case the old applyNameOnJoin skipped entirely).
+            plugin.db().execute(() -> new de.derfakegamer.sentinel.storage.ProfileOverrideDao(plugin.db().database())
+                .upsert(new de.derfakegamer.sentinel.model.ProfileOverride(
+                    p.getUniqueId(), null, "SKINVALUE", "SKINSIG", "Admin", 1L)));
+            flush();
+
+            plugin.profile().applyOverrideOnJoin(p);
+            flush();
+
+            com.destroystokyo.paper.profile.ProfileProperty tex =
+                ProfileManager.texturesOf(p.getPlayerProfile());
+            assertNotNull(tex, "a skin-only override must be applied after join");
+            assertEquals("SKINVALUE", tex.getValue());
         }
     }
 }

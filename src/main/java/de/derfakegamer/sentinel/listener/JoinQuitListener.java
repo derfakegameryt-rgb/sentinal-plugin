@@ -25,7 +25,7 @@ public final class JoinQuitListener implements Listener {
     public void onJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         plugin.vanish().applyOnJoin(player);
-        plugin.profile().applyNameOnJoin(player); // re-apply a stored display-name override (tab/chat)
+        plugin.profile().applyOverrideOnJoin(player); // re-apply stored name + skin override now we're online
 
         String overrideName = plugin.profile().overrideJoinName(player.getUniqueId());
         if (overrideName != null) event.joinMessage(nameMessage("multiplayer.player.joined", overrideName));

@@ -9,11 +9,63 @@ import java.util.regex.Pattern;
 
 /**
  * Applies and persists staff-set display-name / skin overrides via the Paper PlayerProfile API.
- * No NMS: live changes resend the player with hide/show; persisted overrides are written into the
- * login profile by {@link #applyOnLogin}.
+ * No NMS: live changes resend the player with hide/show. The login profile is never mutated (that
+ * breaks the secure-profile handshake / pollutes the account name); persisted overrides are
+ * re-applied after the player is online by {@link #applyOverrideOnJoin}.
  */
 public final class ProfileManager {
     private static final Pattern NAME = Pattern.compile("^[A-Za-z0-9_]{1,16}$");
+
+    // ---- skin fetch retry (Mojang completion is a flaky network call) ----
+
+    /** One profile-completion attempt; returns true if the profile completed with usable textures. */
+    @FunctionalInterface
+    interface ProfileCompleter { boolean complete(); }
+
+    /** Pluggable sleep so tests run without real delays. */
+    @FunctionalInterface
+    interface Sleeper { void sleep(long millis) throws InterruptedException; }
+
+    // One entry per attempt; the value is the backoff slept BEFORE that attempt (so attempt 1 is immediate).
+    static final long[] SKIN_FETCH_BACKOFF_MS = {0L, 250L, 750L};
+
+    /**
+     * Completes a profile with up to {@link #SKIN_FETCH_BACKOFF_MS}.length attempts, sleeping the backoff
+     * before each retry. Async-only (it blocks the calling thread on the sleep). A throwing or false attempt
+     * is retried; returns true on the first success, false if every attempt fails or the thread is interrupted.
+     */
+    static boolean completeWithRetry(ProfileCompleter completer, Sleeper sleeper) {
+        for (long backoff : SKIN_FETCH_BACKOFF_MS) {
+            if (backoff > 0) {
+                try { sleeper.sleep(backoff); }
+                catch (InterruptedException e) { Thread.currentThread().interrupt(); return false; }
+            }
+            try { if (completer.complete()) return true; }
+            catch (Throwable ignored) { /* transient: fall through to the next attempt */ }
+        }
+        return false;
+    }
+
+    // ---- texture cache (avoid re-hitting Mojang for repeated sets / survive a momentary outage) ----
+
+    record CachedTexture(String value, String signature, long fetchedAt) {}
+
+    static final long SKIN_CACHE_TTL_MS = 5 * 60 * 1000L; // 5 minutes
+
+    private final java.util.concurrent.ConcurrentHashMap<String, CachedTexture> skinCache =
+        new java.util.concurrent.ConcurrentHashMap<>();
+
+    static boolean isFresh(long fetchedAt, long now) { return now - fetchedAt < SKIN_CACHE_TTL_MS; }
+
+    /** The cached textures for {@code key} if still fresh, else null. */
+    CachedTexture cacheGet(String key, long now) {
+        CachedTexture c = skinCache.get(key);
+        return (c != null && isFresh(c.fetchedAt(), now)) ? c : null;
+    }
+
+    void cachePut(String key, String value, String signature, long now) {
+        skinCache.put(key, new CachedTexture(value, signature, now));
+    }
 
     // Cosmetic tags ONLY (colour/gradient/rainbow/decorations/reset). Deliberately excludes <click>,
     // <hover>, <insertion> etc. so a staff-set name can never become an interactive component for every
@@ -141,23 +193,38 @@ public final class ProfileManager {
                         java.util.function.Consumer<Boolean> done) {
         java.util.UUID id = target.getUniqueId();
         plugin.scheduler().runAsync(() -> {
-            PlayerProfile src = org.bukkit.Bukkit.createProfile(sourceName);
-            boolean ok = src.complete(true);
-            ProfileProperty tex = ok ? texturesOf(src) : null;
+            String key = sourceName.toLowerCase(java.util.Locale.ROOT);
+            long now = System.currentTimeMillis();
+            String value;
+            String signature;
+            CachedTexture cached = cacheGet(key, now);
+            if (cached != null) {
+                value = cached.value();
+                signature = cached.signature();
+            } else {
+                PlayerProfile src = org.bukkit.Bukkit.createProfile(sourceName);
+                boolean ok = completeWithRetry(() -> src.complete(true), Thread::sleep);
+                ProfileProperty tex = ok ? texturesOf(src) : null;
+                if (tex == null) { plugin.scheduler().runGlobal(() -> done.accept(false)); return; }
+                value = tex.getValue();
+                signature = tex.getSignature();
+                cachePut(key, value, signature, now);
+            }
+            final String fv = value;
+            final String fs = signature;
             plugin.scheduler().runGlobal(() -> {
                 org.bukkit.entity.Player t = org.bukkit.Bukkit.getPlayer(id);
-                if (t == null || !t.isOnline() || tex == null) { done.accept(false); return; }
-                long now = System.currentTimeMillis();
+                if (t == null || !t.isOnline()) { done.accept(false); return; }
+                long ts = System.currentTimeMillis();
                 // find + upsert on the single writer thread so the existing name override is preserved atomically.
                 plugin.db().callbackFor(t, plugin.db().submitWrite(() -> {
                     de.derfakegamer.sentinel.model.ProfileOverride existing = dao.find(id);
                     String nm = existing != null ? existing.displayName() : null;
-                    dao.upsert(new de.derfakegamer.sentinel.model.ProfileOverride(
-                        id, nm, tex.getValue(), tex.getSignature(), staff, now));
+                    dao.upsert(new de.derfakegamer.sentinel.model.ProfileOverride(id, nm, fv, fs, staff, ts));
                     return nm;
                 }), nm -> {
                     if (!t.isOnline()) { done.accept(false); return; }
-                    applyLive(t, nm, tex.getValue(), tex.getSignature());
+                    applyLive(t, nm, fv, fs);
                     plugin.audit().record(staff, "SETSKIN", t.getName(), sourceName);
                     done.accept(true);
                 });
@@ -184,7 +251,7 @@ public final class ProfileManager {
         plugin.scheduler().runAsync(() -> {
             try {
                 PlayerProfile real = org.bukkit.Bukkit.createProfile(id, realName);
-                if (!real.complete(true)) return;
+                if (!completeWithRetry(() -> real.complete(true), Thread::sleep)) return;
                 ProfileProperty tex = texturesOf(real);
                 if (tex == null) return;
                 plugin.scheduler().runGlobal(() -> {
@@ -204,10 +271,31 @@ public final class ProfileManager {
     }
 
     /**
-     * Writes a stored SKIN override into the login profile (async pre-login thread; blocking read
-     * OK). The name override is NOT applied here — changing the login profile name would make the
-     * server cache it and trigger vanilla's "(formerly known as …)" message; the display name is
-     * applied after the player is online via {@link #applyNameOnJoin}.
+     * Re-applies the cached display-name override to the live tab + chat name (reconciliation). Uses the
+     * cached name (no DB hit) and runs on the entity thread. No-op when there is no override or the player
+     * is offline. The above-head floating name is handled separately by {@link NametagManager#refresh}.
+     */
+    public void reassertNameDisplay(org.bukkit.entity.Player player) {
+        String name = joinNames.get(player.getUniqueId());
+        if (name == null) return;
+        net.kyori.adventure.text.Component rendered = renderName(name);
+        plugin.scheduler().runForEntity(player, () -> {
+            if (!player.isOnline()) return;
+            player.playerListName(rendered);
+            player.displayName(rendered);
+        });
+    }
+
+    /**
+     * Pre-login hook: caches the stored display-name override so the join/quit broadcast can use it
+     * synchronously. It deliberately does NOT touch the login profile.
+     *
+     * <p>Neither the name nor the SKIN is injected into the login profile here. The name is left alone
+     * because renaming the login profile makes the server cache it and triggers vanilla's
+     * "(formerly known as …)" message. The skin is left alone because replacing the {@code textures}
+     * property of the (signed) login profile breaks the joining player's own secure-profile handshake —
+     * the symptom is "took too long to log in" on every login that has a skin override. Both are applied
+     * AFTER the player is online via {@link #applyOverrideOnJoin} (at the cost of a brief skin pop-in).
      */
     public void applyOnLogin(org.bukkit.event.player.AsyncPlayerPreLoginEvent event) {
         de.derfakegamer.sentinel.model.ProfileOverride o;
@@ -219,24 +307,22 @@ public final class ProfileManager {
         // Cache the display-name override (if any) so the join/quit broadcast can use it synchronously.
         if (o != null && o.displayName() != null) joinNames.put(event.getUniqueId(), o.displayName());
         else joinNames.remove(event.getUniqueId());
-        if (o == null || o.skinValue() == null) return;
-        PlayerProfile profile = event.getPlayerProfile();
-        profile.getProperties().removeIf(p -> "textures".equals(p.getName()));
-        profile.setProperty(new ProfileProperty("textures", o.skinValue(), o.skinSignature()));
-        event.setPlayerProfile(profile);
     }
 
     /**
-     * Re-applies a stored display-name override once the player is online (above the head + tab + chat).
-     * Runs mid-session on join — NOT at login — because the login profile name is deliberately left as
-     * the real account name (see {@link #applyOnLogin}); the rename is applied here via a resend instead.
+     * Re-applies a stored override (name AND skin) once the player is online. Runs on join — NOT at
+     * login — because mutating the login profile is unsafe: a name change pollutes the account name
+     * ("(formerly known as …)") and a skin change breaks the secure-profile handshake ("took too long
+     * to log in"). The skin is applied here via {@link #applyLive} (texture swap + resend), so it
+     * pops in a couple of ticks after join. The above-head floating name is restored too when present.
      */
-    public void applyNameOnJoin(org.bukkit.entity.Player player) {
+    public void applyOverrideOnJoin(org.bukkit.entity.Player player) {
         java.util.UUID id = player.getUniqueId();
         plugin.db().callbackFor(player, plugin.db().submit(() -> dao.find(id)), o -> {
-            if (o == null || o.displayName() == null || !player.isOnline()) return;
+            if (o == null || !player.isOnline()) return;
+            if (o.displayName() == null && o.skinValue() == null) return;
             applyLive(player, o.displayName(), o.skinValue(), o.skinSignature());
-            plugin.nametags().refresh(player); // restore the floating above-head name after a relog
+            if (o.displayName() != null) plugin.nametags().refresh(player); // restore floating name after relog
         });
     }
 }
