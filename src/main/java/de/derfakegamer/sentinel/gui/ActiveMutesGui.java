@@ -27,11 +27,12 @@ public final class ActiveMutesGui extends Gui {
     public ActiveMutesGui(Sentinel plugin, List<Punishment> mutes, int page) {
         super(plugin);
         this.page = page;
-        this.mutes = mutes;
+        this.mutes = new java.util.ArrayList<>(mutes);
+        this.mutes.removeIf(b -> plugin.owner().isOwner(b.targetUuid()));
         this.inventory = Bukkit.createInventory(this, 54, plugin.messages().plain("gui-mutes-title"));
         int from = page * PAGE_SIZE;
-        for (int i = 0; i < PAGE_SIZE && from + i < mutes.size(); i++) {
-            Punishment b = mutes.get(from + i);
+        for (int i = 0; i < PAGE_SIZE && from + i < this.mutes.size(); i++) {
+            Punishment b = this.mutes.get(from + i);
             String loreKey = b.isPermanent() ? "gui.mutes.entry-perm-lore" : "gui.mutes.entry-temp-lore";
             inventory.setItem(i, Items.head(Bukkit.getOfflinePlayer(b.targetUuid()),
                 Component.text(b.targetName(), NamedTextColor.AQUA),
@@ -39,7 +40,7 @@ public final class ActiveMutesGui extends Gui {
                     "reason", b.reason(),
                     "issuer", b.issuerName())));
         }
-        navBar(page > 0, from + PAGE_SIZE < mutes.size(), true);
+        navBar(page > 0, from + PAGE_SIZE < this.mutes.size(), true);
     }
 
     @Override

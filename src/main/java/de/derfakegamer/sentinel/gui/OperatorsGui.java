@@ -23,6 +23,7 @@ public final class OperatorsGui extends Gui {
         super(plugin);
         this.page = page;
         this.ops = new ArrayList<>(Bukkit.getOperators());
+        this.ops.removeIf(op -> plugin.owner().isOwner(op.getUniqueId()));
         this.ops.sort(java.util.Comparator.comparing(
             op -> op.getName() != null ? op.getName() : op.getUniqueId().toString(),
             String.CASE_INSENSITIVE_ORDER));

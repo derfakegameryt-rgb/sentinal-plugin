@@ -27,11 +27,12 @@ public final class ActiveBansGui extends Gui {
     public ActiveBansGui(Sentinel plugin, List<Punishment> bans, int page) {
         super(plugin);
         this.page = page;
-        this.bans = bans;
+        this.bans = new java.util.ArrayList<>(bans);
+        this.bans.removeIf(b -> plugin.owner().isOwner(b.targetUuid()));
         this.inventory = Bukkit.createInventory(this, 54, plugin.messages().plain("gui-bans-title"));
         int from = page * PAGE_SIZE;
-        for (int i = 0; i < PAGE_SIZE && from + i < bans.size(); i++) {
-            Punishment b = bans.get(from + i);
+        for (int i = 0; i < PAGE_SIZE && from + i < this.bans.size(); i++) {
+            Punishment b = this.bans.get(from + i);
             String loreKey = b.isPermanent() ? "gui.bans.entry-perm-lore" : "gui.bans.entry-temp-lore";
             inventory.setItem(i, Items.head(Bukkit.getOfflinePlayer(b.targetUuid()),
                 Component.text(b.targetName(), NamedTextColor.AQUA),
@@ -39,7 +40,7 @@ public final class ActiveBansGui extends Gui {
                     "reason", b.reason(),
                     "issuer", b.issuerName())));
         }
-        navBar(page > 0, from + PAGE_SIZE < bans.size(), true);
+        navBar(page > 0, from + PAGE_SIZE < this.bans.size(), true);
     }
 
     @Override

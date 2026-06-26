@@ -45,6 +45,7 @@ public final class SearchResultsGui extends Gui {
         if (stored != null) found.putIfAbsent(stored.uuid(), Bukkit.getOfflinePlayer(stored.uuid()));
 
         results.addAll(found.values());
+        results.removeIf(op -> plugin.owner().isOwner(op.getUniqueId()));
         results.sort(java.util.Comparator.comparing(
             op -> op.getName() != null ? op.getName() : op.getUniqueId().toString(),
             String.CASE_INSENSITIVE_ORDER));

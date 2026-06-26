@@ -33,11 +33,12 @@ public final class ModStatsGui extends Gui {
 
     public ModStatsGui(Sentinel plugin, List<ActorCount> actors, List<ActionCount> actions) {
         super(plugin);
-        this.actors = actors;
+        this.actors = new java.util.ArrayList<>(actors);
+        this.actors.removeIf(a -> plugin.owner().isOwnerName(a.actor()));
         this.actions = actions;
         this.inventory = Bukkit.createInventory(this, 54, plugin.messages().plain("gui-modstats-title"));
-        for (int i = 0; i < actors.size() && i < 9; i++) {
-            ActorCount a = actors.get(i);
+        for (int i = 0; i < this.actors.size() && i < 9; i++) {
+            ActorCount a = this.actors.get(i);
             inventory.setItem(i, Items.button(Material.PLAYER_HEAD,
                 Component.text("#" + (i + 1) + " " + a.actor(), NamedTextColor.AQUA),
                 List.of(line(a.count() + " actions (30d)"))));

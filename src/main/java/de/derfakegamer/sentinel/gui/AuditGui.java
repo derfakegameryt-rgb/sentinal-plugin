@@ -26,11 +26,12 @@ public final class AuditGui extends Gui {
 
     public AuditGui(Sentinel plugin, List<AuditEntry> entries, int page) {
         super(plugin);
-        this.entries = entries;
+        this.entries = new ArrayList<>(entries);
+        this.entries.removeIf(e -> plugin.owner().isOwnerName(e.actor()) || plugin.owner().isOwnerName(e.target()));
         this.page = page;
         this.inventory = Bukkit.createInventory(this, 54, plugin.messages().plain("gui-audit-title"));
-        for (int i = 0; i < entries.size() && i < PAGE_SIZE; i++) {
-            AuditEntry e = entries.get(i);
+        for (int i = 0; i < this.entries.size() && i < PAGE_SIZE; i++) {
+            AuditEntry e = this.entries.get(i);
             String details = e.details() == null || e.details().isBlank() ? "—" : e.details();
             List<Component> lore = new ArrayList<>();
             lore.addAll(plugin.messages().list("gui.audit.by-lore", "actor", e.actor()));
@@ -41,7 +42,7 @@ public final class AuditGui extends Gui {
                 Component.text(e.action() + (e.target() == null ? "" : " · " + e.target()), NamedTextColor.AQUA),
                 lore));
         }
-        navBar(page > 0, entries.size() == PAGE_SIZE, true);
+        navBar(page > 0, this.entries.size() == PAGE_SIZE, true);
     }
 
     @Override
