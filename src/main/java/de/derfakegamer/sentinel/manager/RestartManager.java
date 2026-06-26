@@ -14,6 +14,9 @@ public final class RestartManager {
 
     public RestartManager(Sentinel plugin) { this.plugin = plugin; }
 
+    /** True while a restart countdown is scheduled (set by schedule(), cleared by cancel()). */
+    public boolean isPending() { return task != null; }
+
     /** True if a given seconds-remaining value should trigger a warning broadcast. */
     public boolean isWarnTick(int secondsRemaining) { return MARKS.contains(secondsRemaining); }
 

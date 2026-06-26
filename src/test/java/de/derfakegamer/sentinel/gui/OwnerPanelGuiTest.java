@@ -26,6 +26,12 @@ class OwnerPanelGuiTest {
     }
     @AfterEach void tearDown() { MockBukkit.unmock(); }
 
+    @Test void ownerPanelHasRestartAndBackupButtons() {
+        OwnerPanelGui gui = new OwnerPanelGui(plugin);
+        assertEquals(org.bukkit.Material.CLOCK, gui.getInventory().getItem(42).getType(), "restart button present");   // RESTART
+        assertEquals(org.bukkit.Material.CHEST, gui.getInventory().getItem(43).getType(), "backup button present");    // BACKUP
+    }
+
     @Test void panelOpensWith54Slots() {
         OwnerPanelGui gui = new OwnerPanelGui(plugin);
         gui.open(owner);
