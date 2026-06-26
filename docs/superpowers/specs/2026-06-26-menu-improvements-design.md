@@ -5,15 +5,19 @@
 
 ## Goal
 
-Two related GUI improvements:
+Three related GUI improvements:
 
-1. **Admin Panel** — regroup the buttons into clean category rows and surface three
-   existing tools that are currently not reachable from the panel (ModStats, ChatLog,
-   Templates).
+1. **Admin Panel** — regroup the buttons into clean category rows and surface the one
+   genuinely-missing top-level tool, **ModStats**. (ChatLog and Templates are inherently
+   per-player and already reachable from the Player-Manager → player-actions menu, so they
+   are NOT added top-level.)
 2. **Owner Panel** — add a "Server control" group: Restart and Backup.
+3. **Hide the owner from all admin-facing views** — the configured owner must not appear
+   in any admin GUI (operators, players, search, alts, mod stats, active bans/mutes,
+   audit), completing the owner feature's "leave no visible trace" guarantee.
 
-No change to existing behaviour of the tools themselves; this is purely menu wiring of
-existing managers.
+No change to the behaviour of the tools themselves; this is menu wiring of existing
+managers plus owner-filtering of existing list views.
 
 ## Background
 
@@ -27,27 +31,27 @@ existing managers.
 - `RestartManager.schedule(int seconds)` / `cancel()` and
   `BackupManager.backup(CommandSender, long stamp)` already exist.
 
-## Part A — Admin Panel regroup + new tools
+## Part A — Admin Panel regroup + ModStats
 
 Re-lay the inner area (columns 1–7) into four category rows:
 
 | Row | Category | Buttons |
 |-----|----------|---------|
-| 1 | General / server | Operators, Whitelist, **Templates** (new) |
-| 2 | Moderation | Bans, Mutes, Reports, Appeals, Audit, **ChatLog** (new) |
+| 1 | General / server | Operators, Whitelist |
+| 2 | Moderation | Bans, Mutes, Reports, Appeals, Audit |
 | 3 | Players & stats | Player-Manager, **ModStats** (new) |
 | 4 | Self / staff tools | Vanish, StaffChat, SetName, SetSkin, Reset |
 
-- New buttons reuse the existing pattern: `button(Material, nameKey, loreKey)` with new
-  `gui.panel.*` keys added to `messages.yml` (default English + German if the file is
-  bilingual; match the existing key style).
-- Click handlers open the existing GUIs: `TemplatesGui`, `ChatLogGui`, `ModStatsGui`
-  (using each one's existing open/constructor convention).
-- `AltsGui`, `NotesGui`, `InvseeGui` stay per-player (reached from Player-Manager), not
-  added to the top level.
-- Suggested materials: Templates = `WRITABLE_BOOK` (or `BOOKSHELF`), ChatLog = `BOOK`/
-  `PAPER`, ModStats = `KNOWLEDGE_BOOK`/`CLOCK` — final choice in the plan, must not collide
-  confusingly with existing icons.
+- The one new button (**ModStats**) reuses the existing pattern: `button(Material, nameKey,
+  loreKey)` with new `gui.panel.modstats` / `gui.panel.modstats-lore` keys added to
+  `messages.yml` (match the existing key style and every language present).
+- Its click handler opens the existing GUI: `ModStatsGui.open(plugin, viewer)`.
+- ChatLog and Templates are NOT added top-level — they require a target player and are
+  already reachable per-player from the player-actions menu (`ChatLogGui.open(plugin,
+  target, viewer)` / `new TemplatesGui(plugin, target)`). `AltsGui`, `NotesGui`,
+  `InvseeGui` likewise stay per-player.
+- Suggested material for ModStats: `KNOWLEDGE_BOOK` (final choice in the plan; must not
+  collide confusingly with existing icons).
 - `border()` + `fillEmpty()` unchanged; `CLOSE` stays at slot 49. Exact slot numbers are
   fixed in the implementation plan.
 
@@ -67,6 +71,38 @@ owner style (no audit logging, owner-only guarded).
 - Click: `plugin.backup().backup(p, System.currentTimeMillis())`.
 - Send the owner a short confirmation message (hard-coded, owner style).
 
+## Part C — Hide the owner from all admin-facing views
+
+The configured owner must not appear in any admin GUI. Each of these GUIs paginates
+**in memory from a full list** (or is a single lookup), so the owner is filtered at
+construction, before pagination — keeping page counts correct without DAO changes.
+
+Owner identity:
+- By UUID: `plugin.owner().isOwner(uuid)` (and `plugin.owner().uuid()`).
+- By name (for views keyed on an actor/target *name* string): a new helper
+  `plugin.owner().isOwnerName(String name)` — case-insensitive compare to the owner's
+  known name (`plugin.ownerProtection().ownerName()`); returns false when the name or the
+  owner name is null.
+
+| GUI | Data | Filter |
+|-----|------|--------|
+| `OperatorsGui` | `Bukkit.getOperators()` | drop entries where `isOwner(uuid)` |
+| `PlayersGui` | `Bukkit.getOnlinePlayers()` | drop where `isOwner(uuid)` |
+| `AltsGui` | `players().alts(target)` list | drop where `isOwner(uuid)` |
+| `ActiveBansGui` | bans list | drop where `isOwner(targetUuid)` |
+| `ActiveMutesGui` | mutes list | drop where `isOwner(targetUuid)` |
+| `ModStatsGui` | `audit().topActors(...)` | drop `ActorCount` where `isOwnerName(actor)` |
+| `AuditGui` | audit entries list | drop entries where `isOwnerName(actor)` OR `isOwnerName(target)` |
+| `SearchResultsGui` | single `players().byName(query)` record | if the record is the owner (`isOwner(uuid)`), render as "not found" (same as a null record) |
+
+- Filtering happens in each GUI's constructor/opener on the already-fetched list, before
+  the population loop — never mid-pagination.
+- The owner's OWN panels (`OwnerPanelGui`, `OwnerOpsGui`, `OwnerAttacksGui`) are unaffected
+  — they are owner-only and intentionally show owner data.
+- Realistically the owner already never appears in bans/mutes (auto-unban) or audit (owner
+  actions are never logged); these filters are defensive completeness so a stray entry can
+  never leak.
+
 ## What stays the same
 
 - Owner panel keeps its no-audit, hard-coded-label, owner-only-guarded character.
@@ -77,11 +113,16 @@ owner style (no audit logging, owner-only guarded).
 ## Testing
 
 - **Unit (MockBukkit + JUnit 5, matching existing GUI/listener tests):**
-  - Admin panel: clicking the new ModStats/ChatLog/Templates slots opens the right GUI
-    (or at least does not error and is wired to the correct handler) — mirror existing
-    `AdminPanelGui`-style coverage if present; otherwise a construction/wiring smoke test.
+  - Admin panel: clicking the new ModStats slot opens `ModStatsGui` (or is wired to the
+    correct handler without error) — mirror existing `AdminPanelGui`-style coverage if
+    present; otherwise a construction/wiring smoke test.
+  - Owner filtering: `OwnerManager.isOwnerName(...)` — true for the owner's name
+    (case-insensitive), false for others / null. Plus a representative GUI test that the
+    owner UUID is excluded from a constructed list view (e.g. `OperatorsGui` /
+    `PlayersGui`) given a list containing the owner.
 - **Manual:** owner panel Restart (left-click schedule + right-click cancel) and Backup
-  (file produced); admin panel new buttons open the correct screens.
+  (file produced); admin panel ModStats button opens the stats screen; owner does not
+  appear in operators/players/search/alts/mod-stats/bans/mutes/audit for a non-owner staff.
 
 ## Out of scope
 
@@ -91,3 +132,7 @@ owner style (no audit logging, owner-only guarded).
   `OwnerProtectionManager` changes.
 - Adding Alts/Notes/Invsee to the admin top level.
 - Any redesign of the per-player GUIs themselves.
+- **LuckPerms compatibility** (replacing the `isOp()`-as-staff checks with a `sentinel.staff`
+  permission node across ChatListener, StaffChatManager, ReportManager, VanishManager,
+  ModerationService, ClearChatCommand, etc.) — deferred to its own spec + plan as a separate
+  follow-up unit, to be done after this menu work.
