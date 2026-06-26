@@ -271,6 +271,22 @@ public final class ProfileManager {
     }
 
     /**
+     * Re-applies the cached display-name override to the live tab + chat name (reconciliation). Uses the
+     * cached name (no DB hit) and runs on the entity thread. No-op when there is no override or the player
+     * is offline. The above-head floating name is handled separately by {@link NametagManager#refresh}.
+     */
+    public void reassertNameDisplay(org.bukkit.entity.Player player) {
+        String name = joinNames.get(player.getUniqueId());
+        if (name == null) return;
+        net.kyori.adventure.text.Component rendered = renderName(name);
+        plugin.scheduler().runForEntity(player, () -> {
+            if (!player.isOnline()) return;
+            player.playerListName(rendered);
+            player.displayName(rendered);
+        });
+    }
+
+    /**
      * Pre-login hook: caches the stored display-name override so the join/quit broadcast can use it
      * synchronously. It deliberately does NOT touch the login profile.
      *

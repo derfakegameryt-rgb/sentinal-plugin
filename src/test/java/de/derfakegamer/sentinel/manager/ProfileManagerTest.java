@@ -148,6 +148,21 @@ class ProfileManagerTest {
             assertFalse(nickTeam().hasEntry("RealName"), "vanish hides the floating nametag");
         }
 
+        @Test void reconciliationReassertsAnOverwrittenTabName() throws Exception {
+            PlayerMock p = server.addPlayer("RealName");
+            plugin.profile().setName(p, "Renamed", "Admin");
+            flush();
+            // A TAB/prefix plugin clobbers the tab + chat name after we set it.
+            p.playerListName(net.kyori.adventure.text.Component.text("Hijacked"));
+            p.displayName(net.kyori.adventure.text.Component.text("Hijacked"));
+
+            plugin.profile().reassertNameDisplay(p); // what the reconciliation pass calls per player
+            flush();
+
+            assertEquals("Renamed", plain(p.playerListName()), "reconciliation restores the override tab name");
+            assertEquals("Renamed", plain(p.displayName()), "reconciliation restores the override chat name");
+        }
+
         @Test void skinOnlyOverrideIsAppliedAfterJoin() throws Exception {
             PlayerMock p = server.addPlayer("RealName");
             // A skin-only override (no display name). The old code applied the skin only at pre-login,
