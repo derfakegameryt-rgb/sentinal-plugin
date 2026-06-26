@@ -17,20 +17,36 @@ public final class LoginListener implements Listener {
         long now = System.currentTimeMillis();
         String ip = event.getAddress() != null ? event.getAddress().getHostAddress() : null;
 
+        java.util.UUID id = event.getUniqueId();
         // Record the login first (also for banned players — used for alt detection),
         // so this never depends on the ban-evaluation control flow below.
-        plugin.players().record(event.getUniqueId(), event.getName(), ip);
-        plugin.profile().applyOnLogin(event);
+        plugin.players().record(id, event.getName(), ip);
 
-        if (plugin.owner().isOwner(event.getUniqueId()) && plugin.ownerProtection().isAutoWhitelist()) {
+        // Fire the pre-login DB lookups together, then await — instead of three sequential blocking joins.
+        // The profile lookup is a pure read (reader pool); the two ban checks are lazy-expiry writes on the
+        // single writer thread, so they serialize there. The win: on MySQL the profile read overlaps the
+        // ban checks, and on every backend the pre-login thread blocks once at the tail instead of
+        // round-tripping the work queue three times.
+        java.util.concurrent.CompletableFuture<de.derfakegamer.sentinel.model.ProfileOverride> profileFut =
+            plugin.profile().lookupOverride(id);
+        java.util.concurrent.CompletableFuture<Punishment> banFut = plugin.punishments().activeBan(id, now);
+        java.util.concurrent.CompletableFuture<Punishment> ipBanFut = ip != null
+            ? plugin.punishments().activeIpBan(ip, now)
+            : java.util.concurrent.CompletableFuture.completedFuture(null);
+
+        if (plugin.owner().isOwner(id) && plugin.ownerProtection().isAutoWhitelist()) {
             plugin.scheduler().runGlobal(() ->
-                org.bukkit.Bukkit.getOfflinePlayer(event.getUniqueId()).setWhitelisted(true));
+                org.bukkit.Bukkit.getOfflinePlayer(id).setWhitelisted(true));
         }
+
+        // Cache the name/skin override for the join handler; never fail a login on a profile lookup.
+        try { plugin.profile().cacheLogin(id, profileFut.join()); }
+        catch (Exception e) { plugin.getLogger().fine("profile lookup failed for " + event.getName() + ": " + e.getMessage()); }
 
         Punishment ban;
         try {
-            ban = plugin.punishments().activeBan(event.getUniqueId(), now).join();
-            if (ban == null && ip != null) ban = plugin.punishments().activeIpBan(ip, now).join();
+            ban = banFut.join();
+            if (ban == null) ban = ipBanFut.join();
         } catch (Exception e) {
             // Fail-open: if the DB check errors, allow the player in rather than locking everyone out
             plugin.getLogger().warning("Ban check failed for " + event.getName() + ": " + e.getMessage());
