@@ -15,6 +15,13 @@ name: Mirror release to CDN
 on:
   release:
     types: [published]
+  # Manual fallback: release events created via the gh CLI/API don't always trigger the `release`
+  # event above, so allow re-mirroring any existing release by tag.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to mirror, e.g. v3.4.1'
+        required: true
 
 # Allow only one mirror at a time; a newer release supersedes an in-flight one.
 concurrency:
@@ -30,7 +37,7 @@ jobs:
       - name: Download the release jar
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.event.release.tag_name }}
+          TAG: ${{ github.event.inputs.tag || github.event.release.tag_name }}
           REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
@@ -45,7 +52,7 @@ jobs:
 
       - name: Build latest.json + vercel.json
         env:
-          TAG: ${{ github.event.release.tag_name }}
+          TAG: ${{ github.event.inputs.tag || github.event.release.tag_name }}
           CDN_DOMAIN: ${{ secrets.CDN_DOMAIN }}
         run: |
           set -euo pipefail
