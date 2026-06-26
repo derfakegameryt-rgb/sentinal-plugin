@@ -6,6 +6,9 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
+import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.event.vehicle.VehicleEnterEvent;
+import org.bukkit.event.vehicle.VehicleExitEvent;
 
 /**
  * Re-applies the floating nametag after events that detach the mounted TextDisplay passenger: death
@@ -25,6 +28,23 @@ public final class NametagListener implements Listener {
     @EventHandler
     public void onWorldChange(PlayerChangedWorldEvent event) {
         reapplyNextTick(event.getPlayer());
+    }
+
+    @EventHandler
+    public void onTeleport(PlayerTeleportEvent event) {
+        // Long-distance / cross-world teleports can drop the mounted TextDisplay passenger.
+        reapplyNextTick(event.getPlayer());
+    }
+
+    @EventHandler
+    public void onVehicleEnter(VehicleEnterEvent event) {
+        // Mounting a boat/horse/minecart re-stacks passengers and can eject the floating name.
+        if (event.getEntered() instanceof Player player) reapplyNextTick(player);
+    }
+
+    @EventHandler
+    public void onVehicleExit(VehicleExitEvent event) {
+        if (event.getExited() instanceof Player player) reapplyNextTick(player);
     }
 
     // A tick later, once the player entity has settled in its new state/world.

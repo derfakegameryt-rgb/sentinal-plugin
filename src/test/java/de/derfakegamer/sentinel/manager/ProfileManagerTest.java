@@ -163,6 +163,20 @@ class ProfileManagerTest {
             assertEquals("Renamed", plain(p.displayName()), "reconciliation restores the override chat name");
         }
 
+        @Test void teleportKeepsTheCustomNametagActive() throws Exception {
+            PlayerMock p = server.addPlayer("RealName");
+            plugin.profile().setName(p, "Renamed", "Admin");
+            flush();
+            assertTrue(nickTeam().hasEntry("RealName"), "nametag active before teleport");
+
+            org.bukkit.Location to = p.getLocation().clone().add(1000, 0, 1000);
+            server.getPluginManager().callEvent(new org.bukkit.event.player.PlayerTeleportEvent(p, p.getLocation(), to));
+            flush();
+
+            assertTrue(nickTeam().hasEntry("RealName"),
+                "after a teleport the custom nametag is re-applied (vanilla stays suppressed)");
+        }
+
         @Test void skinOnlyOverrideIsAppliedAfterJoin() throws Exception {
             PlayerMock p = server.addPlayer("RealName");
             // A skin-only override (no display name). The old code applied the skin only at pre-login,
