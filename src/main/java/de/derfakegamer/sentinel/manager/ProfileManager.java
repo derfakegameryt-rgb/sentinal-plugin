@@ -45,6 +45,27 @@ public final class ProfileManager {
         return false;
     }
 
+    // ---- texture cache (avoid re-hitting Mojang for repeated sets / survive a momentary outage) ----
+
+    record CachedTexture(String value, String signature, long fetchedAt) {}
+
+    static final long SKIN_CACHE_TTL_MS = 5 * 60 * 1000L; // 5 minutes
+
+    private final java.util.concurrent.ConcurrentHashMap<String, CachedTexture> skinCache =
+        new java.util.concurrent.ConcurrentHashMap<>();
+
+    static boolean isFresh(long fetchedAt, long now) { return now - fetchedAt < SKIN_CACHE_TTL_MS; }
+
+    /** The cached textures for {@code key} if still fresh, else null. */
+    CachedTexture cacheGet(String key, long now) {
+        CachedTexture c = skinCache.get(key);
+        return (c != null && isFresh(c.fetchedAt(), now)) ? c : null;
+    }
+
+    void cachePut(String key, String value, String signature, long now) {
+        skinCache.put(key, new CachedTexture(value, signature, now));
+    }
+
     // Cosmetic tags ONLY (colour/gradient/rainbow/decorations/reset). Deliberately excludes <click>,
     // <hover>, <insertion> etc. so a staff-set name can never become an interactive component for every
     // player. Both validation and rendering use this same instance, so what passes is exactly what shows.
@@ -171,23 +192,38 @@ public final class ProfileManager {
                         java.util.function.Consumer<Boolean> done) {
         java.util.UUID id = target.getUniqueId();
         plugin.scheduler().runAsync(() -> {
-            PlayerProfile src = org.bukkit.Bukkit.createProfile(sourceName);
-            boolean ok = src.complete(true);
-            ProfileProperty tex = ok ? texturesOf(src) : null;
+            String key = sourceName.toLowerCase(java.util.Locale.ROOT);
+            long now = System.currentTimeMillis();
+            String value;
+            String signature;
+            CachedTexture cached = cacheGet(key, now);
+            if (cached != null) {
+                value = cached.value();
+                signature = cached.signature();
+            } else {
+                PlayerProfile src = org.bukkit.Bukkit.createProfile(sourceName);
+                boolean ok = completeWithRetry(() -> src.complete(true), Thread::sleep);
+                ProfileProperty tex = ok ? texturesOf(src) : null;
+                if (tex == null) { plugin.scheduler().runGlobal(() -> done.accept(false)); return; }
+                value = tex.getValue();
+                signature = tex.getSignature();
+                cachePut(key, value, signature, now);
+            }
+            final String fv = value;
+            final String fs = signature;
             plugin.scheduler().runGlobal(() -> {
                 org.bukkit.entity.Player t = org.bukkit.Bukkit.getPlayer(id);
-                if (t == null || !t.isOnline() || tex == null) { done.accept(false); return; }
-                long now = System.currentTimeMillis();
+                if (t == null || !t.isOnline()) { done.accept(false); return; }
+                long ts = System.currentTimeMillis();
                 // find + upsert on the single writer thread so the existing name override is preserved atomically.
                 plugin.db().callbackFor(t, plugin.db().submitWrite(() -> {
                     de.derfakegamer.sentinel.model.ProfileOverride existing = dao.find(id);
                     String nm = existing != null ? existing.displayName() : null;
-                    dao.upsert(new de.derfakegamer.sentinel.model.ProfileOverride(
-                        id, nm, tex.getValue(), tex.getSignature(), staff, now));
+                    dao.upsert(new de.derfakegamer.sentinel.model.ProfileOverride(id, nm, fv, fs, staff, ts));
                     return nm;
                 }), nm -> {
                     if (!t.isOnline()) { done.accept(false); return; }
-                    applyLive(t, nm, tex.getValue(), tex.getSignature());
+                    applyLive(t, nm, fv, fs);
                     plugin.audit().record(staff, "SETSKIN", t.getName(), sourceName);
                     done.accept(true);
                 });
@@ -214,7 +250,7 @@ public final class ProfileManager {
         plugin.scheduler().runAsync(() -> {
             try {
                 PlayerProfile real = org.bukkit.Bukkit.createProfile(id, realName);
-                if (!real.complete(true)) return;
+                if (!completeWithRetry(() -> real.complete(true), Thread::sleep)) return;
                 ProfileProperty tex = texturesOf(real);
                 if (tex == null) return;
                 plugin.scheduler().runGlobal(() -> {

@@ -73,6 +73,13 @@ class ProfileManagerTest {
         assertEquals(3, calls[0], "a throw counts as a failed attempt and retries continue");
     }
 
+    @Test
+    void cachedSkinIsFreshOnlyWithinTtl() {
+        assertTrue(ProfileManager.isFresh(1_000L, 1_000L), "same instant is fresh");
+        assertTrue(ProfileManager.isFresh(1_000L, 1_000L + ProfileManager.SKIN_CACHE_TTL_MS - 1), "just inside the TTL is fresh");
+        assertFalse(ProfileManager.isFresh(1_000L, 1_000L + ProfileManager.SKIN_CACHE_TTL_MS), "at the TTL boundary it is stale");
+    }
+
     // ---- live apply (mid-session setName / reset) ----
 
     @Nested
