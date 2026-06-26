@@ -114,6 +114,10 @@ public final class NametagManager {
                         new Vector3f(1f, 1f, 1f), new AxisAngle4f()));
                 });
                 player.addPassenger(td); // ride the player so it follows with no per-tick work
+                // The owner's own client predicts its movement locally while the passenger is server-driven,
+                // so to the owner the name would lag / hang in the air. Hide it from the owner (vanilla never
+                // shows you your own above-head name); everyone else sees it follow normally.
+                player.hideEntity(plugin, td);
                 displays.put(player.getUniqueId(), td.getUniqueId());
             } catch (Throwable t) {
                 plugin.getLogger().fine("nametag show failed for " + player.getName() + ": " + t.getMessage());
