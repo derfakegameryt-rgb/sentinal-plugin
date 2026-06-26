@@ -53,7 +53,7 @@ public final class ActiveMutesGui extends Gui {
         if (slot == Gui.NAV_BACK) { new AdminPanelGui(plugin).open(p); return; }
         if (slot == Gui.NAV_CLOSE) { p.closeInventory(); return; }
         int index = page * PAGE_SIZE + slot;
-        if (slot >= 0 && slot < PAGE_SIZE && index < mutes.size())
-            PlayerActionsGui.open(plugin, Bukkit.getOfflinePlayer(mutes.get(index).targetUuid()), p);
+        if (slot >= 0 && slot < PAGE_SIZE && index < this.mutes.size())
+            PlayerActionsGui.open(plugin, Bukkit.getOfflinePlayer(this.mutes.get(index).targetUuid()), p);
     }
 }

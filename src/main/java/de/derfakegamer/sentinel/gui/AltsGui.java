@@ -75,19 +75,19 @@ public final class AltsGui extends Gui {
                 mod.sendMessage(plugin.messages().prefixed("no-permission")); return;
             }
             Player p = mod;
-            new ConfirmGui(plugin, Component.text("Ban " + (alts.size() + 1) + " accounts?", NamedTextColor.RED), () -> {
+            new ConfirmGui(plugin, Component.text("Ban " + (this.alts.size() + 1) + " accounts?", NamedTextColor.RED), () -> {
                 // Fire-and-forget: futures complete on the DB thread; results are broadcast by ModerationService
                 plugin.moderation().apply(p.getUniqueId(), p.getName(), target.getUniqueId(),
                     target.getName() == null ? "?" : target.getName(), null,
                     de.derfakegamer.sentinel.model.PunishmentType.BAN, 0, "Alt of a banned account");
-                for (PlayerRecord r : alts)
+                for (PlayerRecord r : this.alts)
                     plugin.moderation().apply(p.getUniqueId(), p.getName(), r.uuid(), r.name(), null,
                         de.derfakegamer.sentinel.model.PunishmentType.BAN, 0, "Alt of a banned account");
             }, null).open(p);
             return;
         }
-        if (slot >= 0 && slot < PAGE_SIZE && slot < alts.size()) {
-            OfflinePlayer alt = Bukkit.getOfflinePlayer(alts.get(slot).uuid());
+        if (slot >= 0 && slot < PAGE_SIZE && slot < this.alts.size()) {
+            OfflinePlayer alt = Bukkit.getOfflinePlayer(this.alts.get(slot).uuid());
             PlayerActionsGui.open(plugin, alt, mod);
         }
     }
