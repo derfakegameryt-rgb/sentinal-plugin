@@ -12,8 +12,10 @@ public final class AdminPanelGui extends Gui {
     private static final int OPS = 10, WHITELIST = 11;
     // Row 2 (moderation): bans, mutes, reports, appeals, audit
     private static final int BANS = 19, MUTES = 20, REPORTS = 21, APPEALS = 22, AUDIT = 23;
-    // Row 3 (player tools): player manager, vanish, staff chat, self name/skin/reset
-    private static final int PLAYERS = 28, VANISH = 29, STAFFCHAT = 30, SETNAME = 31, SETSKIN = 32, RESETPROFILE = 33;
+    // Row 3 (players & stats): player manager, mod stats
+    private static final int PLAYERS = 28, MODSTATS = 29;
+    // Row 4 (self / staff tools): vanish, staff chat, self name/skin/reset
+    private static final int VANISH = 37, STAFFCHAT = 38, SETNAME = 39, SETSKIN = 40, RESETPROFILE = 41;
     private static final int CLOSE = 49;
 
     public AdminPanelGui(Sentinel plugin) {
@@ -27,6 +29,7 @@ public final class AdminPanelGui extends Gui {
         inventory.setItem(APPEALS,   button(Material.WRITABLE_BOOK, "gui.panel.appeals",        "gui.panel.appeals-lore"));
         inventory.setItem(AUDIT,     button(Material.WRITABLE_BOOK, "gui.panel.audit",          "gui.panel.audit-lore"));
         inventory.setItem(PLAYERS,   button(Material.PLAYER_HEAD,   "gui.panel.player-manager", "gui.panel.player-manager-lore"));
+        inventory.setItem(MODSTATS,  button(Material.KNOWLEDGE_BOOK, "gui.panel.modstats",      "gui.panel.modstats-lore"));
         inventory.setItem(VANISH,    button(Material.ENDER_EYE,     "gui.panel.vanish",         "gui.panel.vanish-lore"));
         inventory.setItem(STAFFCHAT, button(Material.NETHER_STAR,   "gui.panel.staffchat",      "gui.panel.staffchat-lore"));
         inventory.setItem(SETNAME,      button(Material.NAME_TAG,     "gui.panel.setname",      "gui.panel.setname-lore"));
@@ -54,6 +57,7 @@ public final class AdminPanelGui extends Gui {
             case APPEALS -> AppealsGui.open(plugin, p, 0);
             case AUDIT -> AuditGui.open(plugin, p, 0);
             case PLAYERS -> PlayersGui.open(plugin, 0, p);
+            case MODSTATS -> ModStatsGui.open(plugin, p);
             case VANISH -> {
                 boolean v = plugin.vanish().toggle(p);
                 p.sendMessage(plugin.messages().prefixed(v ? "vanish-on" : "vanish-off"));
